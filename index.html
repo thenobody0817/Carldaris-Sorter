@@ -79,29 +79,15 @@
     --qty-min-w: 34px;
     --qty-radius: 10px;
   }
-
-  main[data-tsize="sm"]{
-    --name-fs: 11px;
-    --name-pad-bottom: 16px;
-  }
-  main[data-tsize="lg"]{
-    --name-fs: 15px;
-    --name-pad-bottom: 20px;
-  }
-
+  main[data-tsize="sm"]{ --name-fs: 11px; --name-pad-bottom: 16px; }
+  main[data-tsize="lg"]{ --name-fs: 15px; --name-pad-bottom: 20px; }
   main[data-qsize="sm"]{
-    --qty-fs: 16px;
-    --qty-pad-y: 3px;
-    --qty-pad-x: 7px;
-    --qty-min-w: 28px;
-    --qty-radius: 8px;
+    --qty-fs: 16px; --qty-pad-y: 3px; --qty-pad-x: 7px;
+    --qty-min-w: 28px; --qty-radius: 8px;
   }
   main[data-qsize="lg"]{
-    --qty-fs: 26px;
-    --qty-pad-y: 5px;
-    --qty-pad-x: 12px;
-    --qty-min-w: 42px;
-    --qty-radius: 12px;
+    --qty-fs: 26px; --qty-pad-y: 5px; --qty-pad-x: 12px;
+    --qty-min-w: 42px; --qty-radius: 12px;
   }
 
   main[data-cols="auto"]{
@@ -189,14 +175,8 @@
     border-radius:var(--qty-radius);
     pointer-events:none;
   }
-  .tile .qty.zero{
-    color:#999;
-    background:rgba(0,0,0,.45);
-  }
-  .tile.selected .qty{
-    color:var(--select);
-    background:rgba(0,0,0,.65);
-  }
+  .tile .qty.zero{ color:#999; background:rgba(0,0,0,.45); }
+  .tile.selected .qty{ color:var(--select); background:rgba(0,0,0,.65); }
 
   .add-tile{
     background:transparent;
@@ -215,19 +195,18 @@
     background:#1a1a1a;border-color:#666;color:#999;
   }
   main[data-cols="5"] .add-tile,
-  main[data-cols="6"] .add-tile{
-    font-size:34px;
-  }
+  main[data-cols="6"] .add-tile{ font-size:34px; }
 
-  #modal,#editor,#cats,#calc,#settings{
+  #modal,#editor,#cats,#calc,#settings,#counter{
     position:fixed;inset:0;background:#000b;z-index:20;
     display:none;align-items:flex-end;
     -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
   }
-  #modal.on,#editor.on,#cats.on,#calc.on,#settings.on{display:flex}
+  #modal.on,#editor.on,#cats.on,#calc.on,#settings.on,#counter.on{display:flex}
   #editor{z-index:30}
   #calc{z-index:30}
   #settings{z-index:30}
+  #counter{z-index:22}
 
   .sheet{
     background:#222;width:100%;
@@ -260,7 +239,6 @@
     background:var(--accent);color:#000;
   }
 
-  /* заголовок модального окна с кнопкой закрытия */
   .sheet-head{
     display:flex;align-items:flex-start;gap:10px;
     margin-bottom:10px;
@@ -276,15 +254,70 @@
     line-height:1;
   }
 
-  .autosave-hint{
-    font-size:11px;color:#666;
-    text-align:center;margin:-6px 0 8px;
-    letter-spacing:.03em;
+  /* ============ compact counter panel ============ */
+  #counter{ align-items:flex-end; }
+
+  .counter-sheet{
+    background:#222;width:100%;
+    border-radius:22px 22px 0 0;
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+    animation:slideup .2s ease;
   }
 
-  .opt-row{
-    display:flex;gap:6px;margin:8px 0 4px;
+  .counter-head{
+    display:flex;align-items:center;gap:8px;
+    margin-bottom:12px;
   }
+  .counter-name{
+    flex:1;min-width:0;
+    font-size:15px;font-weight:700;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    color:var(--fg);
+    padding-left:4px;
+  }
+  .counter-actions{ display:flex;gap:6px;flex-shrink:0; }
+  .c-action{
+    width:38px;height:38px;padding:0;
+    background:#2a2a2a;color:var(--fg);
+    border-radius:11px;font-size:18px;font-weight:500;
+    display:flex;align-items:center;justify-content:center;
+    line-height:1;
+  }
+
+  .counter-body{
+    display:flex;align-items:stretch;gap:14px;
+    min-height:160px;
+  }
+
+  .counter-num{
+    flex:1;min-width:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:64px;font-weight:800;line-height:1;
+    font-variant-numeric:tabular-nums;
+    color:var(--fg);
+    letter-spacing:-.02em;
+    padding-left:8px;
+  }
+
+  .counter-btns{
+    display:flex;flex-direction:column;gap:10px;
+    flex:0 0 108px;
+  }
+
+  .c-btn{
+    flex:1;min-height:60px;padding:0;
+    border-radius:16px;
+    font-size:30px;font-weight:800;
+    background:#2a2a2a;color:var(--fg);
+    border:0;font-family:inherit;
+    transition:transform .06s ease, background .12s;
+  }
+  .c-btn:active{ transform:scale(.96); }
+  .c-btn.minus{ background:#3a3a3a;color:var(--fg); }
+  .c-btn.plus{ background:var(--accent);color:#000; }
+
+  /* ============ settings ============ */
+  .opt-row{ display:flex;gap:6px;margin:8px 0 4px; }
   .opt-row button{
     flex:1;padding:14px 0;font-size:15px;font-weight:700;
     background:#2a2a2a;color:var(--fg);
@@ -527,7 +560,7 @@
       <button onclick="openSettings()" title="Настройки">⚙</button>
       <button onclick="openCats()">Категории</button>
       <button onclick="exportCSV()">CSV</button>
-      <button onclick="resetAll()">Сброс</button>
+      <button onclick="resetAll()">Обнулить</button>
       <button class="save" onclick="saveToFile()">💾 Сохранить</button>
     </div>
   </div>
@@ -543,6 +576,26 @@
   <button class="qb-btn calc" onclick="openCalc()" title="Умножить ряды">×</button>
   <button class="qb-btn" onclick="qbBump(-1)">−1</button>
   <button class="qb-btn plus" onclick="qbBump(1)">+1</button>
+</div>
+
+<!-- ============ compact counter panel ============ -->
+<div id="counter">
+  <div class="counter-sheet">
+    <div class="counter-head">
+      <div class="counter-name" id="cName"></div>
+      <div class="counter-actions">
+        <button class="c-action" onclick="openFullFromCounter()" title="Ещё">⋯</button>
+        <button class="c-action" onclick="closeCounter()" title="Закрыть">✕</button>
+      </div>
+    </div>
+    <div class="counter-body">
+      <div class="counter-num" id="cNum">0</div>
+      <div class="counter-btns">
+        <button class="c-btn minus" onclick="counterBump(-1)">−1</button>
+        <button class="c-btn plus"  onclick="counterBump(1)">+1</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="modal">
@@ -836,31 +889,18 @@ function save(){
 }
 
 /* ================= настройки ================= */
-function applyGridCols(){
-  document.getElementById('grid').dataset.cols = state.gridCols || '4';
-}
-function applyGridDir(){
-  document.getElementById('grid').dataset.dir = state.gridDir || 'ltr';
-}
-function applyTextSize(){
-  document.getElementById('grid').dataset.tsize = state.textSize || 'md';
-}
-function applyQtySize(){
-  document.getElementById('grid').dataset.qsize = state.qtySize || 'md';
-}
+function applyGridCols(){ document.getElementById('grid').dataset.cols = state.gridCols || '4'; }
+function applyGridDir(){  document.getElementById('grid').dataset.dir  = state.gridDir  || 'ltr'; }
+function applyTextSize(){ document.getElementById('grid').dataset.tsize = state.textSize || 'md'; }
+function applyQtySize(){  document.getElementById('grid').dataset.qsize = state.qtySize  || 'md'; }
 
 function setGridCols(v){ state.gridCols = v; save(); applyGridCols(); renderOpts(); render(); }
 function setGridDir(v){  state.gridDir  = v; save(); applyGridDir();  renderOpts(); }
 function setTextSize(v){ state.textSize = v; save(); applyTextSize(); renderOpts(); }
 function setQtySize(v){  state.qtySize  = v; save(); applyQtySize();  renderOpts(); }
 
-function openSettings(){
-  renderOpts();
-  document.getElementById('settings').classList.add('on');
-}
-function closeSettings(){
-  document.getElementById('settings').classList.remove('on');
-}
+function openSettings(){ renderOpts(); document.getElementById('settings').classList.add('on'); }
+function closeSettings(){ document.getElementById('settings').classList.remove('on'); }
 
 function renderOpts(){
   const curCols = String(state.gridCols || '4');
@@ -953,7 +993,7 @@ function buildUpdatedHtml(){
     mainClone.setAttribute('data-qsize', state.qtySize  || 'md');
   }
 
-  ['#modal','#editor','#cats','#pick','#calc','#settings'].forEach(sel => {
+  ['#modal','#editor','#cats','#pick','#calc','#settings','#counter'].forEach(sel => {
     const el = clone.querySelector(sel);
     if (el) el.classList.remove('on');
   });
@@ -969,7 +1009,8 @@ function buildUpdatedHtml(){
   if (mClear) mClear.removeAttribute('style');
 
   ['#mName','#mCat','#qbName','#qbQty','#pickTitle','#pickMsg',
-   '#edTitle','#edSub','#total','#date','#voiceToast','#calcTitle'].forEach(sel => {
+   '#edTitle','#edSub','#total','#date','#voiceToast','#calcTitle',
+   '#cName','#cNum'].forEach(sel => {
     const el = clone.querySelector(sel);
     if (el) el.textContent = '';
   });
@@ -997,7 +1038,6 @@ function buildUpdatedHtml(){
   clone.querySelectorAll('#settings .opt-row button')
     .forEach(b => b.classList.remove('active'));
 
-  /* очищаем inline-стили лифта клавиатуры */
   clone.querySelectorAll('.sheet').forEach(s => {
     s.style.transform = '';
     s.style.maxHeight = '';
@@ -1021,42 +1061,36 @@ function safeJson(obj){
   return JSON.stringify(obj).replace(/</g, '\\u003c');
 }
 
-/* ================= сброс ================= */
+/* ================= сброс счётчиков ================= */
 async function resetAll(){
   const ok = await showPick({
-    title: 'Сбросить всё?',
-    message: 'Текущий подсчёт и список позиций будут удалены, вернётся исходный набор.',
+    title: 'Начать новый подсчёт?',
+    message: 'Название документа будет очищено, а все счётчики — обнулены.\nПозиции, категории, фото и настройки останутся.',
     options: [
-      {label:'Сбросить и начать заново', value:'yes', style:'danger'},
+      {label:'Начать заново', value:'yes', style:'danger'},
       {label:'Отмена', value:null}
     ]
   });
   if (ok !== 'yes') return;
 
-  const keep = {
-    gridCols: state.gridCols || '4',
-    gridDir:  state.gridDir  || 'ltr',
-    textSize: state.textSize || 'md',
-    qtySize:  state.qtySize  || 'md'
-  };
-
-  localStorage.removeItem(KEY);
-  state = seed();
-  Object.assign(state, keep);
+  state.label = '';
+  document.getElementById('label').value = '';
+  for (const it of state.items){
+    it.qty = 0;
+    it.counted = false;
+  }
 
   qbId = null;
   activeId = null;
+  state.lastItem = null;
   document.getElementById('quickbar').classList.add('hidden');
   document.getElementById('modal').classList.remove('on');
-  document.getElementById('editor').classList.remove('on');
-  document.getElementById('cats').classList.remove('on');
   document.getElementById('calc').classList.remove('on');
   document.getElementById('settings').classList.remove('on');
+  document.getElementById('editor').classList.remove('on');
+  document.getElementById('cats').classList.remove('on');
+  document.getElementById('counter').classList.remove('on');
   save();
-  applyGridCols();
-  applyGridDir();
-  applyTextSize();
-  applyQtySize();
   render();
 }
 
@@ -1102,10 +1136,10 @@ function render(){
 
   document.getElementById('total').textContent = total.toLocaleString('ru-RU');
 
-  /* если модальное окно открыто — обновим qbQty-подобное отображение */
-  if (activeId){
+  /* если открыта панель счётчика, освежим число */
+  if (activeId && document.getElementById('counter').classList.contains('on')){
     const it = state.items.find(i => i.id === activeId);
-    if (it) document.getElementById('mInput').dataset.qty = it.qty;
+    if (it) document.getElementById('cNum').textContent = it.qty.toLocaleString('ru-RU');
   }
 }
 
@@ -1186,7 +1220,7 @@ document.addEventListener('pointerup', () => {
 
   const id = pressTarget.dataset.id;
   if (id === qbId){
-    openModal(id);
+    openCounter(id);
   } else {
     qbShow(id);
   }
@@ -1230,6 +1264,48 @@ function qbBump(n){
   navigator.vibrate?.(8);
 }
 
+/* ================= компактная панель счётчика ================= */
+function openCounter(id){
+  activeId = id;
+  const it = state.items.find(i => i.id === id);
+  if (!it) return;
+
+  document.getElementById('cName').textContent = it.name;
+  document.getElementById('cNum').textContent = it.qty.toLocaleString('ru-RU');
+
+  document.getElementById('counter').classList.add('on');
+  document.getElementById('quickbar').classList.add('hidden');
+}
+
+function closeCounter(){
+  document.getElementById('counter').classList.remove('on');
+  activeId = null;
+  if (qbId) qbShow(qbId);
+}
+
+function counterBump(n){
+  if (!activeId) return;
+  const it = state.items.find(i => i.id === activeId);
+  if (!it) return;
+  it.qty = Math.max(0, it.qty + n);
+  it.counted = true;
+  document.getElementById('cNum').textContent = it.qty.toLocaleString('ru-RU');
+  save(); render();
+  navigator.vibrate?.(8);
+}
+
+function openFullFromCounter(){
+  if (!activeId) return;
+  const id = activeId;
+  document.getElementById('counter').classList.remove('on');
+  activeId = null;
+  openModal(id);
+}
+
+document.getElementById('counter').addEventListener('click', e => {
+  if (e.target.id === 'counter') closeCounter();
+});
+
 /* ================= калькулятор ================= */
 function openCalc(){
   if (!qbId) return;
@@ -1248,9 +1324,7 @@ function openCalc(){
   setTimeout(() => { rowsEl.focus(); rowsEl.select(); }, 60);
 }
 
-function closeCalc(){
-  document.getElementById('calc').classList.remove('on');
-}
+function closeCalc(){ document.getElementById('calc').classList.remove('on'); }
 
 function updateCalcTotal(){
   const rows = parseInt(document.getElementById('calcRows').value) || 0;
@@ -1266,10 +1340,7 @@ function calcCommit(sign){
   const cols = parseInt(document.getElementById('calcCols').value) || 0;
   const n = rows * cols;
 
-  if (n <= 0){
-    closeCalc();
-    return;
-  }
+  if (n <= 0){ closeCalc(); return; }
 
   calcRowsLast = rows;
   calcColsLast = cols;
@@ -1309,7 +1380,6 @@ function openModal(id){
   document.getElementById('modal').classList.add('on');
   document.getElementById('quickbar').classList.add('hidden');
 
-  /* после открытия — сразу поднимаем клавиатуру и выделяем число */
   setTimeout(() => {
     inp.focus();
     inp.select();
@@ -1318,7 +1388,6 @@ function openModal(id){
 }
 
 function closeModal(){
-  /* на всякий случай финально коммитим то, что в поле */
   commitLive(true);
   document.getElementById('modal').classList.remove('on');
   activeId = null;
@@ -1326,15 +1395,14 @@ function closeModal(){
   if (qbId) qbShow(qbId);
 }
 
-/* live-коммит значения поля в текущий элемент */
 function commitLive(silent){
   if (!activeId) return;
   const raw = document.getElementById('mInput').value;
-  if (raw === '') return;                    /* пусто — не трогаем */
+  if (raw === '') return;
   const n = Math.max(0, parseInt(raw, 10) || 0);
   const it = state.items.find(i => i.id === activeId);
   if (!it) return;
-  if (it.qty === n) return;                  /* без изменений */
+  if (it.qty === n) return;
   it.qty = n;
   it.counted = true;
   save();
@@ -1393,7 +1461,6 @@ if (window.visualViewport){
 /* ================= изменение / удаление позиции ================= */
 function editCurrent(){
   if (!activeId) return;
-  /* количество уже сохранено live — просто переходим в редактор */
   const id = activeId;
   activeId = null;
   document.getElementById('modal').classList.remove('on');
@@ -1551,13 +1618,8 @@ document.getElementById('editor').addEventListener('click', e => {
 });
 
 /* ================= управление категориями ================= */
-function openCats(){
-  renderCatList();
-  document.getElementById('cats').classList.add('on');
-}
-function closeCats(){
-  document.getElementById('cats').classList.remove('on');
-}
+function openCats(){ renderCatList(); document.getElementById('cats').classList.add('on'); }
+function closeCats(){ document.getElementById('cats').classList.remove('on'); }
 
 function renderCatList(){
   const box = document.getElementById('catsList');
@@ -1660,7 +1722,6 @@ function plural(n, one, few, many){
 document.getElementById('cats').addEventListener('click', e => {
   if (e.target.id === 'cats') closeCats();
 });
-
 document.getElementById('settings').addEventListener('click', e => {
   if (e.target.id === 'settings') closeSettings();
 });
@@ -1824,6 +1885,7 @@ function exportCSV(){
 /* ================= Esc ================= */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
+  if (document.getElementById('counter').classList.contains('on')){ closeCounter(); return; }
   if (document.getElementById('settings').classList.contains('on')){ closeSettings(); return; }
   if (document.getElementById('calc').classList.contains('on')){ closeCalc(); return; }
   if (document.getElementById('editor').classList.contains('on')){ closeEditor(); return; }
@@ -1963,9 +2025,7 @@ function processVoiceCommand(rawText){
 
 function startVoice(){
   if (!recognition || !listening) return;
-  try{
-    recognition.start();
-  }catch(e){ /* уже запущено */ }
+  try{ recognition.start(); }catch(e){ /* уже запущено */ }
 }
 
 function stopVoice(){
@@ -1973,9 +2033,7 @@ function stopVoice(){
   const btn = document.getElementById('micBtn');
   if (btn) btn.classList.remove('on');
   if (restartTimer){ clearTimeout(restartTimer); restartTimer = null; }
-  if (recognition){
-    try{ recognition.stop(); }catch{}
-  }
+  if (recognition){ try{ recognition.stop(); }catch{} }
 }
 
 function toggleVoice(){
