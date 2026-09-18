@@ -19,12 +19,19 @@
   try{
     var pref = 'auto';
     var accent = 'green';
+    var contrast = 'normal';
     var raw = localStorage.getItem('countlist.v3');
-    if (raw){ var s = JSON.parse(raw); if (s && s.theme) pref = s.theme; if (s && s.accent) accent = s.accent; }
+    if (raw){
+      var s = JSON.parse(raw);
+      if (s && s.theme) pref = s.theme;
+      if (s && s.accent) accent = s.accent;
+      if (s && s.contrast) contrast = s.contrast;
+    }
     var light = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches;
-    var eff = (pref === 'light' || pref === 'dark') ? pref : (light ? 'light' : 'dark');
+    var eff = (pref === 'light' || pref === 'dark' || pref === 'oled') ? pref : (light ? 'light' : 'dark');
     document.documentElement.setAttribute('data-theme', eff);
     document.documentElement.setAttribute('data-accent', accent);
+    document.documentElement.setAttribute('data-contrast', contrast === 'high' ? 'high' : 'normal');
   }catch(e){}
 })();
 </script>
@@ -68,6 +75,14 @@
     --select-ring:#fbbf2455;
     --select-glow:#fbbf2466;
 
+    /* tile counter badge (drawn over photos) */
+    --qty-fg:#fff;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-ring:rgba(255,255,255,.22);
+    --qty-zero-fg:#bbb;
+    --qty-zero-bg:rgba(0,0,0,.5);
+    --qty-sel-bg:rgba(0,0,0,.72);
+
     /* danger / status */
     --danger:#f87171;
     --danger-bg:#3a1f1f;
@@ -94,11 +109,11 @@
 
     /* text */
     --fg:#14171a;
-    --dim:#5f6b76;
-    --muted:#3a434c;
-    --add-fg:#9aa4ad;
-    --add-fg-active:#5f6b76;
-    --placeholder:#9aa4ad;
+    --dim:#4b5563;
+    --muted:#2b333b;
+    --add-fg:#7b8590;
+    --add-fg-active:#3a434c;
+    --placeholder:#6b7480;
 
     /* lines & shadows */
     --border:#d7dbe0;
@@ -123,6 +138,54 @@
     --mic-pulse-end:#dc262600;
     --save-bg:#dcfce7;
     --save-fg:#15803d;
+
+    /* tile counter badge (drawn over photos) */
+    --qty-fg:#14171a;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-ring:rgba(0,0,0,.14);
+    --qty-zero-fg:#5f6b76;
+    --qty-zero-bg:rgba(255,255,255,.8);
+    --qty-sel-bg:rgba(255,255,255,.96);
+  }
+  /* OLED black — dark base with true-black surfaces */
+  html[data-theme="oled"]{
+    --bg:#000;
+    --card:#0a0a0a;
+    --surface:#111;
+    --surface-2:#161616;
+    --surface-3:#222;
+    --surface-4:#2a2a2a;
+    --sunken:#000;
+    --sunken-2:#111;
+    --header-bg:#000000cc;
+    --quickbar-bg:#0a0a0aee;
+    --border:#2a2a2a;
+    --border-strong:#3a3a3a;
+    --shadow:#000;
+    --shadow-strong:#000;
+  }
+  /* High-contrast modifier — boosts text/border contrast on the active theme */
+  html[data-contrast="high"]{
+    --fg:#ffffff;
+    --dim:#cfcfcf;
+    --muted:#f0f0f0;
+    --add-fg:#cfcfcf;
+    --add-fg-active:#ffffff;
+    --placeholder:#cfcfcf;
+    --border:#666;
+    --border-strong:#999;
+    --glow:#ffffff55;
+  }
+  html[data-theme="light"][data-contrast="high"]{
+    --fg:#000000;
+    --dim:#3a434c;
+    --muted:#14171a;
+    --add-fg:#3a434c;
+    --add-fg-active:#000000;
+    --placeholder:#3a434c;
+    --border:#8a939c;
+    --border-strong:#5f6b76;
+    --glow:#00000033;
   }
   /* accent presets — override --accent/--accent-fg per theme */
   :root[data-accent="green"]{  --accent:#4ade80; --accent-fg:#000; }
@@ -202,8 +265,6 @@
     grid-template-columns:repeat(4, 1fr);
 
     --name-fs: 13px;
-    --name-pad-top: 6px;
-    --name-pad-bottom: 18px;
 
     --qty-fs: 20px;
     --qty-pad-y: 4px;
@@ -211,8 +272,8 @@
     --qty-min-w: 34px;
     --qty-radius: 10px;
   }
-  main[data-tsize="sm"]{ --name-fs: 11px; --name-pad-bottom: 16px; }
-  main[data-tsize="lg"]{ --name-fs: 15px; --name-pad-bottom: 20px; }
+  main[data-tsize="sm"]{ --name-fs: 11px; }
+  main[data-tsize="lg"]{ --name-fs: 15px; }
   main[data-qsize="sm"]{
     --qty-fs: 16px; --qty-pad-y: 3px; --qty-pad-x: 7px;
     --qty-min-w: 28px; --qty-radius: 8px;
@@ -260,7 +321,7 @@
   .tile{
     background:var(--card);border-radius:14px;overflow:hidden;
     position:relative;aspect-ratio:1;
-    display:flex;align-items:center;justify-content:center;
+    display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
     border:2px solid transparent;cursor:pointer;
     transition:transform .06s ease,
                border-color .2s ease,
@@ -275,14 +336,17 @@
     box-shadow:0 0 0 3px var(--select-ring), 0 0 20px var(--select-glow);
     z-index:1;
   }
-  .tile img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+  .tile img{flex:1 1 auto;min-height:0;width:100%;height:auto;object-fit:cover;pointer-events:none}
 
   .tile .name{
-    position:absolute;left:0;right:0;top:0;
-    padding:var(--name-pad-top) 6px var(--name-pad-bottom);
+    order:-1;
+    flex:0 0 auto;
+    padding:4px 7px;
     font-size:var(--name-fs);
     font-weight:700;line-height:1.2;
-    background:linear-gradient(#000e 40%, #000a 75%, transparent);
+    color:var(--fg);
+    background:var(--card);
+    border-bottom:1px solid var(--border);
     text-align:center;
     word-break:break-word;
     overflow:hidden;
@@ -308,15 +372,17 @@
     font-weight:800;
     line-height:1;
     font-variant-numeric:tabular-nums;
-    color:#fff;
-    background:rgba(0,0,0,.6);
+    color:var(--qty-fg);
+    background:var(--qty-bg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
     -webkit-backdrop-filter:blur(6px);
     backdrop-filter:blur(6px);
     border-radius:var(--qty-radius);
     pointer-events:none;
   }
-  .tile .qty.zero{ color:#999; background:rgba(0,0,0,.45); }
-  .tile.selected .qty{ color:var(--select); background:rgba(0,0,0,.65); }
+  .tile .qty.zero{ color:var(--qty-zero-fg); background:var(--qty-zero-bg); }
+  .tile.counted .qty{ color:var(--accent-fg); background:var(--accent); }
+  .tile.selected .qty{ color:var(--select); background:var(--qty-sel-bg); }
 
   .add-tile{
     background:transparent;
@@ -497,6 +563,7 @@
   }
   .opt-row button[data-cols="auto"]{flex:1.6;font-size:13px}
   .opt-row button[data-dir]{font-size:13px}
+  .opt-row#themeRow button, .opt-row#contrastRow button{font-size:13px}
   .opt-row button.active{
     background:var(--accent);color:var(--accent-fg);
     border-color:var(--accent);
@@ -939,9 +1006,18 @@
     <div class="settings-block">
       <div class="block-label" data-i18n="settings.theme">Theme</div>
       <div class="opt-row" id="themeRow">
-        <button data-themeopt="auto" onclick="setTheme('auto')" data-i18n="settings.themeAuto">Auto</button>
+        <button data-themeopt="auto"  onclick="setTheme('auto')"  data-i18n="settings.themeAuto">Auto</button>
         <button data-themeopt="light" onclick="setTheme('light')" data-i18n="settings.themeLight">Light</button>
-        <button data-themeopt="dark" onclick="setTheme('dark')" data-i18n="settings.themeDark">Dark</button>
+        <button data-themeopt="dark"  onclick="setTheme('dark')"  data-i18n="settings.themeDark">Dark</button>
+        <button data-themeopt="oled"  onclick="setTheme('oled')"  data-i18n="settings.themeOled">OLED</button>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <div class="block-label" data-i18n="settings.contrast">Contrast</div>
+      <div class="opt-row" id="contrastRow">
+        <button data-contrastopt="normal" onclick="setContrast('normal')" data-i18n="settings.contrastNormal">Normal</button>
+        <button data-contrastopt="high"   onclick="setContrast('high')"   data-i18n="settings.contrastHigh">High</button>
       </div>
     </div>
 
@@ -1073,6 +1149,10 @@ const I18N = {
     'settings.themeAuto':'Авто',
     'settings.themeLight':'Светлая',
     'settings.themeDark':'Тёмная',
+    'settings.themeOled':'OLED',
+    'settings.contrast':'Контраст',
+    'settings.contrastNormal':'Обычный',
+    'settings.contrastHigh':'Высокий',
     'settings.accent':'Акцентный цвет',
     'accent.green':'Зелёный',
     'accent.blue':'Синий',
@@ -1186,6 +1266,10 @@ const I18N = {
     'settings.themeAuto':'Auto',
     'settings.themeLight':'Light',
     'settings.themeDark':'Dark',
+    'settings.themeOled':'OLED',
+    'settings.contrast':'Contrast',
+    'settings.contrastNormal':'Normal',
+    'settings.contrastHigh':'High',
     'settings.accent':'Accent color',
     'accent.green':'Green',
     'accent.blue':'Blue',
@@ -1299,6 +1383,10 @@ const I18N = {
     'settings.themeAuto':'Auto',
     'settings.themeLight':'Gaišā',
     'settings.themeDark':'Tumšā',
+    'settings.themeOled':'OLED',
+    'settings.contrast':'Kontrasts',
+    'settings.contrastNormal':'Parasts',
+    'settings.contrastHigh':'Augsts',
     'settings.accent':'Akcenta krāsa',
     'accent.green':'Zaļš',
     'accent.blue':'Zils',
@@ -1412,6 +1500,10 @@ const I18N = {
     'settings.themeAuto':'自动',
     'settings.themeLight':'浅色',
     'settings.themeDark':'深色',
+    'settings.themeOled':'OLED',
+    'settings.contrast':'对比度',
+    'settings.contrastNormal':'普通',
+    'settings.contrastHigh':'高',
     'settings.accent':'强调色',
     'accent.green':'绿色',
     'accent.blue':'蓝色',
@@ -1674,6 +1766,7 @@ function load(){
   if (!chosen.rowFit)   chosen.rowFit   = 'auto';
   if (!chosen.theme)    chosen.theme    = 'auto';
   if (!chosen.accent)   chosen.accent   = 'green';
+  if (!chosen.contrast) chosen.contrast = 'normal';
   if (!LANGS[chosen.lang]) chosen.lang  = 'ru';
 
   /* one-time: give older saved states the hosted images for default items */
@@ -1734,6 +1827,7 @@ function seed(){
     rowFit: 'auto',
     theme: 'auto',
     accent: 'green',
+    contrast: 'normal',
     lang: detectLang(),
     savedAt: 0
   };
@@ -1754,7 +1848,7 @@ function applyQtySize(){  document.getElementById('grid').dataset.qsize = state.
 /* ================= theme ================= */
 function effectiveTheme(){
   const pref = state.theme || 'auto';
-  if (pref === 'light' || pref === 'dark') return pref;
+  if (pref === 'light' || pref === 'dark' || pref === 'oled') return pref;
   return (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches)
     ? 'light' : 'dark';
 }
@@ -1763,16 +1857,29 @@ function applyTheme(){
   const eff = effectiveTheme();
   document.documentElement.setAttribute('data-theme', eff);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', eff === 'light' ? '#f4f5f7' : '#111');
+  if (meta) meta.setAttribute('content', eff === 'light' ? '#f4f5f7' : (eff === 'oled' ? '#000000' : '#111111'));
   const apple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
   if (apple) apple.setAttribute('content', eff === 'light' ? 'default' : 'black-translucent');
 }
 
 function setTheme(v){
-  if (v !== 'auto' && v !== 'light' && v !== 'dark') return;
+  if (v !== 'auto' && v !== 'light' && v !== 'dark' && v !== 'oled') return;
   state.theme = v;
   save();
   applyTheme();
+  renderOpts();
+}
+
+/* ================= contrast ================= */
+function applyContrast(){
+  document.documentElement.setAttribute('data-contrast', state.contrast === 'high' ? 'high' : 'normal');
+}
+
+function setContrast(v){
+  if (v !== 'normal' && v !== 'high') return;
+  state.contrast = v;
+  save();
+  applyContrast();
   renderOpts();
 }
 
@@ -1988,6 +2095,10 @@ function renderOpts(){
   const curAccent = String(state.accent || 'green');
   document.querySelectorAll('#accentRow button').forEach(b =>
     b.classList.toggle('active', b.dataset.accentopt === curAccent));
+
+  const curContrast = String(state.contrast || 'normal');
+  document.querySelectorAll('#contrastRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.contrastopt === curContrast));
 }
 
 /* ================= saving to file ================= */
@@ -3457,6 +3568,7 @@ if (SpeechRecognition){
 /* ================= startup ================= */
 applyTheme();
 applyAccent();
+applyContrast();
 watchSystemTheme();
 applyGridCols();
 applyGridDir();
