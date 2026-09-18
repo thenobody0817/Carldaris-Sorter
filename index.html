@@ -18,11 +18,13 @@
 (function(){
   try{
     var pref = 'auto';
+    var accent = 'green';
     var raw = localStorage.getItem('countlist.v3');
-    if (raw){ var s = JSON.parse(raw); if (s && s.theme) pref = s.theme; }
+    if (raw){ var s = JSON.parse(raw); if (s && s.theme) pref = s.theme; if (s && s.accent) accent = s.accent; }
     var light = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches;
     var eff = (pref === 'light' || pref === 'dark') ? pref : (light ? 'light' : 'dark');
     document.documentElement.setAttribute('data-theme', eff);
+    document.documentElement.setAttribute('data-accent', accent);
   }catch(e){}
 })();
 </script>
@@ -122,6 +124,19 @@
     --save-bg:#dcfce7;
     --save-fg:#15803d;
   }
+  /* accent presets — override --accent/--accent-fg per theme */
+  :root[data-accent="green"]{  --accent:#4ade80; --accent-fg:#000; }
+  :root[data-accent="blue"]{   --accent:#60a5fa; --accent-fg:#000; }
+  :root[data-accent="violet"]{ --accent:#a78bfa; --accent-fg:#000; }
+  :root[data-accent="pink"]{   --accent:#f472b6; --accent-fg:#000; }
+  :root[data-accent="amber"]{  --accent:#fbbf24; --accent-fg:#000; }
+  :root[data-accent="cyan"]{   --accent:#22d3ee; --accent-fg:#000; }
+  html[data-theme="light"][data-accent="green"]{  --accent:#16a34a; --accent-fg:#fff; }
+  html[data-theme="light"][data-accent="blue"]{   --accent:#2563eb; --accent-fg:#fff; }
+  html[data-theme="light"][data-accent="violet"]{ --accent:#7c3aed; --accent-fg:#fff; }
+  html[data-theme="light"][data-accent="pink"]{   --accent:#db2777; --accent-fg:#fff; }
+  html[data-theme="light"][data-accent="amber"]{  --accent:#d97706; --accent-fg:#fff; }
+  html[data-theme="light"][data-accent="cyan"]{   --accent:#0891b2; --accent-fg:#fff; }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
   body{
@@ -492,6 +507,28 @@
     font-size:12px;color:var(--dim);
     text-transform:uppercase;letter-spacing:.06em;font-weight:700;
     margin:0 0 6px;
+  }
+  .opt-row.accent-row{ flex-wrap:wrap; justify-content:center; gap:10px; }
+  .opt-row.accent-row button{
+    flex:0 0 40px;width:40px;height:40px;padding:0;
+    border-radius:50%;border:3px solid transparent;
+    background:var(--sw, var(--surface-2));
+  }
+  .opt-row.accent-row button[data-accentopt="green"]{  --sw:#4ade80; }
+  .opt-row.accent-row button[data-accentopt="blue"]{   --sw:#60a5fa; }
+  .opt-row.accent-row button[data-accentopt="violet"]{ --sw:#a78bfa; }
+  .opt-row.accent-row button[data-accentopt="pink"]{   --sw:#f472b6; }
+  .opt-row.accent-row button[data-accentopt="amber"]{  --sw:#fbbf24; }
+  .opt-row.accent-row button[data-accentopt="cyan"]{   --sw:#22d3ee; }
+  html[data-theme="light"] .opt-row.accent-row button[data-accentopt="green"]{  --sw:#16a34a; }
+  html[data-theme="light"] .opt-row.accent-row button[data-accentopt="blue"]{   --sw:#2563eb; }
+  html[data-theme="light"] .opt-row.accent-row button[data-accentopt="violet"]{ --sw:#7c3aed; }
+  html[data-theme="light"] .opt-row.accent-row button[data-accentopt="pink"]{   --sw:#db2777; }
+  html[data-theme="light"] .opt-row.accent-row button[data-accentopt="amber"]{  --sw:#d97706; }
+  html[data-theme="light"] .opt-row.accent-row button[data-accentopt="cyan"]{   --sw:#0891b2; }
+  .opt-row.accent-row button.active{
+    background:var(--sw, var(--accent));
+    border-color:var(--fg);
   }
 
   .calc-row{
@@ -908,6 +945,18 @@
       </div>
     </div>
 
+    <div class="settings-block">
+      <div class="block-label" data-i18n="settings.accent">Accent color</div>
+      <div class="opt-row accent-row" id="accentRow">
+        <button data-accentopt="green"  onclick="setAccent('green')"  data-i18n-title="accent.green"  data-i18n-aria="accent.green"  aria-label="Green"></button>
+        <button data-accentopt="blue"   onclick="setAccent('blue')"   data-i18n-title="accent.blue"   data-i18n-aria="accent.blue"   aria-label="Blue"></button>
+        <button data-accentopt="violet" onclick="setAccent('violet')" data-i18n-title="accent.violet" data-i18n-aria="accent.violet" aria-label="Violet"></button>
+        <button data-accentopt="pink"   onclick="setAccent('pink')"   data-i18n-title="accent.pink"   data-i18n-aria="accent.pink"   aria-label="Pink"></button>
+        <button data-accentopt="amber"  onclick="setAccent('amber')"  data-i18n-title="accent.amber"  data-i18n-aria="accent.amber"  aria-label="Amber"></button>
+        <button data-accentopt="cyan"   onclick="setAccent('cyan')"   data-i18n-title="accent.cyan"   data-i18n-aria="accent.cyan"   aria-label="Cyan"></button>
+      </div>
+    </div>
+
     <div class="row">
       <button onclick="closeSettings()" data-i18n="close">Close</button>
     </div>
@@ -1024,6 +1073,13 @@ const I18N = {
     'settings.themeAuto':'Авто',
     'settings.themeLight':'Светлая',
     'settings.themeDark':'Тёмная',
+    'settings.accent':'Акцентный цвет',
+    'accent.green':'Зелёный',
+    'accent.blue':'Синий',
+    'accent.violet':'Фиолетовый',
+    'accent.pink':'Розовый',
+    'accent.amber':'Янтарный',
+    'accent.cyan':'Голубой',
     'reorder.title':'Перестановка плиток',
     'reorder.on':'Перетащите плитки; бросайте в пустые ячейки, чтобы оставить пропуски',
     'reorder.done':'Порядок сохранён',
@@ -1130,6 +1186,13 @@ const I18N = {
     'settings.themeAuto':'Auto',
     'settings.themeLight':'Light',
     'settings.themeDark':'Dark',
+    'settings.accent':'Accent color',
+    'accent.green':'Green',
+    'accent.blue':'Blue',
+    'accent.violet':'Violet',
+    'accent.pink':'Pink',
+    'accent.amber':'Amber',
+    'accent.cyan':'Cyan',
     'reorder.title':'Rearrange tiles',
     'reorder.on':'Drag tiles to rearrange; drop into empty cells to leave gaps',
     'reorder.done':'Order saved',
@@ -1236,6 +1299,13 @@ const I18N = {
     'settings.themeAuto':'Auto',
     'settings.themeLight':'Gaišā',
     'settings.themeDark':'Tumšā',
+    'settings.accent':'Akcenta krāsa',
+    'accent.green':'Zaļš',
+    'accent.blue':'Zils',
+    'accent.violet':'Violets',
+    'accent.pink':'Rozā',
+    'accent.amber':'Dzintara',
+    'accent.cyan':'Ciāna',
     'reorder.title':'Pārkārtot flīzes',
     'reorder.on':'Velciet flīzes; nometiet tukšās šūnās, lai atstātu atstarpes',
     'reorder.done':'Secība saglabāta',
@@ -1342,6 +1412,13 @@ const I18N = {
     'settings.themeAuto':'自动',
     'settings.themeLight':'浅色',
     'settings.themeDark':'深色',
+    'settings.accent':'强调色',
+    'accent.green':'绿色',
+    'accent.blue':'蓝色',
+    'accent.violet':'紫色',
+    'accent.pink':'粉色',
+    'accent.amber':'琥珀色',
+    'accent.cyan':'青色',
     'reorder.title':'排列方块',
     'reorder.on':'拖动方块重新排列；放入空单元格可留出间隔',
     'reorder.done':'顺序已保存',
@@ -1596,6 +1673,7 @@ function load(){
   if (!chosen.qtySize)  chosen.qtySize  = 'md';
   if (!chosen.rowFit)   chosen.rowFit   = 'auto';
   if (!chosen.theme)    chosen.theme    = 'auto';
+  if (!chosen.accent)   chosen.accent   = 'green';
   if (!LANGS[chosen.lang]) chosen.lang  = 'ru';
 
   /* one-time: give older saved states the hosted images for default items */
@@ -1655,6 +1733,7 @@ function seed(){
     qtySize: 'md',
     rowFit: 'auto',
     theme: 'auto',
+    accent: 'green',
     lang: detectLang(),
     savedAt: 0
   };
@@ -1694,6 +1773,21 @@ function setTheme(v){
   state.theme = v;
   save();
   applyTheme();
+  renderOpts();
+}
+
+/* ================= accent ================= */
+const ACCENTS = ['green','blue','violet','pink','amber','cyan'];
+
+function applyAccent(){
+  document.documentElement.setAttribute('data-accent', state.accent || 'green');
+}
+
+function setAccent(v){
+  if (ACCENTS.indexOf(v) < 0) return;
+  state.accent = v;
+  save();
+  applyAccent();
   renderOpts();
 }
 
@@ -1890,6 +1984,10 @@ function renderOpts(){
   const curTheme = String(state.theme || 'auto');
   document.querySelectorAll('#themeRow button').forEach(b =>
     b.classList.toggle('active', b.dataset.themeopt === curTheme));
+
+  const curAccent = String(state.accent || 'green');
+  document.querySelectorAll('#accentRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.accentopt === curAccent));
 }
 
 /* ================= saving to file ================= */
@@ -3358,6 +3456,7 @@ if (SpeechRecognition){
 
 /* ================= startup ================= */
 applyTheme();
+applyAccent();
 watchSystemTheme();
 applyGridCols();
 applyGridDir();
