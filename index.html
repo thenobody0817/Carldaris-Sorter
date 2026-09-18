@@ -230,6 +230,20 @@
   }
   #reorderBtn.active{ background:var(--accent); color:#000; }
 
+  /* empty layout cells */
+  .tile.gap{
+    background:transparent;
+    border:2px dashed transparent;
+    box-shadow:none;
+    pointer-events:none;
+  }
+  body.reorder main .tile.gap{
+    border-color:#3a3a3a;
+    box-shadow:none;
+    pointer-events:auto;
+    touch-action:auto;
+  }
+
   #modal,#editor,#cats,#calc,#settings,#counter{
     position:fixed;inset:0;background:#000b;z-index:20;
     display:none;align-items:flex-end;
@@ -884,7 +898,7 @@ const I18N = {
     'settings.large':'Крупный',
     'settings.language':'Язык',
     'reorder.title':'Перестановка плиток',
-    'reorder.on':'Перетащите плитки, чтобы изменить порядок',
+    'reorder.on':'Перетащите плитки; бросайте в пустые ячейки, чтобы оставить пропуски',
     'reorder.done':'Порядок сохранён',
     'editor.newItem':'Новая позиция',
     'editor.subItem':'Введите название и категорию',
@@ -986,7 +1000,7 @@ const I18N = {
     'settings.large':'Large',
     'settings.language':'Language',
     'reorder.title':'Rearrange tiles',
-    'reorder.on':'Drag tiles to change the order',
+    'reorder.on':'Drag tiles to rearrange; drop into empty cells to leave gaps',
     'reorder.done':'Order saved',
     'editor.newItem':'New item',
     'editor.subItem':'Enter name and category',
@@ -1088,7 +1102,7 @@ const I18N = {
     'settings.large':'Liels',
     'settings.language':'Valoda',
     'reorder.title':'Pārkārtot flīzes',
-    'reorder.on':'Velciet flīzes, lai mainītu secību',
+    'reorder.on':'Velciet flīzes; nometiet tukšās šūnās, lai atstātu atstarpes',
     'reorder.done':'Secība saglabāta',
     'editor.newItem':'Jauna pozīcija',
     'editor.subItem':'Ievadiet nosaukumu un kategoriju',
@@ -1190,7 +1204,7 @@ const I18N = {
     'settings.large':'大',
     'settings.language':'语言',
     'reorder.title':'排列方块',
-    'reorder.on':'拖动方块以更改顺序',
+    'reorder.on':'拖动方块重新排列；放入空单元格可留出间隔',
     'reorder.done':'顺序已保存',
     'editor.newItem':'新项目',
     'editor.subItem':'输入名称和分类',
@@ -1611,7 +1625,7 @@ function fitTiles(){
   /* count how many category headers will actually be rendered */
   let visibleCats = 0;
   for (const cat of (state.categories || [])){
-    if (state.items.some(i => i.category === cat)) visibleCats++;
+    if (state.items.some(i => i.category === cat && !i.spacer)) visibleCats++;
   }
 
   const catHeaderH = 32;
@@ -1855,16 +1869,20 @@ function render(){
   grid.innerHTML = '';
   let total = 0;
 
-  for (const it of state.items.filter(i => !i.category)){
+  const uncat = state.items.filter(i => !i.category);
+  while (uncat.length && uncat[uncat.length - 1].spacer) uncat.pop();
+  for (const it of uncat){
+    if (it.spacer){ grid.appendChild(makeGap(it)); continue; }
     total += it.qty;
     grid.appendChild(makeTile(it));
   }
 
   for (const cat of state.categories){
     const list = state.items.filter(i => i.category === cat);
-    if (list.length === 0) continue;
+    while (list.length && list[list.length - 1].spacer) list.pop();
+    if (!list.some(i => !i.spacer)) continue;
 
-    const catSum = list.reduce((s, it) => s + it.qty, 0);
+    const catSum = list.reduce((s, it) => s + (it.spacer ? 0 : it.qty), 0);
     const hdr = document.createElement('div');
     hdr.className = 'cat-title';
     hdr.innerHTML = `<span>${escapeHtml(cat)}</span>
@@ -1872,6 +1890,7 @@ function render(){
     grid.appendChild(hdr);
 
     for (const it of list){
+      if (it.spacer){ grid.appendChild(makeGap(it)); continue; }
       total += it.qty;
       grid.appendChild(makeTile(it));
     }
@@ -1898,10 +1917,19 @@ function makeTile(it){
     + (it.qty > 0 ? ' counted' : '')
     + (it.id === qbId ? ' selected' : '');
   el.dataset.id = it.id;
+  el.dataset.cat = it.category || '';
   el.innerHTML = `
     ${it.image ? `<img src="${it.image}" alt="">` : ''}
     <div class="name">${escapeHtml(it.name)}</div>
     <div class="qty ${it.qty ? '' : 'zero'}">${it.qty}</div>`;
+  return el;
+}
+
+function makeGap(it){
+  const el = document.createElement('div');
+  el.className = 'tile gap';
+  el.dataset.id = it.id;
+  el.dataset.cat = it.category || '';
   return el;
 }
 
@@ -2026,6 +2054,7 @@ document.addEventListener('keydown', e => {
 });
 
 function startDrag(e, tile){
+  if (tile.classList.contains('gap')) return;
   e.preventDefault();
   dragState = {
     el: tile,
@@ -2042,6 +2071,50 @@ function startDrag(e, tile){
   navigator.vibrate?.(8);
 }
 
+function gridColumns(){
+  const c = state.gridCols || '4';
+  if (c !== 'auto') return Math.max(1, parseInt(c, 10) || 4);
+  const tpl = getComputedStyle(gridEl).gridTemplateColumns || '';
+  return Math.max(1, tpl.split(/\s+/).filter(Boolean).length);
+}
+
+function groupCellsOf(el){
+  let first = el;
+  while (first.previousElementSibling &&
+         first.previousElementSibling.classList.contains('tile')){
+    first = first.previousElementSibling;
+  }
+  const cells = [];
+  for (let c = first; c && c.classList.contains('tile'); c = c.nextElementSibling){
+    cells.push(c);
+  }
+  return cells;
+}
+
+function newGapEl(cat){
+  const el = document.createElement('div');
+  el.className = 'tile gap';
+  el.dataset.id = '__gap_' + Date.now().toString(36) + '_' +
+                  Math.random().toString(36).slice(2, 7);
+  el.dataset.cat = cat || '';
+  return el;
+}
+
+function swapNodes(a, b){
+  const ph = document.createComment('ph');
+  a.replaceWith(ph);
+  b.replaceWith(a);
+  ph.replaceWith(b);
+}
+
+function trimTrailingGaps(el){
+  const cells = groupCellsOf(el);
+  for (let i = cells.length - 1; i >= 0; i--){
+    if (!cells[i].classList.contains('gap')) break;
+    cells[i].remove();
+  }
+}
+
 function moveDrag(e){
   const ds = dragState;
   if (!ds) return;
@@ -2052,20 +2125,56 @@ function moveDrag(e){
   }
   e.preventDefault();
 
-  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.tile');
-  if (!over || over === ds.el) return;
-  if (itemCat(over.dataset.id) !== ds.cat) return;
+  const cells = groupCellsOf(ds.el);
+  if (cells.length < 2) return;
 
-  const r = over.getBoundingClientRect();
+  const fr = cells[0].getBoundingClientRect();
+  const lr = cells[cells.length - 1].getBoundingClientRect();
+  const gridRect = gridEl.getBoundingClientRect();
+  const cs = getComputedStyle(gridEl);
+  const gapX = parseFloat(cs.columnGap) || 0;
+  const gapY = parseFloat(cs.rowGap) || 0;
+  const cols = gridColumns();
+  const cellW = fr.width + gapX;
+  const cellH = fr.height + gapY;
   const rtl = (state.gridDir || 'ltr') === 'rtl';
-  let before;
-  if (e.clientY < r.top)         before = true;
-  else if (e.clientY > r.bottom) before = false;
-  else before = rtl ? (e.clientX > r.left + r.width / 2)
-                    : (e.clientX < r.left + r.width / 2);
 
-  if (before) over.before(ds.el);
-  else        over.after(ds.el);
+  if (e.clientX < gridRect.left || e.clientX > gridRect.right) return;
+  if (e.clientY < fr.top - cellH * 0.6) return;
+  if (e.clientY > lr.bottom + cellH * 1.2) return;
+
+  let col = rtl ? Math.floor((fr.right - e.clientX) / cellW)
+                : Math.floor((e.clientX - fr.left) / cellW);
+  let row = Math.floor((e.clientY - fr.top) / cellH);
+  col = Math.max(0, Math.min(cols - 1, col));
+  row = Math.max(0, row);
+
+  const i = cells.indexOf(ds.el);
+  let k = Math.min(row * cols + col, cells.length + cols);
+  if (i < 0 || k === i) return;
+
+  const target = cells[k];
+  if (target && target.classList.contains('gap')){
+    swapNodes(ds.el, target);
+  } else {
+    const g = newGapEl(ds.cat);
+    ds.el.replaceWith(g);
+
+    const now = groupCellsOf(g);
+    if (k >= now.length){
+      let tail = now[now.length - 1];
+      for (let n = now.length; n < k; n++){
+        const pad = newGapEl(ds.cat);
+        tail.parentNode.insertBefore(pad, tail.nextElementSibling);
+        tail = pad;
+      }
+      tail.parentNode.insertBefore(ds.el, tail.nextElementSibling);
+    } else {
+      now[k].parentNode.insertBefore(ds.el, now[k]);
+    }
+  }
+
+  trimTrailingGaps(ds.el);
 }
 
 function endDrag(){
@@ -2079,20 +2188,33 @@ function endDrag(){
 }
 
 function persistOrder(){
-  const ids = Array.from(gridEl.querySelectorAll('.tile')).map(t => t.dataset.id);
-  const pos = new Map(ids.map((id, i) => [id, i]));
-  state.items.sort((a, b) => {
-    const pa = pos.has(a.id) ? pos.get(a.id) : Infinity;
-    const pb = pos.has(b.id) ? pos.get(b.id) : Infinity;
-    return pa - pb;
-  });
+  const cells = Array.from(gridEl.querySelectorAll('.tile'));
+  const byId = new Map(state.items.map(i => [i.id, i]));
+  const ordered = [];
+  const seen = new Set();
+
+  for (const cell of cells){
+    const id = cell.dataset.id;
+    let it = byId.get(id);
+    if (!it){
+      it = { id, spacer: true, category: cell.dataset.cat || '', qty: 0 };
+      byId.set(id, it);
+    }
+    if (!seen.has(id)){ ordered.push(it); seen.add(id); }
+  }
+
+  for (const it of state.items){
+    if (!seen.has(it.id) && !it.spacer){ ordered.push(it); seen.add(it.id); }
+  }
+
+  state.items = ordered;
   save();
 }
 
 /* ================= bottom bar ================= */
 function qbShow(id){
   const it = state.items.find(i => i.id === id);
-  if (!it) return;
+  if (!it || it.spacer) return;
   qbId = id;
   state.lastItem = id;
   save();
@@ -2120,7 +2242,7 @@ function qbBump(n){
 function openCounter(id){
   activeId = id;
   const it = state.items.find(i => i.id === id);
-  if (!it) return;
+  if (!it || it.spacer) return;
 
   document.getElementById('cName').textContent = it.name;
   document.getElementById('cNum').textContent = nf(it.qty);
@@ -2220,7 +2342,7 @@ document.getElementById('calc').addEventListener('click', e => {
 function openModal(id){
   activeId = id;
   const it = state.items.find(i => i.id === id);
-  if (!it) return;
+  if (!it || it.spacer) return;
 
   document.getElementById('mName').textContent = it.name;
   document.getElementById('mCat').textContent  = it.category || '';
@@ -2483,7 +2605,7 @@ function renderCatList(){
   }
 
   state.categories.forEach((cat, idx) => {
-    const count = state.items.filter(i => i.category === cat).length;
+    const count = state.items.filter(i => i.category === cat && !i.spacer).length;
 
     const row = document.createElement('div');
     row.className = 'cat-row';
@@ -2518,7 +2640,7 @@ function renderCatList(){
 async function deleteCategory(idx){
   const cat = state.categories[idx];
   if (cat === undefined) return;
-  const inCat = state.items.filter(i => i.category === cat);
+  const inCat = state.items.filter(i => i.category === cat && !i.spacer);
   const n = inCat.length;
 
   if (n === 0){
@@ -2560,6 +2682,10 @@ async function deleteCategory(idx){
       return;
     }
   }
+
+  const validCats = new Set(state.categories);
+  state.items = state.items.filter(i =>
+    !(i.spacer && i.category && !validCats.has(i.category)));
 
   save(); render(); renderCatList();
 }
@@ -2703,10 +2829,10 @@ function exportCSV(){
     [],
     [t('csv.category'), t('csv.item'), t('csv.qty')]
   ];
-  for (const it of state.items.filter(i => !i.category))
+  for (const it of state.items.filter(i => !i.category && !i.spacer))
     rows.push(['', it.name, it.qty]);
   for (const cat of state.categories){
-    for (const it of state.items.filter(i => i.category === cat))
+    for (const it of state.items.filter(i => i.category === cat && !i.spacer))
       rows.push([cat, it.name, it.qty]);
   }
 
@@ -2878,6 +3004,7 @@ function matchItem(text){
 
   let best = null, bestRatio = 0;
   for (const it of state.items){
+    if (it.spacer) continue;
     const nWords = normalizeText(it.name).split(' ').filter(w => w.length >= 2);
     if (nWords.length === 0) continue;
 
