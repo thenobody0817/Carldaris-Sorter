@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111">
-<title>Подсчёт</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Count">
+<title>Count</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
 <script id="embeddedState" type="application/json">null</script>
 
@@ -103,7 +110,7 @@
   main[data-dir="rtl"]{ direction: rtl; }
   main[data-dir="rtl"] > *{ direction: ltr; }
 
-  /* --- режим "видно рядов" — фиксированная высота плитки --- */
+  /* --- "rows visible" mode — fixed tile height --- */
   main[data-fit] .tile,
   main[data-fit] .add-tile{
     aspect-ratio: auto;
@@ -558,18 +565,19 @@
 
 <header>
   <input id="label" class="label" type="text"
-         placeholder="Без названия" maxlength="80"
+         placeholder="Untitled" maxlength="80"
+         data-i18n-ph="app.untitled"
          autocomplete="off" spellcheck="false">
   <div class="hdr-bottom">
     <div class="date" id="date"></div>
     <div class="hdr-right">
       <span id="total" class="total">0</span>
-      <button id="micBtn" class="mic" onclick="toggleVoice()" title="Голосовой ввод">🎤</button>
-      <button onclick="openSettings()" title="Настройки">⚙</button>
-      <button onclick="openCats()">Категории</button>
-      <button onclick="exportCSV()">CSV</button>
-      <button onclick="resetAll()">Обнулить</button>
-      <button class="save" onclick="saveToFile()">💾 Сохранить</button>
+      <button id="micBtn" class="mic" onclick="toggleVoice()" title="Voice input" data-i18n-title="voice.title">🎤</button>
+      <button onclick="openSettings()" title="Settings" data-i18n-title="settings.title">⚙</button>
+      <button onclick="openCats()" data-i18n="categories.title">Categories</button>
+      <button onclick="exportCSV()" data-i18n="csv">CSV</button>
+      <button onclick="resetAll()" data-i18n="reset">Reset</button>
+      <button class="save" onclick="saveToFile()" data-i18n="save">💾 Save</button>
     </div>
   </div>
 </header>
@@ -581,7 +589,7 @@
     <div class="qb-name" id="qbName"></div>
     <div class="qb-qty"  id="qbQty">0</div>
   </button>
-  <button class="qb-btn calc" onclick="openCalc()" title="Умножить ряды">×</button>
+  <button class="qb-btn calc" onclick="openCalc()" title="Multiply rows" data-i18n-title="calc.mulRows">×</button>
   <button class="qb-btn" onclick="qbBump(-1)">−1</button>
   <button class="qb-btn plus" onclick="qbBump(1)">+1</button>
 </div>
@@ -591,8 +599,8 @@
     <div class="counter-head">
       <div class="counter-name" id="cName"></div>
       <div class="counter-actions">
-        <button class="c-action" onclick="openFullFromCounter()" title="Ещё">⋯</button>
-        <button class="c-action" onclick="closeCounter()" title="Закрыть">✕</button>
+        <button class="c-action" onclick="openFullFromCounter()" title="More" data-i18n-title="more">⋯</button>
+        <button class="c-action" onclick="closeCounter()" title="Close" data-i18n-title="close">✕</button>
       </div>
     </div>
     <div class="counter-body">
@@ -612,7 +620,7 @@
         <h2 id="mName"></h2>
         <div class="sub" id="mCat"></div>
       </div>
-      <button class="sheet-close" onclick="closeModal()" aria-label="Закрыть">✕</button>
+      <button class="sheet-close" onclick="closeModal()" aria-label="Close" data-i18n-aria="close">✕</button>
     </div>
 
     <input id="mInput" type="number" inputmode="numeric" step="1" value="0"
@@ -626,70 +634,80 @@
     </div>
 
     <div class="img-block">
-      <div class="img-label">Фото позиции</div>
+      <div class="img-label" data-i18n="photo.section">Item photo</div>
       <img id="mPreview" class="img-preview" alt="">
       <div class="img-row">
         <button onclick="takePhoto()">
           <span class="ico">📷</span>
-          <span class="lbl">Снять фото</span>
+          <span class="lbl" data-i18n="photo.camera">Take photo</span>
         </button>
         <button onclick="pickFromGallery()">
           <span class="ico">🖼</span>
-          <span class="lbl">Из галереи</span>
+          <span class="lbl" data-i18n="photo.gallery">From gallery</span>
         </button>
       </div>
       <button id="mClear" class="img-clear danger"
-              onclick="clearImage()">🗑 Убрать фото</button>
+              onclick="clearImage()" data-i18n="photo.remove">🗑 Remove photo</button>
     </div>
 
     <div class="row">
-      <button onclick="editCurrent()">✏️ Изменить</button>
-      <button class="danger" onclick="deleteCurrent()">🗑 Удалить</button>
+      <button onclick="editCurrent()" data-i18n="edit">✏️ Edit</button>
+      <button class="danger" onclick="deleteCurrent()" data-i18n="delete">🗑 Delete</button>
     </div>
   </div>
 </div>
 
 <div id="calc">
   <div class="sheet">
-    <h2 id="calcTitle">Умножить</h2>
-    <div class="sub">Ряды × В ряду</div>
+    <h2 id="calcTitle" data-i18n="calc.title">Multiply</h2>
+    <div class="sub" data-i18n="calc.sub">Rows × Per row</div>
 
     <div class="calc-row">
       <div class="calc-field">
-        <label for="calcRows">Рядов</label>
+        <label for="calcRows" data-i18n="calc.rows">Rows</label>
         <input id="calcRows" type="number" inputmode="numeric" min="0" value="1">
       </div>
       <div class="calc-x">×</div>
       <div class="calc-field">
-        <label for="calcCols">В ряду</label>
+        <label for="calcCols" data-i18n="calc.cols">Per row</label>
         <input id="calcCols" type="number" inputmode="numeric" min="0" value="1">
       </div>
     </div>
 
     <div class="calc-total">
-      <span>Итого</span>
+      <span data-i18n="calc.total">Total</span>
       <strong id="calcTotal" class="zero">0</strong>
     </div>
 
     <div class="row">
-      <button onclick="closeCalc()">Отмена</button>
+      <button onclick="closeCalc()" data-i18n="cancel">Cancel</button>
     </div>
     <div class="row">
-      <button onclick="calcCommit(-1)">− Вычесть</button>
-      <button class="accent" onclick="calcCommit(1)">+ Добавить</button>
+      <button onclick="calcCommit(-1)" data-i18n="calc.subtract">− Subtract</button>
+      <button class="accent" onclick="calcCommit(1)" data-i18n="calc.add">+ Add</button>
     </div>
   </div>
 </div>
 
 <div id="settings">
   <div class="sheet">
-    <h2>Настройки</h2>
-    <div class="sub">Вид плиток</div>
+    <h2 data-i18n="settings.title">Settings</h2>
+    <div class="sub" data-i18n="settings.tileView">Tile view</div>
 
     <div class="settings-block">
-      <div class="block-label">Плиток в ряду (столбцов)</div>
+      <div class="block-label" data-i18n="settings.language">Language</div>
+      <div class="opt-row" id="langRow">
+        <button data-lang="ru" onclick="setLang('ru')">Рус</button>
+        <button data-lang="en" onclick="setLang('en')">Eng</button>
+        <button data-lang="lv" onclick="setLang('lv')">Lat</button>
+        <button data-lang="zh" onclick="setLang('zh')">中文</button>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <div class="block-label" data-i18n="settings.cols">Tiles per row (columns)</div>
       <div class="opt-row" id="sizeRow">
-        <button data-cols="auto" onclick="setGridCols('auto')">Авто</button>
+        <button data-cols="auto" onclick="setGridCols('auto')" data-i18n="settings.auto">Auto</button>
         <button data-cols="3" onclick="setGridCols('3')">3</button>
         <button data-cols="4" onclick="setGridCols('4')">4</button>
         <button data-cols="5" onclick="setGridCols('5')">5</button>
@@ -698,9 +716,9 @@
     </div>
 
     <div class="settings-block">
-      <div class="block-label">Видно рядов на экране</div>
+      <div class="block-label" data-i18n="settings.rowsVisible">Rows visible on screen</div>
       <div class="opt-row" id="rowFitRow">
-        <button data-rowfit="auto" onclick="setRowFit('auto')">Авто</button>
+        <button data-rowfit="auto" onclick="setRowFit('auto')" data-i18n="settings.auto">Auto</button>
         <button data-rowfit="3" onclick="setRowFit('3')">3</button>
         <button data-rowfit="4" onclick="setRowFit('4')">4</button>
         <button data-rowfit="5" onclick="setRowFit('5')">5</button>
@@ -709,72 +727,72 @@
     </div>
 
     <div class="settings-block">
-      <div class="block-label">Направление</div>
+      <div class="block-label" data-i18n="settings.direction">Direction</div>
       <div class="opt-row" id="dirRow">
-        <button data-dir="ltr" onclick="setGridDir('ltr')">Слева → вправо</button>
-        <button data-dir="rtl" onclick="setGridDir('rtl')">Справа → влево</button>
+        <button data-dir="ltr" onclick="setGridDir('ltr')" data-i18n="settings.ltr">Left → right</button>
+        <button data-dir="rtl" onclick="setGridDir('rtl')" data-i18n="settings.rtl">Right → left</button>
       </div>
     </div>
 
     <div class="settings-block">
-      <div class="block-label">Размер текста</div>
+      <div class="block-label" data-i18n="settings.textSize">Text size</div>
       <div class="opt-row" id="tsizeRow">
-        <button data-tsize="sm" onclick="setTextSize('sm')">Мелкий</button>
-        <button data-tsize="md" onclick="setTextSize('md')">Обычный</button>
-        <button data-tsize="lg" onclick="setTextSize('lg')">Крупный</button>
+        <button data-tsize="sm" onclick="setTextSize('sm')" data-i18n="settings.small">Small</button>
+        <button data-tsize="md" onclick="setTextSize('md')" data-i18n="settings.medium">Normal</button>
+        <button data-tsize="lg" onclick="setTextSize('lg')" data-i18n="settings.large">Large</button>
       </div>
     </div>
 
     <div class="settings-block">
-      <div class="block-label">Размер счётчика</div>
+      <div class="block-label" data-i18n="settings.qtySize">Counter size</div>
       <div class="opt-row" id="qsizeRow">
-        <button data-qsize="sm" onclick="setQtySize('sm')">Мелкий</button>
-        <button data-qsize="md" onclick="setQtySize('md')">Обычный</button>
-        <button data-qsize="lg" onclick="setQtySize('lg')">Крупный</button>
+        <button data-qsize="sm" onclick="setQtySize('sm')" data-i18n="settings.small">Small</button>
+        <button data-qsize="md" onclick="setQtySize('md')" data-i18n="settings.medium">Normal</button>
+        <button data-qsize="lg" onclick="setQtySize('lg')" data-i18n="settings.large">Large</button>
       </div>
     </div>
 
     <div class="row">
-      <button onclick="closeSettings()">Закрыть</button>
+      <button onclick="closeSettings()" data-i18n="close">Close</button>
     </div>
   </div>
 </div>
 
 <div id="editor">
   <div class="sheet">
-    <h2 id="edTitle">Новая позиция</h2>
-    <div class="sub" id="edSub">Введите название и категорию</div>
+    <h2 id="edTitle" data-i18n="editor.newItem">New item</h2>
+    <div class="sub" id="edSub" data-i18n="editor.subItem">Enter name and category</div>
 
     <div id="edFieldName">
-      <label class="ed-label" for="edName" id="edNameLabel">Название</label>
+      <label class="ed-label" for="edName" id="edNameLabel" data-i18n="editor.name">Name</label>
       <input id="edName" class="ed-input" type="text" maxlength="60"
              autocomplete="off" spellcheck="false"
-             placeholder="Например: Кега 20 л">
+             placeholder="E.g.: Keg 20 L" data-i18n-ph="editor.namePh">
     </div>
 
     <div id="edFieldCat">
-      <label class="ed-label" for="edCat">Категория</label>
+      <label class="ed-label" for="edCat" data-i18n="editor.category">Category</label>
       <input id="edCat" class="ed-input" type="text" maxlength="30"
              list="catList" autocomplete="off" spellcheck="false"
-             placeholder="Например: Кеги">
+             placeholder="E.g.: Kegs" data-i18n-ph="editor.categoryPh">
       <datalist id="catList"></datalist>
     </div>
 
     <div class="row">
-      <button onclick="closeEditor()">Отмена</button>
-      <button class="accent" onclick="saveEditor()">✓ Сохранить</button>
+      <button onclick="closeEditor()" data-i18n="cancel">Cancel</button>
+      <button class="accent" onclick="saveEditor()" data-i18n="editor.save">✓ Save</button>
     </div>
   </div>
 </div>
 
 <div id="cats">
   <div class="sheet">
-    <h2>Категории</h2>
-    <div class="sub">Переименуйте, удалите или добавьте раздел</div>
+    <h2 data-i18n="categories.title">Categories</h2>
+    <div class="sub" data-i18n="cats.sub">Rename, delete or add a section</div>
     <div id="catsList" class="cats-list"></div>
-    <button class="cats-add" onclick="openEditor(null, 'category')">+ Добавить категорию</button>
+    <button class="cats-add" onclick="openEditor(null, 'category')" data-i18n="cats.add">+ Add category</button>
     <div class="row">
-      <button onclick="closeCats()">Закрыть</button>
+      <button onclick="closeCats()" data-i18n="close">Close</button>
     </div>
   </div>
 </div>
@@ -798,21 +816,537 @@
 
 const KEY = 'countlist.v3';
 
-const DEFAULTS = [
-  {id:'crateGrnE', name:'Ящик зелёный',         category:'Ящики пустые',      image:'', qty:0, counted:false},
-  {id:'crateBluE', name:'Ящик синий',           category:'Ящики пустые',      image:'', qty:0, counted:false},
+/* ================= localization ================= */
+const LANGS = {
+  ru: { name:'Русский',  locale:'ru-RU', speech:'ru-RU' },
+  en: { name:'English',  locale:'en-US', speech:'en-US' },
+  lv: { name:'Latviešu', locale:'lv-LV', speech:'lv-LV' },
+  zh: { name:'中文',      locale:'zh-CN', speech:'zh-CN' },
+};
 
-  {id:'crateGrnF', name:'Зелёный с бутылками',  category:'Ящики с бутылками', image:'', qty:0, counted:false},
-  {id:'crateBluF', name:'Синий с прозрачными',  category:'Ящики с бутылками', image:'', qty:0, counted:false},
-  {id:'crateTub',  name:'Синий с Tuborg',       category:'Ящики с бутылками', image:'', qty:0, counted:false},
+const I18N = {
+  ru: {
+    'app.title':'Подсчёт',
+    'app.untitled':'Без названия',
+    'voice.title':'Голосовой ввод',
+    'settings.title':'Настройки',
+    'categories.title':'Категории',
+    'csv':'CSV',
+    'reset':'Обнулить',
+    'save':'💾 Сохранить',
+    'more':'Ещё',
+    'close':'Закрыть',
+    'calc.mulRows':'Умножить ряды',
+    'photo.section':'Фото позиции',
+    'photo.camera':'Снять фото',
+    'photo.gallery':'Из галереи',
+    'photo.remove':'🗑 Убрать фото',
+    'edit':'✏️ Изменить',
+    'delete':'🗑 Удалить',
+    'calc.title':'Умножить',
+    'calc.sub':'Ряды × В ряду',
+    'calc.rows':'Рядов',
+    'calc.cols':'В ряду',
+    'calc.total':'Итого',
+    'cancel':'Отмена',
+    'calc.subtract':'− Вычесть',
+    'calc.add':'+ Добавить',
+    'settings.tileView':'Вид плиток',
+    'settings.cols':'Плиток в ряду (столбцов)',
+    'settings.auto':'Авто',
+    'settings.rowsVisible':'Видно рядов на экране',
+    'settings.direction':'Направление',
+    'settings.ltr':'Слева → вправо',
+    'settings.rtl':'Справа → влево',
+    'settings.textSize':'Размер текста',
+    'settings.qtySize':'Размер счётчика',
+    'settings.small':'Мелкий',
+    'settings.medium':'Обычный',
+    'settings.large':'Крупный',
+    'settings.language':'Язык',
+    'editor.newItem':'Новая позиция',
+    'editor.subItem':'Введите название и категорию',
+    'editor.name':'Название',
+    'editor.namePh':'Например: Кега 20 л',
+    'editor.category':'Категория',
+    'editor.categoryPh':'Например: Кеги',
+    'editor.nameCategory':'Название категории',
+    'editor.nameCategoryPh':'Например: Кеги',
+    'editor.newCategory':'Новая категория',
+    'editor.subNewCategory':'Введите название раздела',
+    'editor.editCategory':'Изменить категорию',
+    'editor.subEditCategory':'Новое имя отобразится у всех её позиций',
+    'editor.editItem':'Изменить позицию',
+    'editor.subEditItem':'Переименуйте или смените категорию',
+    'editor.save':'✓ Сохранить',
+    'cats.sub':'Переименуйте, удалите или добавьте раздел',
+    'cats.add':'+ Добавить категорию',
+    'cats.empty':'Пока нет ни одной категории',
+    'cats.rename':'Переименовать',
+    'cats.delete':'Удалить',
+    'cats.deleteEmptyTitle':'Удалить категорию?',
+    'cats.deleteEmptyMsg':'Категория «{cat}» пуста.',
+    'cats.hasTitle':'Категория «{cat}»',
+    'cats.hasMsg':'Содержит {n} {word}. Что сделать?',
+    'cats.delAll':'Удалить вместе с позициями',
+    'cats.orphan':'Перенести в «Без категории»',
+    'addTile.title':'Добавить позицию',
+    'reset.title':'Начать новый подсчёт?',
+    'reset.msg':'Название документа будет очищено, а все счётчики — обнулены.\nПозиции, категории, фото и настройки останутся.',
+    'reset.confirm':'Начать заново',
+    'delete.title':'Удалить позицию?',
+    'delete.msg':'«{name}» будет удалена вместе с количеством и фото.',
+    'delete.confirm':'Удалить',
+    'save.savedTitle':'Сохранено',
+    'save.savedMsg':'Файл перезаписан. Все изменения теперь внутри него.',
+    'save.downloadTitle':'Файл сохранён',
+    'save.downloadMsg':'Файл «{filename}» скачан в папку «Загрузки».\n\nЗамените им текущий файл приложения — тогда все изменения сохранятся внутри HTML и поедут вместе с ним на любое устройство.',
+    'save.understood':'Понятно',
+    'save.failMsg':'Не удалось собрать файл: {msg}',
+    'validate.category':'Введите название категории',
+    'validate.item':'Введите название позиции',
+    'validate.dupCat':'Такая категория уже есть',
+    'img.error':'Не удалось прочитать изображение',
+    'csv.name':'Название',
+    'csv.date':'Дата',
+    'csv.category':'Категория',
+    'csv.item':'Позиция',
+    'csv.qty':'Количество',
+    'slug.default':'подсчёт',
+    'voice.off':'Голосовой ввод выключен',
+    'voice.selectFirst':'Сначала выберите позицию',
+    'voice.selected':'Выбрано: {name}',
+    'voice.notUnderstood':'Не понял: {text}',
+    'voice.unsupported':'Голосовой ввод не поддерживается. Откройте в Chrome, Edge или Safari.',
+    'voice.listening':'Слушаю...',
+    'voice.noMic':'Нет доступа к микрофону. Проверьте HTTPS и разрешения.',
+    'items.one':'позицию',
+    'items.few':'позиции',
+    'items.many':'позиций',
+  },
+  en: {
+    'app.title':'Count',
+    'app.untitled':'Untitled',
+    'voice.title':'Voice input',
+    'settings.title':'Settings',
+    'categories.title':'Categories',
+    'csv':'CSV',
+    'reset':'Reset',
+    'save':'💾 Save',
+    'more':'More',
+    'close':'Close',
+    'calc.mulRows':'Multiply rows',
+    'photo.section':'Item photo',
+    'photo.camera':'Take photo',
+    'photo.gallery':'From gallery',
+    'photo.remove':'🗑 Remove photo',
+    'edit':'✏️ Edit',
+    'delete':'🗑 Delete',
+    'calc.title':'Multiply',
+    'calc.sub':'Rows × Per row',
+    'calc.rows':'Rows',
+    'calc.cols':'Per row',
+    'calc.total':'Total',
+    'cancel':'Cancel',
+    'calc.subtract':'− Subtract',
+    'calc.add':'+ Add',
+    'settings.tileView':'Tile view',
+    'settings.cols':'Tiles per row (columns)',
+    'settings.auto':'Auto',
+    'settings.rowsVisible':'Rows visible on screen',
+    'settings.direction':'Direction',
+    'settings.ltr':'Left → right',
+    'settings.rtl':'Right → left',
+    'settings.textSize':'Text size',
+    'settings.qtySize':'Counter size',
+    'settings.small':'Small',
+    'settings.medium':'Normal',
+    'settings.large':'Large',
+    'settings.language':'Language',
+    'editor.newItem':'New item',
+    'editor.subItem':'Enter name and category',
+    'editor.name':'Name',
+    'editor.namePh':'E.g.: Keg 20 L',
+    'editor.category':'Category',
+    'editor.categoryPh':'E.g.: Kegs',
+    'editor.nameCategory':'Category name',
+    'editor.nameCategoryPh':'E.g.: Kegs',
+    'editor.newCategory':'New category',
+    'editor.subNewCategory':'Enter the section name',
+    'editor.editCategory':'Edit category',
+    'editor.subEditCategory':'The new name will appear on all its items',
+    'editor.editItem':'Edit item',
+    'editor.subEditItem':'Rename or change the category',
+    'editor.save':'✓ Save',
+    'cats.sub':'Rename, delete or add a section',
+    'cats.add':'+ Add category',
+    'cats.empty':'No categories yet',
+    'cats.rename':'Rename',
+    'cats.delete':'Delete',
+    'cats.deleteEmptyTitle':'Delete category?',
+    'cats.deleteEmptyMsg':'Category “{cat}” is empty.',
+    'cats.hasTitle':'Category “{cat}”',
+    'cats.hasMsg':'Contains {n} {word}. What to do?',
+    'cats.delAll':'Delete with items',
+    'cats.orphan':'Move to “Uncategorized”',
+    'addTile.title':'Add item',
+    'reset.title':'Start a new count?',
+    'reset.msg':'The document name will be cleared and all counters reset.\nItems, categories, photos and settings will remain.',
+    'reset.confirm':'Start over',
+    'delete.title':'Delete item?',
+    'delete.msg':'“{name}” will be deleted along with its quantity and photo.',
+    'delete.confirm':'Delete',
+    'save.savedTitle':'Saved',
+    'save.savedMsg':'File overwritten. All changes are now inside it.',
+    'save.downloadTitle':'File saved',
+    'save.downloadMsg':'File “{filename}” was downloaded to “Downloads”.\n\nReplace the current app file with it — all changes will be stored inside the HTML and travel with it to any device.',
+    'save.understood':'Got it',
+    'save.failMsg':'Could not build the file: {msg}',
+    'validate.category':'Enter a category name',
+    'validate.item':'Enter an item name',
+    'validate.dupCat':'This category already exists',
+    'img.error':'Could not read the image',
+    'csv.name':'Name',
+    'csv.date':'Date',
+    'csv.category':'Category',
+    'csv.item':'Item',
+    'csv.qty':'Quantity',
+    'slug.default':'count',
+    'voice.off':'Voice input off',
+    'voice.selectFirst':'Select an item first',
+    'voice.selected':'Selected: {name}',
+    'voice.notUnderstood':'Did not understand: {text}',
+    'voice.unsupported':'Voice input is not supported. Open in Chrome, Edge or Safari.',
+    'voice.listening':'Listening...',
+    'voice.noMic':'No microphone access. Check HTTPS and permissions.',
+    'items.one':'item',
+    'items.few':'items',
+    'items.many':'items',
+  },
+  lv: {
+    'app.title':'Skaitīšana',
+    'app.untitled':'Bez nosaukuma',
+    'voice.title':'Balss ievade',
+    'settings.title':'Iestatījumi',
+    'categories.title':'Kategorijas',
+    'csv':'CSV',
+    'reset':'Nodzēst',
+    'save':'💾 Saglabāt',
+    'more':'Vairāk',
+    'close':'Aizvērt',
+    'calc.mulRows':'Reizināt rindas',
+    'photo.section':'Pozīcijas foto',
+    'photo.camera':'Uzņemt foto',
+    'photo.gallery':'No galerijas',
+    'photo.remove':'🗑 Noņemt foto',
+    'edit':'✏️ Mainīt',
+    'delete':'🗑 Dzēst',
+    'calc.title':'Reizināt',
+    'calc.sub':'Rindas × Rindā',
+    'calc.rows':'Rindas',
+    'calc.cols':'Rindā',
+    'calc.total':'Kopā',
+    'cancel':'Atcelt',
+    'calc.subtract':'− Atņemt',
+    'calc.add':'+ Pievienot',
+    'settings.tileView':'Flīžu skats',
+    'settings.cols':'Flīzes rindā (kolonnas)',
+    'settings.auto':'Auto',
+    'settings.rowsVisible':'Redzamās rindas ekrānā',
+    'settings.direction':'Virziens',
+    'settings.ltr':'No kreisās → pa labi',
+    'settings.rtl':'No labās → pa kreisi',
+    'settings.textSize':'Teksta izmērs',
+    'settings.qtySize':'Skaitītāja izmērs',
+    'settings.small':'Mazs',
+    'settings.medium':'Parasts',
+    'settings.large':'Liels',
+    'settings.language':'Valoda',
+    'editor.newItem':'Jauna pozīcija',
+    'editor.subItem':'Ievadiet nosaukumu un kategoriju',
+    'editor.name':'Nosaukums',
+    'editor.namePh':'Piemēram: Kega 20 l',
+    'editor.category':'Kategorija',
+    'editor.categoryPh':'Piemēram: Kegas',
+    'editor.nameCategory':'Kategorijas nosaukums',
+    'editor.nameCategoryPh':'Piemēram: Kegas',
+    'editor.newCategory':'Jauna kategorija',
+    'editor.subNewCategory':'Ievadiet sadaļas nosaukumu',
+    'editor.editCategory':'Mainīt kategoriju',
+    'editor.subEditCategory':'Jaunais nosaukums parādīsies visām tās pozīcijām',
+    'editor.editItem':'Mainīt pozīciju',
+    'editor.subEditItem':'Pārdēvējiet vai mainiet kategoriju',
+    'editor.save':'✓ Saglabāt',
+    'cats.sub':'Pārdēvējiet, dzēsiet vai pievienojiet sadaļu',
+    'cats.add':'+ Pievienot kategoriju',
+    'cats.empty':'Vēl nav nevienas kategorijas',
+    'cats.rename':'Pārdēvēt',
+    'cats.delete':'Dzēst',
+    'cats.deleteEmptyTitle':'Dzēst kategoriju?',
+    'cats.deleteEmptyMsg':'Kategorija “{cat}” ir tukša.',
+    'cats.hasTitle':'Kategorija “{cat}”',
+    'cats.hasMsg':'Satur {n} {word}. Ko darīt?',
+    'cats.delAll':'Dzēst kopā ar pozīcijām',
+    'cats.orphan':'Pārvietot uz “Bez kategorijas”',
+    'addTile.title':'Pievienot pozīciju',
+    'reset.title':'Sākt jaunu skaitīšanu?',
+    'reset.msg':'Dokumenta nosaukums tiks notīrīts, un visi skaitītāji tiks nodzēsti.\nPozīcijas, kategorijas, foto un iestatījumi paliks.',
+    'reset.confirm':'Sākt no jauna',
+    'delete.title':'Dzēst pozīciju?',
+    'delete.msg':'“{name}” tiks dzēsta kopā ar daudzumu un foto.',
+    'delete.confirm':'Dzēst',
+    'save.savedTitle':'Saglabāts',
+    'save.savedMsg':'Fails pārrakstīts. Visas izmaiņas tagad ir tajā.',
+    'save.downloadTitle':'Fails saglabāts',
+    'save.downloadMsg':'Fails “{filename}” lejupielādēts mapē “Lejupielādes”.\n\nAizstājiet ar to pašreizējo lietotnes failu — tad visas izmaiņas saglabāsies HTML iekšienē un ceļos kopā ar to uz jebkuru ierīci.',
+    'save.understood':'Saprotu',
+    'save.failMsg':'Neizdevās izveidot failu: {msg}',
+    'validate.category':'Ievadiet kategorijas nosaukumu',
+    'validate.item':'Ievadiet pozīcijas nosaukumu',
+    'validate.dupCat':'Šāda kategorija jau pastāv',
+    'img.error':'Neizdevās nolasīt attēlu',
+    'csv.name':'Nosaukums',
+    'csv.date':'Datums',
+    'csv.category':'Kategorija',
+    'csv.item':'Pozīcija',
+    'csv.qty':'Daudzums',
+    'slug.default':'skaitisana',
+    'voice.off':'Balss ievade izslēgta',
+    'voice.selectFirst':'Vispirms izvēlieties pozīciju',
+    'voice.selected':'Izvēlēts: {name}',
+    'voice.notUnderstood':'Nesapratu: {text}',
+    'voice.unsupported':'Balss ievade netiek atbalstīta. Atveriet Chrome, Edge vai Safari.',
+    'voice.listening':'Klausos...',
+    'voice.noMic':'Nav piekļuves mikrofonam. Pārbaudiet HTTPS un atļaujas.',
+    'items.one':'pozīciju',
+    'items.few':'pozīcijas',
+    'items.many':'pozīcijas',
+  },
+  zh: {
+    'app.title':'计数',
+    'app.untitled':'无标题',
+    'voice.title':'语音输入',
+    'settings.title':'设置',
+    'categories.title':'分类',
+    'csv':'CSV',
+    'reset':'清零',
+    'save':'💾 保存',
+    'more':'更多',
+    'close':'关闭',
+    'calc.mulRows':'相乘行数',
+    'photo.section':'商品照片',
+    'photo.camera':'拍照',
+    'photo.gallery':'从相册选择',
+    'photo.remove':'🗑 移除照片',
+    'edit':'✏️ 编辑',
+    'delete':'🗑 删除',
+    'calc.title':'相乘',
+    'calc.sub':'行数 × 每行',
+    'calc.rows':'行数',
+    'calc.cols':'每行',
+    'calc.total':'合计',
+    'cancel':'取消',
+    'calc.subtract':'− 减去',
+    'calc.add':'+ 添加',
+    'settings.tileView':'方块视图',
+    'settings.cols':'每行方块数（列）',
+    'settings.auto':'自动',
+    'settings.rowsVisible':'屏幕可见行数',
+    'settings.direction':'方向',
+    'settings.ltr':'从左 → 到右',
+    'settings.rtl':'从右 → 到左',
+    'settings.textSize':'文字大小',
+    'settings.qtySize':'计数器大小',
+    'settings.small':'小',
+    'settings.medium':'正常',
+    'settings.large':'大',
+    'settings.language':'语言',
+    'editor.newItem':'新项目',
+    'editor.subItem':'输入名称和分类',
+    'editor.name':'名称',
+    'editor.namePh':'例如：20 升桶',
+    'editor.category':'分类',
+    'editor.categoryPh':'例如：桶',
+    'editor.nameCategory':'分类名称',
+    'editor.nameCategoryPh':'例如：桶',
+    'editor.newCategory':'新分类',
+    'editor.subNewCategory':'输入分区名称',
+    'editor.editCategory':'编辑分类',
+    'editor.subEditCategory':'新名称将显示在其所有项目上',
+    'editor.editItem':'编辑项目',
+    'editor.subEditItem':'重命名或更改分类',
+    'editor.save':'✓ 保存',
+    'cats.sub':'重命名、删除或添加分区',
+    'cats.add':'+ 添加分类',
+    'cats.empty':'还没有任何分类',
+    'cats.rename':'重命名',
+    'cats.delete':'删除',
+    'cats.deleteEmptyTitle':'删除分类？',
+    'cats.deleteEmptyMsg':'分类“{cat}”是空的。',
+    'cats.hasTitle':'分类“{cat}”',
+    'cats.hasMsg':'包含 {n} {word}。要怎么做？',
+    'cats.delAll':'连同项目一起删除',
+    'cats.orphan':'移动到“未分类”',
+    'addTile.title':'添加项目',
+    'reset.title':'开始新的计数？',
+    'reset.msg':'文档名称将被清除，所有计数器将归零。\n项目、分类、照片和设置将保留。',
+    'reset.confirm':'重新开始',
+    'delete.title':'删除项目？',
+    'delete.msg':'“{name}”将连同数量和照片一起删除。',
+    'delete.confirm':'删除',
+    'save.savedTitle':'已保存',
+    'save.savedMsg':'文件已覆盖。所有更改现在都在其中。',
+    'save.downloadTitle':'文件已保存',
+    'save.downloadMsg':'文件“{filename}”已下载到“下载”文件夹。\n\n用它替换当前应用文件——这样所有更改都会保存在 HTML 内，并随它一起到任何设备。',
+    'save.understood':'知道了',
+    'save.failMsg':'无法生成文件：{msg}',
+    'validate.category':'请输入分类名称',
+    'validate.item':'请输入项目名称',
+    'validate.dupCat':'该分类已存在',
+    'img.error':'无法读取图像',
+    'csv.name':'名称',
+    'csv.date':'日期',
+    'csv.category':'分类',
+    'csv.item':'项目',
+    'csv.qty':'数量',
+    'slug.default':'count',
+    'voice.off':'语音输入已关闭',
+    'voice.selectFirst':'请先选择一个项目',
+    'voice.selected':'已选择：{name}',
+    'voice.notUnderstood':'未听懂：{text}',
+    'voice.unsupported':'不支持语音输入。请在 Chrome、Edge 或 Safari 中打开。',
+    'voice.listening':'正在聆听...',
+    'voice.noMic':'无法访问麦克风。请检查 HTTPS 和权限。',
+    'items.one':'个项目',
+    'items.few':'个项目',
+    'items.many':'个项目',
+  }
+};
 
-  {id:'keg15',     name:'Кега 15 л',            category:'Кеги',              image:'', qty:0, counted:false},
-  {id:'keg20',     name:'Кега 20 л',            category:'Кеги',              image:'', qty:0, counted:false},
-  {id:'keg20slim', name:'Кега 20 л узкая',      category:'Кеги',              image:'', qty:0, counted:false},
-  {id:'keg30',     name:'Кега 30 л',            category:'Кеги',              image:'', qty:0, counted:false},
+function detectLang(){
+  const n = (navigator.language || 'ru').toLowerCase();
+  if (n.startsWith('en')) return 'en';
+  if (n.startsWith('lv')) return 'lv';
+  if (n.startsWith('zh')) return 'zh';
+  return 'ru';
+}
 
-  {id:'palEUR',    name:'Паллета EUR',          category:'Паллеты',           image:'', qty:0, counted:false},
-];
+function curLang(){
+  return LANGS[state && state.lang] ? state.lang : 'ru';
+}
+
+function t(key, vars){
+  const dict = I18N[curLang()] || I18N.ru;
+  let s = dict[key];
+  if (s === undefined) s = I18N.ru[key];
+  if (s === undefined) s = key;
+  if (vars){
+    for (const k in vars){
+      s = s.split('{' + k + '}').join(vars[k]);
+    }
+  }
+  return s;
+}
+
+function curLocale(){ return (LANGS[curLang()] || LANGS.ru).locale; }
+function nf(n){ return Number(n).toLocaleString(curLocale()); }
+
+function pluralKey(n){
+  const l = curLang();
+  if (l === 'ru'){
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return 'one';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return 'few';
+    return 'many';
+  }
+  if (l === 'lv'){
+    return (n % 10 === 1 && n % 100 !== 11) ? 'one' : 'many';
+  }
+  if (l === 'en'){
+    return n === 1 ? 'one' : 'many';
+  }
+  return 'many';
+}
+
+function pluralItems(n){ return t('items.' + pluralKey(n)); }
+
+/* Default items per language. Ids stay stable so switching language re-localizes them. */
+const DEFAULT_ITEMS = {
+  ru: [
+    {id:'crateGrnE', name:'Ящик зелёный',        category:'Ящики пустые'},
+    {id:'crateBluE', name:'Ящик синий',          category:'Ящики пустые'},
+    {id:'crateGrnF', name:'Зелёный с бутылками', category:'Ящики с бутылками'},
+    {id:'crateBluF', name:'Синий с прозрачными', category:'Ящики с бутылками'},
+    {id:'crateTub',  name:'Синий с Tuborg',      category:'Ящики с бутылками'},
+    {id:'crateGrnGarage', name:'Зелёный с Garage', category:'Ящики с бутылками'},
+    {id:'keg15',     name:'Кега 15 л',           category:'Кеги'},
+    {id:'keg20',     name:'Кега 20 л',           category:'Кеги'},
+    {id:'keg20slim', name:'Кега 20 л узкая',     category:'Кеги'},
+    {id:'keg30',     name:'Кега 30 л',           category:'Кеги'},
+    {id:'palEUR',    name:'Паллета EUR',         category:'Паллеты'},
+  ],
+  en: [
+    {id:'crateGrnE', name:'Green crate',             category:'Empty crates'},
+    {id:'crateBluE', name:'Blue crate',              category:'Empty crates'},
+    {id:'crateGrnF', name:'Green with bottles',      category:'Crates with bottles'},
+    {id:'crateBluF', name:'Blue with clear bottles', category:'Crates with bottles'},
+    {id:'crateTub',  name:'Blue with Tuborg',        category:'Crates with bottles'},
+    {id:'crateGrnGarage', name:'Green with Garage',  category:'Crates with bottles'},
+    {id:'keg15',     name:'Keg 15 L',                category:'Kegs'},
+    {id:'keg20',     name:'Keg 20 L',                category:'Kegs'},
+    {id:'keg20slim', name:'Keg 20 L slim',           category:'Kegs'},
+    {id:'keg30',     name:'Keg 30 L',                category:'Kegs'},
+    {id:'palEUR',    name:'EUR pallet',              category:'Pallets'},
+  ],
+  lv: [
+    {id:'crateGrnE', name:'Zaļā kaste',           category:'Tukšas kastes'},
+    {id:'crateBluE', name:'Zilā kaste',           category:'Tukšas kastes'},
+    {id:'crateGrnF', name:'Zaļā ar pudelēm',      category:'Kastes ar pudelēm'},
+    {id:'crateBluF', name:'Zilā ar caurspīdīgām', category:'Kastes ar pudelēm'},
+    {id:'crateTub',  name:'Zilā ar Tuborg',       category:'Kastes ar pudelēm'},
+    {id:'crateGrnGarage', name:'Zaļā ar Garage',  category:'Kastes ar pudelēm'},
+    {id:'keg15',     name:'Kega 15 l',            category:'Kegas'},
+    {id:'keg20',     name:'Kega 20 l',            category:'Kegas'},
+    {id:'keg20slim', name:'Kega 20 l šaurā',      category:'Kegas'},
+    {id:'keg30',     name:'Kega 30 l',            category:'Kegas'},
+    {id:'palEUR',    name:'Palete EUR',           category:'Paletes'},
+  ],
+  zh: [
+    {id:'crateGrnE', name:'绿色箱',       category:'空箱'},
+    {id:'crateBluE', name:'蓝色箱',       category:'空箱'},
+    {id:'crateGrnF', name:'绿色带瓶',     category:'带瓶箱'},
+    {id:'crateBluF', name:'蓝色带透明瓶', category:'带瓶箱'},
+    {id:'crateTub',  name:'蓝色带Tuborg', category:'带瓶箱'},
+    {id:'crateGrnGarage', name:'绿色带Garage', category:'带瓶箱'},
+    {id:'keg15',     name:'15升桶',       category:'桶'},
+    {id:'keg20',     name:'20升桶',       category:'桶'},
+    {id:'keg20slim', name:'20升窄桶',     category:'桶'},
+    {id:'keg30',     name:'30升桶',       category:'桶'},
+    {id:'palEUR',    name:'EUR托盘',      category:'托盘'},
+  ],
+};
+
+/* Hosted images live in the repo /images folder. Relative paths resolve both on
+   GitHub Pages and when the file is opened locally next to the images folder. */
+const IMAGE_BY_ID = {
+  crateGrnE: 'images/crateGrnE.webp',
+  crateBluE: 'images/crateBluE.webp',
+  crateGrnF: 'images/crateGrnF.webp',
+  crateBluF: 'images/crateBluF.webp',
+  crateTub:  'images/crateTub.webp',
+  crateGrnGarage: 'images/crateGrnGarage.webp',
+  keg20:     'images/keg20.webp',
+  keg20slim: 'images/keg20slim.webp',
+  palEUR:    'images/palEUR.webp',
+};
+
+function defaultItemsFor(lang){
+  const list = DEFAULT_ITEMS[lang] || DEFAULT_ITEMS.ru;
+  return list.map(d => ({
+    id: d.id, name: d.name, category: d.category,
+    image: IMAGE_BY_ID[d.id] || '', qty: 0, counted: false
+  }));
+}
 
 let state       = load();
 let activeId    = null;
@@ -824,7 +1358,7 @@ let editorMode  = 'item';
 let calcRowsLast = 1;
 let calcColsLast = 1;
 
-/* ================= состояние ================= */
+/* ================= state ================= */
 function readEmbedded(){
   try{
     const el = document.getElementById('embeddedState');
@@ -832,7 +1366,7 @@ function readEmbedded(){
     const text = (el.textContent || '').trim();
     if (!text || text === 'null') return null;
     return JSON.parse(text);
-  }catch(e){ console.warn('embedded state повреждён', e); return null; }
+  }catch(e){ console.warn('embedded state is corrupted', e); return null; }
 }
 
 function readLocal(){
@@ -876,11 +1410,36 @@ function load(){
   if (!chosen.textSize) chosen.textSize = 'md';
   if (!chosen.qtySize)  chosen.qtySize  = 'md';
   if (!chosen.rowFit)   chosen.rowFit   = 'auto';
+  if (!LANGS[chosen.lang]) chosen.lang  = 'ru';
+
+  /* one-time: give older saved states the hosted images for default items */
+  if (!chosen.imgV1){
+    for (const it of chosen.items){
+      if (!it.image && IMAGE_BY_ID[it.id]) it.image = IMAGE_BY_ID[it.id];
+    }
+    chosen.imgV1 = 1;
+  }
+
+  /* one-time: add default items introduced after this state was created */
+  if (!chosen.newDefaultsV1){
+    if (!chosen.items.some(i => i.id === 'crateGrnGarage')){
+      const d = (DEFAULT_ITEMS[chosen.lang] || DEFAULT_ITEMS.ru).find(x => x.id === 'crateGrnGarage');
+      if (d){
+        const item = {id:d.id, name:d.name, category:d.category,
+                      image: IMAGE_BY_ID[d.id] || '', qty:0, counted:false};
+        const idx = chosen.items.findIndex(i => i.id === 'crateTub');
+        if (idx >= 0) chosen.items.splice(idx + 1, 0, item);
+        else chosen.items.push(item);
+        if (d.category && !chosen.categories.includes(d.category)) chosen.categories.push(d.category);
+      }
+    }
+    chosen.newDefaultsV1 = 1;
+  }
   return chosen;
 }
 
 function seed(){
-  const items = structuredClone(DEFAULTS);
+  const items = defaultItemsFor(detectLang());
   const seen = new Set();
   const categories = [];
   for (const it of items){
@@ -898,6 +1457,7 @@ function seed(){
     textSize: 'md',
     qtySize: 'md',
     rowFit: 'auto',
+    lang: detectLang(),
     savedAt: 0
   };
 }
@@ -905,10 +1465,10 @@ function seed(){
 function save(){
   state.savedAt = Date.now();
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch(e){ console.warn('не удалось сохранить', e); }
+  catch(e){ console.warn('failed to save', e); }
 }
 
-/* ================= настройки ================= */
+/* ================= settings ================= */
 function applyGridCols(){ document.getElementById('grid').dataset.cols = state.gridCols || '4'; }
 function applyGridDir(){  document.getElementById('grid').dataset.dir  = state.gridDir  || 'ltr'; }
 function applyTextSize(){ document.getElementById('grid').dataset.tsize = state.textSize || 'md'; }
@@ -920,7 +1480,69 @@ function setTextSize(v){ state.textSize = v; save(); applyTextSize(); renderOpts
 function setQtySize(v){  state.qtySize  = v; save(); applyQtySize();  renderOpts(); }
 function setRowFit(v){   state.rowFit   = v; save(); renderOpts(); render(); requestAnimationFrame(fitTiles); }
 
-/* Вычисляет высоту плитки, чтобы в видимую область вошло ровно N рядов. */
+/* ================= language ================= */
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    el.setAttribute('aria-label', t(el.dataset.i18nAria));
+  });
+  document.documentElement.lang = curLang();
+  document.title = t('app.title');
+}
+
+function applyVoiceLang(){
+  if (recognition) recognition.lang = (LANGS[curLang()] || LANGS.ru).speech;
+}
+
+/* Re-localizes built-in items/categories when the language changes (user items untouched). */
+function localizeDefaults(lang){
+  const target = DEFAULT_ITEMS[lang] || DEFAULT_ITEMS.ru;
+  const byId = new Map(target.map(d => [d.id, d]));
+
+  const catMap = new Map();
+  for (const l in DEFAULT_ITEMS){
+    for (const d of DEFAULT_ITEMS[l]){
+      const tgt = byId.get(d.id);
+      if (tgt && d.category) catMap.set(d.category, tgt.category);
+    }
+  }
+
+  for (const it of state.items){
+    const d = byId.get(it.id);
+    if (d){ it.name = d.name; it.category = d.category; }
+  }
+
+  const seen = new Set();
+  const cats = [];
+  for (const c of state.categories){
+    const nc = catMap.get(c) || c;
+    if (!seen.has(nc)){ seen.add(nc); cats.push(nc); }
+  }
+  state.categories = cats;
+}
+
+function setLang(v){
+  if (!LANGS[v]) return;
+  state.lang = v;
+  localizeDefaults(v);
+  save();
+  applyI18n();
+  applyVoiceLang();
+  renderOpts();
+  render();
+  if (qbId) qbShow(qbId);
+  requestAnimationFrame(fitTiles);
+}
+
+/* Computes the tile height so exactly N rows fit in the visible area. */
 function fitTiles(){
   const main = document.getElementById('grid');
   if (!main) return;
@@ -940,10 +1562,10 @@ function fitTiles(){
 
   const headerH = (document.querySelector('header')?.offsetHeight) || 90;
 
-  /* нижний отступ body — там живёт quickbar + safe-area */
+  /* body bottom padding — that is where the quickbar + safe-area live */
   const bodyPB = parseFloat(getComputedStyle(document.body).paddingBottom) || 100;
 
-  /* считаем сколько заголовков категорий реально отрисуется */
+  /* count how many category headers will actually be rendered */
   let visibleCats = 0;
   for (const cat of (state.categories || [])){
     if (state.items.some(i => i.category === cat)) visibleCats++;
@@ -991,15 +1613,19 @@ function renderOpts(){
   const curQs = String(state.qtySize || 'md');
   document.querySelectorAll('#qsizeRow button').forEach(b =>
     b.classList.toggle('active', b.dataset.qsize === curQs));
+
+  const curLangVal = String(state.lang || 'ru');
+  document.querySelectorAll('#langRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === curLangVal));
 }
 
-/* ================= сохранение в файл ================= */
+/* ================= saving to file ================= */
 async function saveToFile(){
   let html;
   try{ html = buildUpdatedHtml(); }
   catch(e){
     console.error(e);
-    alert('Не удалось собрать файл: ' + e.message);
+    alert(t('save.failMsg', {msg: e.message}));
     return;
   }
 
@@ -1015,23 +1641,23 @@ async function saveToFile(){
       await writable.write(html);
       await writable.close();
       await showPick({
-        title: 'Сохранено',
-        message: 'Файл перезаписан. Все изменения теперь внутри него.',
-        options: [{label:'Понятно', value:null}]
+        title: t('save.savedTitle'),
+        message: t('save.savedMsg'),
+        options: [{label:t('save.understood'), value:null}]
       });
       return;
     }catch(e){
       if (e && e.name === 'AbortError') return;
-      console.warn('showSaveFilePicker не сработал, откат к скачиванию', e);
+      console.warn('showSaveFilePicker failed, falling back to download', e);
     }
   }
 
   downloadHtml(html, filename);
 
   await showPick({
-    title: 'Файл сохранён',
-    message: `Файл «${filename}» скачан в папку «Загрузки».\n\nЗамените им текущий файл приложения — тогда все изменения сохранятся внутри HTML и поедут вместе с ним на любое устройство.`,
-    options: [{label:'Понятно', value:null}]
+    title: t('save.downloadTitle'),
+    message: t('save.downloadMsg', {filename}),
+    options: [{label:t('save.understood'), value:null}]
   });
 }
 
@@ -1048,7 +1674,7 @@ function downloadHtml(html, filename){
 }
 
 function suggestedFilename(){
-  return `${slug(state.label || 'подсчёт')}-${state.date}.html`;
+  return `${slug(state.label || t('slug.default'))}-${state.date}.html`;
 }
 
 function buildUpdatedHtml(){
@@ -1069,7 +1695,7 @@ function buildUpdatedHtml(){
     } else {
       mainClone.removeAttribute('data-fit');
     }
-    /* вычисленную высоту плитки не сохраняем — она пересчитается при загрузке */
+    /* the computed tile height is not saved — it is recalculated on load */
     mainClone.removeAttribute('style');
   }
 
@@ -1141,14 +1767,14 @@ function safeJson(obj){
   return JSON.stringify(obj).replace(/</g, '\\u003c');
 }
 
-/* ================= сброс счётчиков ================= */
+/* ================= resetting counters ================= */
 async function resetAll(){
   const ok = await showPick({
-    title: 'Начать новый подсчёт?',
-    message: 'Название документа будет очищено, а все счётчики — обнулены.\nПозиции, категории, фото и настройки останутся.',
+    title: t('reset.title'),
+    message: t('reset.msg'),
     options: [
-      {label:'Начать заново', value:'yes', style:'danger'},
-      {label:'Отмена', value:null}
+      {label:t('reset.confirm'), value:'yes', style:'danger'},
+      {label:t('cancel'), value:null}
     ]
   });
   if (ok !== 'yes') return;
@@ -1175,10 +1801,10 @@ async function resetAll(){
   requestAnimationFrame(fitTiles);
 }
 
-/* ================= отрисовка ================= */
+/* ================= rendering ================= */
 function render(){
   document.getElementById('date').textContent =
-    new Date(state.date + 'T00:00').toLocaleDateString('ru-RU',
+    new Date(state.date + 'T00:00').toLocaleDateString(curLocale(),
       {day:'numeric', month:'long', year:'numeric'});
   document.getElementById('label').value = state.label || '';
 
@@ -1199,7 +1825,7 @@ function render(){
     const hdr = document.createElement('div');
     hdr.className = 'cat-title';
     hdr.innerHTML = `<span>${escapeHtml(cat)}</span>
-                     <span class="cat-sum">${catSum.toLocaleString('ru-RU')}</span>`;
+                     <span class="cat-sum">${nf(catSum)}</span>`;
     grid.appendChild(hdr);
 
     for (const it of list){
@@ -1211,15 +1837,15 @@ function render(){
   const addTile = document.createElement('div');
   addTile.className = 'add-tile';
   addTile.textContent = '+';
-  addTile.title = 'Добавить позицию';
+  addTile.title = t('addTile.title');
   addTile.onclick = () => openEditor(null, 'item');
   grid.appendChild(addTile);
 
-  document.getElementById('total').textContent = total.toLocaleString('ru-RU');
+  document.getElementById('total').textContent = nf(total);
 
   if (activeId && document.getElementById('counter').classList.contains('on')){
     const it = state.items.find(i => i.id === activeId);
-    if (it) document.getElementById('cNum').textContent = it.qty.toLocaleString('ru-RU');
+    if (it) document.getElementById('cNum').textContent = nf(it.qty);
   }
 }
 
@@ -1242,7 +1868,7 @@ function escapeHtml(s){
   }[c]));
 }
 
-/* ================= название документа ================= */
+/* ================= document name ================= */
 const labelEl = document.getElementById('label');
 labelEl.addEventListener('input', () => { state.label = labelEl.value; save(); });
 labelEl.addEventListener('keydown', e => {
@@ -1258,7 +1884,7 @@ window.addEventListener('beforeunload', () => {
   save();
 });
 
-/* ================= тап / долгое нажатие ================= */
+/* ================= tap / long press ================= */
 const gridEl = document.getElementById('grid');
 let pressTimer  = null;
 let pressTarget = null;
@@ -1317,7 +1943,7 @@ gridEl.addEventListener('contextmenu', e => {
   if (tile){ e.preventDefault(); openModal(tile.dataset.id); }
 });
 
-/* ================= нижняя панель ================= */
+/* ================= bottom bar ================= */
 function qbShow(id){
   const it = state.items.find(i => i.id === id);
   if (!it) return;
@@ -1344,14 +1970,14 @@ function qbBump(n){
   navigator.vibrate?.(8);
 }
 
-/* ================= компактная панель счётчика ================= */
+/* ================= compact counter panel ================= */
 function openCounter(id){
   activeId = id;
   const it = state.items.find(i => i.id === id);
   if (!it) return;
 
   document.getElementById('cName').textContent = it.name;
-  document.getElementById('cNum').textContent = it.qty.toLocaleString('ru-RU');
+  document.getElementById('cNum').textContent = nf(it.qty);
 
   document.getElementById('counter').classList.add('on');
   document.getElementById('quickbar').classList.add('hidden');
@@ -1369,7 +1995,7 @@ function counterBump(n){
   if (!it) return;
   it.qty = Math.max(0, it.qty + n);
   it.counted = true;
-  document.getElementById('cNum').textContent = it.qty.toLocaleString('ru-RU');
+  document.getElementById('cNum').textContent = nf(it.qty);
   save(); render();
   navigator.vibrate?.(8);
 }
@@ -1386,7 +2012,7 @@ document.getElementById('counter').addEventListener('click', e => {
   if (e.target.id === 'counter') closeCounter();
 });
 
-/* ================= калькулятор ================= */
+/* ================= calculator ================= */
 function openCalc(){
   if (!qbId) return;
   const it = state.items.find(i => i.id === qbId);
@@ -1411,7 +2037,7 @@ function updateCalcTotal(){
   const cols = parseInt(document.getElementById('calcCols').value) || 0;
   const n = rows * cols;
   const el = document.getElementById('calcTotal');
-  el.textContent = n.toLocaleString('ru-RU');
+  el.textContent = nf(n);
   el.className = n > 0 ? '' : 'zero';
 }
 
@@ -1427,7 +2053,7 @@ function calcCommit(sign){
 
   qbBump(sign * n);
   closeCalc();
-  showToast(`${sign > 0 ? '+' : '−'}${n.toLocaleString('ru-RU')}`,
+  showToast(`${sign > 0 ? '+' : '−'}${nf(n)}`,
             sign > 0 ? 'ok' : '');
 }
 
@@ -1444,7 +2070,7 @@ document.getElementById('calc').addEventListener('click', e => {
   if (e.target.id === 'calc') closeCalc();
 });
 
-/* ================= окно позиции (live-save) ================= */
+/* ================= item window (live-save) ================= */
 function openModal(id){
   activeId = id;
   const it = state.items.find(i => i.id === id);
@@ -1509,7 +2135,7 @@ document.getElementById('mInput').addEventListener('keydown', e => {
   if (e.key === 'Escape'){ e.preventDefault(); closeModal(); }
 });
 
-/* ================= подъём листа над клавиатурой ================= */
+/* ================= lifting the sheet above the keyboard ================= */
 function liftSheetForKeyboard(){
   if (!window.visualViewport) return;
   const vv = window.visualViewport;
@@ -1538,7 +2164,7 @@ if (window.visualViewport){
   visualViewport.addEventListener('scroll', liftSheetForKeyboard);
 }
 
-/* ================= изменение / удаление позиции ================= */
+/* ================= editing / deleting an item ================= */
 function editCurrent(){
   if (!activeId) return;
   const id = activeId;
@@ -1555,11 +2181,11 @@ async function deleteCurrent(){
   if (!it) return;
 
   const ok = await showPick({
-    title: 'Удалить позицию?',
-    message: `«${it.name}» будет удалена вместе с количеством и фото.`,
+    title: t('delete.title'),
+    message: t('delete.msg', {name: it.name}),
     options: [
-      {label:'Удалить', value:'yes', style:'danger'},
-      {label:'Отмена', value:null}
+      {label:t('delete.confirm'), value:'yes', style:'danger'},
+      {label:t('cancel'), value:null}
     ]
   });
   if (ok !== 'yes') return;
@@ -1576,7 +2202,7 @@ async function deleteCurrent(){
   save(); render();
 }
 
-/* ================= редактор позиции / категории ================= */
+/* ================= item / category editor ================= */
 function openEditor(idOrIdx, mode){
   editorMode = mode;
   editingId  = null;
@@ -1594,33 +2220,33 @@ function openEditor(idOrIdx, mode){
 
   if (mode === 'category'){
     fldCat.style.display = 'none';
-    nameLbl.textContent = 'Название категории';
-    nameEl.placeholder = 'Например: Кеги';
+    nameLbl.textContent = t('editor.nameCategory');
+    nameEl.placeholder = t('editor.nameCategoryPh');
     if (idOrIdx === null){
-      titleEl.textContent = 'Новая категория';
-      subEl.textContent   = 'Введите название раздела';
+      titleEl.textContent = t('editor.newCategory');
+      subEl.textContent   = t('editor.subNewCategory');
       nameEl.value = '';
     } else {
       editingCat = idOrIdx;
-      titleEl.textContent = 'Изменить категорию';
-      subEl.textContent   = 'Новое имя отобразится у всех её позиций';
+      titleEl.textContent = t('editor.editCategory');
+      subEl.textContent   = t('editor.subEditCategory');
       nameEl.value = state.categories[idOrIdx];
     }
   } else {
     fldCat.style.display = '';
-    nameLbl.textContent = 'Название';
-    nameEl.placeholder = 'Например: Кега 20 л';
+    nameLbl.textContent = t('editor.name');
+    nameEl.placeholder = t('editor.namePh');
     if (idOrIdx === null){
-      titleEl.textContent = 'Новая позиция';
-      subEl.textContent   = 'Введите название и категорию';
+      titleEl.textContent = t('editor.newItem');
+      subEl.textContent   = t('editor.subItem');
       nameEl.value = '';
       catEl.value  = '';
     } else {
       editingId = idOrIdx;
       const it = state.items.find(i => i.id === idOrIdx);
       if (!it) return;
-      titleEl.textContent = 'Изменить позицию';
-      subEl.textContent   = 'Переименуйте или смените категорию';
+      titleEl.textContent = t('editor.editItem');
+      subEl.textContent   = t('editor.subEditItem');
       nameEl.value = it.name;
       catEl.value  = it.category || '';
     }
@@ -1640,8 +2266,8 @@ function saveEditor(){
   const name = document.getElementById('edName').value.trim();
   if (!name){
     alert(editorMode === 'category'
-      ? 'Введите название категории'
-      : 'Введите название позиции');
+      ? t('validate.category')
+      : t('validate.item'));
     document.getElementById('edName').focus();
     return;
   }
@@ -1649,7 +2275,7 @@ function saveEditor(){
   if (editorMode === 'category'){
     const dup = state.categories.findIndex((c, i) =>
       c.toLowerCase() === name.toLowerCase() && i !== editingCat);
-    if (dup !== -1){ alert('Такая категория уже есть'); return; }
+    if (dup !== -1){ alert(t('validate.dupCat')); return; }
 
     if (editingCat === null){
       state.categories.push(name);
@@ -1697,7 +2323,7 @@ document.getElementById('editor').addEventListener('click', e => {
   });
 });
 
-/* ================= управление категориями ================= */
+/* ================= category management ================= */
 function openCats(){ renderCatList(); document.getElementById('cats').classList.add('on'); }
 function closeCats(){ document.getElementById('cats').classList.remove('on'); }
 
@@ -1706,7 +2332,7 @@ function renderCatList(){
   box.innerHTML = '';
 
   if (state.categories.length === 0){
-    box.innerHTML = '<div class="cats-empty">Пока нет ни одной категории</div>';
+    box.innerHTML = `<div class="cats-empty">${escapeHtml(t('cats.empty'))}</div>`;
     return;
   }
 
@@ -1728,13 +2354,13 @@ function renderCatList(){
 
     const rn = document.createElement('button');
     rn.textContent = '✏️';
-    rn.title = 'Переименовать';
+    rn.title = t('cats.rename');
     rn.onclick = () => openEditor(idx, 'category');
     row.appendChild(rn);
 
     const dl = document.createElement('button');
     dl.textContent = '🗑';
-    dl.title = 'Удалить';
+    dl.title = t('cats.delete');
     dl.className = 'danger';
     dl.onclick = () => deleteCategory(idx);
     row.appendChild(dl);
@@ -1751,23 +2377,23 @@ async function deleteCategory(idx){
 
   if (n === 0){
     const ok = await showPick({
-      title: 'Удалить категорию?',
-      message: `Категория «${cat}» пуста.`,
+      title: t('cats.deleteEmptyTitle'),
+      message: t('cats.deleteEmptyMsg', {cat}),
       options: [
-        {label:'Удалить', value:'yes', style:'danger'},
-        {label:'Отмена', value:null}
+        {label:t('delete.confirm'), value:'yes', style:'danger'},
+        {label:t('cancel'), value:null}
       ]
     });
     if (ok !== 'yes') return;
     state.categories.splice(idx, 1);
   } else {
     const choice = await showPick({
-      title: `Категория «${cat}»`,
-      message: `Содержит ${n} ${plural(n,'позицию','позиции','позиций')}. Что сделать?`,
+      title: t('cats.hasTitle', {cat}),
+      message: t('cats.hasMsg', {n, word: pluralItems(n)}),
       options: [
-        {label:'Удалить вместе с позициями', value:'delAll', style:'danger'},
-        {label:'Перенести в «Без категории»', value:'orphan'},
-        {label:'Отмена', value:null}
+        {label:t('cats.delAll'), value:'delAll', style:'danger'},
+        {label:t('cats.orphan'), value:'orphan'},
+        {label:t('cancel'), value:null}
       ]
     });
 
@@ -1792,13 +2418,6 @@ async function deleteCategory(idx){
   save(); render(); renderCatList();
 }
 
-function plural(n, one, few, many){
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
-  return many;
-}
-
 document.getElementById('cats').addEventListener('click', e => {
   if (e.target.id === 'cats') closeCats();
 });
@@ -1806,7 +2425,7 @@ document.getElementById('settings').addEventListener('click', e => {
   if (e.target.id === 'settings') closeSettings();
 });
 
-/* ================= мини-диалог ================= */
+/* ================= mini dialog ================= */
 function showPick({title, message, options}){
   return new Promise(resolve => {
     const el = document.getElementById('pick');
@@ -1830,7 +2449,7 @@ function showPick({title, message, options}){
   });
 }
 
-/* ================= фото ================= */
+/* ================= photo ================= */
 function updatePreview(){
   const img = document.getElementById('mPreview');
   const clearBtn = document.getElementById('mClear');
@@ -1873,7 +2492,7 @@ async function handleImageFile(file){
     updatePreview();
   }catch(e){
     console.warn(e);
-    alert('Не удалось прочитать изображение');
+    alert(t('img.error'));
   }
 }
 
@@ -1922,21 +2541,21 @@ async function compressImage(file, max = 360, quality = 0.75){
   }
 }
 
-/* ================= экспорт CSV ================= */
+/* ================= CSV export ================= */
 function slug(s){
   return (s || '')
     .trim()
     .replace(/[\\/:*?"<>|]+/g, '')
     .replace(/\s+/g, '-')
-    .slice(0, 50) || 'подсчёт';
+    .slice(0, 50) || t('slug.default');
 }
 
 function exportCSV(){
   const rows = [
-    ['Название', state.label || ''],
-    ['Дата',     state.date],
+    [t('csv.name'), state.label || ''],
+    [t('csv.date'), state.date],
     [],
-    ['Категория','Позиция','Количество']
+    [t('csv.category'), t('csv.item'), t('csv.qty')]
   ];
   for (const it of state.items.filter(i => !i.category))
     rows.push(['', it.name, it.qty]);
@@ -1955,7 +2574,7 @@ function exportCSV(){
   );
   const a = document.createElement('a');
   a.href = url;
-  a.download = `подсчёт-${slug(state.label)}-${state.date}.csv`;
+  a.download = `${t('slug.default')}-${slug(state.label)}-${state.date}.csv`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1973,7 +2592,7 @@ document.addEventListener('keydown', e => {
   if (activeId) closeModal();
 });
 
-/* ================= голосовой ввод ================= */
+/* ================= voice input ================= */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 let recognition  = null;
@@ -2001,7 +2620,62 @@ const RU_NUMS = {
   пятьсот:500, шестьсот:600, семьсот:700, восемьсот:800, девятьсот:900,
 };
 
-function normalizeRu(s){
+const EN_NUMS = {
+  zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8,
+  nine:9, ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14,
+  fifteen:15, sixteen:16, seventeen:17, eighteen:18, nineteen:19,
+  twenty:20, thirty:30, forty:40, fifty:50, sixty:60, seventy:70,
+  eighty:80, ninety:90, hundred:100, thousand:1000
+};
+
+const LV_NUMS = {
+  nulle:0, viens:1, viena:1, divi:2, divas:2, tris:3, trīs:3, cetri:4,
+  četri:4, cetras:4, četras:4, pieci:5, piecas:5, sesi:6, seši:6,
+  sesas:6, sešas:6, septini:7, septiņi:7, septinas:7, septiņas:7,
+  astoni:8, astoņi:8, astonas:8, astoņas:8, devini:9, deviņi:9,
+  devinas:9, deviņas:9, desmit:10, vienpadsmit:11, divpadsmit:12,
+  trispadsmit:13, trīspadsmit:13, cetrpadsmit:14, četrpadsmit:14,
+  piecpadsmit:15, sespadsmit:16, sešpadsmit:16, septinpadsmit:17,
+  septiņpadsmit:17, astonpadsmit:18, astoņpadsmit:18, devinpadsmit:19,
+  deviņpadsmit:19, divdesmit:20, trisdesmit:30, trīsdesmit:30,
+  cetrdesmit:40, četrdesmit:40, piecdesmit:50, sesdesmit:60,
+  sešdesmit:60, septindesmit:70, septiņdesmit:70, astondesmit:80,
+  astoņdesmit:80, devindesmit:90, deviņdesmit:90, simts:100
+};
+
+const NUM_WORDS = { ru: RU_NUMS, en: EN_NUMS, lv: LV_NUMS };
+
+const VOICE_WORDS = {
+  ru: {
+    stop:  /(^| )(стоп|хватит|закончить|выключи|выключить)( |$)/,
+    plus:  /(^| )(плюс|добав|прибав|плюсуй)( |$)/,
+    minus: /(^| )(минус|убери|уменьши|отними)( |$)/
+  },
+  en: {
+    stop:  /(^| )(stop|finish|turn off|off)( |$)/,
+    plus:  /(^| )(plus|add|increase)( |$)/,
+    minus: /(^| )(minus|remove|subtract|decrease)( |$)/
+  },
+  lv: {
+    stop:  /(^| )(stop|beigt|izslegt|izslēgt|izslēdz)( |$)/,
+    plus:  /(^| )(plus|pievieno|pieliec|palielini)( |$)/,
+    minus: /(^| )(minus|mīnus|atnem|atņem|nonem|noņem|samazini)( |$)/
+  },
+  zh: {
+    stop:  /(停止|关闭|結束|结束|停)/,
+    plus:  /(加|添加|增加|加上)/,
+    minus: /(减|減|减去|減去|去掉|减少|減少)/
+  }
+};
+
+const VOICE_STOP = {
+  ru: new Set(['плюс','минус','добавь','прибавь','убери','отними','и','в','на','для','с','к','по','мл','шт','штук','штуки','л','литров','литра']),
+  en: new Set(['plus','minus','add','remove','subtract','and','in','on','for','with','to','by','ml','pcs','pieces','l','liters','litre','litres']),
+  lv: new Set(['plus','mīnus','minus','pievieno','pieliec','palielini','atņem','atnem','noņem','nonem','samazini','un','ar','uz','par','no','l','ml','gab','gabali']),
+  zh: new Set(['加','添加','增加','加上','减','減','减去','減去','去掉','减少','減少','和','的','个','個','升','毫升'])
+};
+
+function normalizeText(s){
   return String(s || '')
     .toLowerCase()
     .replace(/ё/g, 'е')
@@ -2009,27 +2683,47 @@ function normalizeRu(s){
     .trim();
 }
 
+function parseZhNumber(s){
+  const digits = { '零':0,'〇':0,'一':1,'二':2,'两':2,'兩':2,'三':3,'四':4,
+                   '五':5,'六':6,'七':7,'八':8,'九':9 };
+  const units = { '十':10,'百':100,'千':1000,'万':10000 };
+  let total = 0, section = 0, number = 0;
+  for (const ch of s){
+    if (digits[ch] !== undefined){ number = digits[ch]; }
+    else if (units[ch] !== undefined){
+      const u = units[ch];
+      if (u === 10000){ section = (section + number) * u; total += section; section = 0; number = 0; }
+      else { if (number === 0) number = 1; section += number * u; number = 0; }
+    }
+  }
+  return total + section + number;
+}
+
 function extractNumber(text){
   const digits = text.match(/\d+/);
   if (digits) return parseInt(digits[0], 10);
 
-  const words = normalizeRu(text).split(/\s+/);
+  if (curLang() === 'zh'){
+    const zh = String(text).replace(/[^\u4e00-\u9fff零〇一二两兩三四五六七八九十百千万萬]/g, '');
+    const n = zh ? parseZhNumber(zh) : 0;
+    return n || null;
+  }
+
+  const map = NUM_WORDS[curLang()] || RU_NUMS;
+  const words = normalizeText(text).split(/\s+/);
   let sum = 0, found = false;
   for (const w of words){
-    const n = RU_NUMS[w];
+    const n = map[w];
     if (n !== undefined){ sum += n; found = true; }
   }
   return found ? sum : null;
 }
 
 function matchItem(text){
-  const t = normalizeRu(text);
+  const t = normalizeText(text);
   if (!t) return null;
 
-  const stop = new Set([
-    'плюс','минус','добавь','прибавь','убери','отними',
-    'и','в','на','для','с','к','по','мл','шт','штук','штуки','л','литров','литра'
-  ]);
+  const stop = VOICE_STOP[curLang()] || VOICE_STOP.ru;
 
   const tWords = t.split(' ').filter(w =>
     w.length >= 2 && !stop.has(w)
@@ -2038,7 +2732,7 @@ function matchItem(text){
 
   let best = null, bestRatio = 0;
   for (const it of state.items){
-    const nWords = normalizeRu(it.name).split(' ').filter(w => w.length >= 2);
+    const nWords = normalizeText(it.name).split(' ').filter(w => w.length >= 2);
     if (nWords.length === 0) continue;
 
     let hit = 0;
@@ -2066,25 +2760,27 @@ function showToast(msg, kind){
 }
 
 function processVoiceCommand(rawText){
-  const t = normalizeRu(rawText);
-  if (!t) return;
+  const txt = normalizeText(rawText);
+  if (!txt) return;
   console.log('[voice] heard:', rawText);
 
-  if (/(^| )(стоп|хватит|закончить|выключи|выключить)( |$)/.test(t)){
+  const words = VOICE_WORDS[curLang()] || VOICE_WORDS.ru;
+
+  if (words.stop.test(txt)){
     stopVoice();
-    showToast('Голосовой ввод выключен');
+    showToast(t('voice.off'));
     return;
   }
 
-  const isPlus  = /(^| )(плюс|добав|прибав|плюсуй)( |$)/.test(t) || /\+/.test(t);
-  const isMinus = /(^| )(минус|убери|уменьши|отними)( |$)/.test(t)   || /-/.test(t);
+  const isPlus  = words.plus.test(txt)  || /\+/.test(txt);
+  const isMinus = words.minus.test(txt) || /-/.test(txt);
 
   if (isPlus || isMinus){
     if (!qbId){
-      showToast('Сначала выберите позицию', 'warn');
+      showToast(t('voice.selectFirst'), 'warn');
       return;
     }
-    const n = extractNumber(t) || 1;
+    const n = extractNumber(rawText) || 1;
     const delta = isMinus ? -n : n;
     qbBump(delta);
     const it = state.items.find(i => i.id === qbId);
@@ -2096,16 +2792,16 @@ function processVoiceCommand(rawText){
   const it = matchItem(rawText);
   if (it){
     qbShow(it.id);
-    showToast('Выбрано: ' + it.name, 'ok');
+    showToast(t('voice.selected', {name: it.name}), 'ok');
     return;
   }
 
-  showToast('Не понял: ' + rawText, 'warn');
+  showToast(t('voice.notUnderstood', {text: rawText}), 'warn');
 }
 
 function startVoice(){
   if (!recognition || !listening) return;
-  try{ recognition.start(); }catch(e){ /* уже запущено */ }
+  try{ recognition.start(); }catch(e){ /* already started */ }
 }
 
 function stopVoice(){
@@ -2118,25 +2814,24 @@ function stopVoice(){
 
 function toggleVoice(){
   if (!recognition){
-    showToast('Голосовой ввод не поддерживается. Откройте в Chrome, Edge или Safari.',
-              'warn');
+    showToast(t('voice.unsupported'), 'warn');
     return;
   }
   if (listening){
     stopVoice();
-    showToast('Голосовой ввод выключен');
+    showToast(t('voice.off'));
   } else {
     listening = true;
     const btn = document.getElementById('micBtn');
     if (btn) btn.classList.add('on');
     startVoice();
-    showToast('Слушаю...');
+    showToast(t('voice.listening'));
   }
 }
 
 if (SpeechRecognition){
   recognition = new SpeechRecognition();
-  recognition.lang = 'ru-RU';
+  recognition.lang = (LANGS[curLang()] || LANGS.ru).speech;
   recognition.continuous = true;
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
@@ -2154,7 +2849,7 @@ if (SpeechRecognition){
     console.warn('[voice] error:', e.error);
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed'){
       stopVoice();
-      showToast('Нет доступа к микрофону. Проверьте HTTPS и разрешения.', 'warn');
+      showToast(t('voice.noMic'), 'warn');
     }
   };
 
@@ -2170,15 +2865,25 @@ if (SpeechRecognition){
   };
 }
 
-/* ================= запуск ================= */
+/* ================= startup ================= */
 applyGridCols();
 applyGridDir();
 applyTextSize();
 applyQtySize();
+applyI18n();
+applyVoiceLang();
 render();
 requestAnimationFrame(fitTiles);
 if (state.lastItem && state.items.find(i => i.id === state.lastItem)){
   qbShow(state.lastItem);
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:'){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
 }
 </script>
 </body>
