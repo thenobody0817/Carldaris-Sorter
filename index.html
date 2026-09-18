@@ -103,6 +103,13 @@
   main[data-dir="rtl"]{ direction: rtl; }
   main[data-dir="rtl"] > *{ direction: ltr; }
 
+  /* --- режим "видно рядов" — фиксированная высота плитки --- */
+  main[data-fit] .tile,
+  main[data-fit] .add-tile{
+    aspect-ratio: auto;
+    height: var(--tile-h, 100px);
+  }
+
   .cat-title{
     grid-column:1 / -1;
     font-size:13px;font-weight:700;text-transform:uppercase;
@@ -116,6 +123,7 @@
     font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;
   }
   main[data-cols="6"] .cat-title{ font-size:11px; }
+  main[data-fit] .cat-title{ margin:6px 2px 2px; }
 
   .tile{
     background:var(--card);border-radius:14px;overflow:hidden;
@@ -254,7 +262,7 @@
     line-height:1;
   }
 
-  /* ============ compact counter panel ============ */
+  /* compact counter panel */
   #counter{ align-items:flex-end; }
 
   .counter-sheet{
@@ -316,7 +324,7 @@
   .c-btn.minus{ background:#3a3a3a;color:var(--fg); }
   .c-btn.plus{ background:var(--accent);color:#000; }
 
-  /* ============ settings ============ */
+  /* settings */
   .opt-row{ display:flex;gap:6px;margin:8px 0 4px; }
   .opt-row button{
     flex:1;padding:14px 0;font-size:15px;font-weight:700;
@@ -578,7 +586,6 @@
   <button class="qb-btn plus" onclick="qbBump(1)">+1</button>
 </div>
 
-<!-- ============ compact counter panel ============ -->
 <div id="counter">
   <div class="counter-sheet">
     <div class="counter-head">
@@ -680,13 +687,24 @@
     <div class="sub">Вид плиток</div>
 
     <div class="settings-block">
-      <div class="block-label">Плиток в ряду</div>
+      <div class="block-label">Плиток в ряду (столбцов)</div>
       <div class="opt-row" id="sizeRow">
         <button data-cols="auto" onclick="setGridCols('auto')">Авто</button>
         <button data-cols="3" onclick="setGridCols('3')">3</button>
         <button data-cols="4" onclick="setGridCols('4')">4</button>
         <button data-cols="5" onclick="setGridCols('5')">5</button>
         <button data-cols="6" onclick="setGridCols('6')">6</button>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <div class="block-label">Видно рядов на экране</div>
+      <div class="opt-row" id="rowFitRow">
+        <button data-rowfit="auto" onclick="setRowFit('auto')">Авто</button>
+        <button data-rowfit="3" onclick="setRowFit('3')">3</button>
+        <button data-rowfit="4" onclick="setRowFit('4')">4</button>
+        <button data-rowfit="5" onclick="setRowFit('5')">5</button>
+        <button data-rowfit="6" onclick="setRowFit('6')">6</button>
       </div>
     </div>
 
@@ -857,6 +875,7 @@ function load(){
   if (!chosen.gridDir)  chosen.gridDir  = 'ltr';
   if (!chosen.textSize) chosen.textSize = 'md';
   if (!chosen.qtySize)  chosen.qtySize  = 'md';
+  if (!chosen.rowFit)   chosen.rowFit   = 'auto';
   return chosen;
 }
 
@@ -878,6 +897,7 @@ function seed(){
     gridDir: 'ltr',
     textSize: 'md',
     qtySize: 'md',
+    rowFit: 'auto',
     savedAt: 0
   };
 }
@@ -894,10 +914,59 @@ function applyGridDir(){  document.getElementById('grid').dataset.dir  = state.g
 function applyTextSize(){ document.getElementById('grid').dataset.tsize = state.textSize || 'md'; }
 function applyQtySize(){  document.getElementById('grid').dataset.qsize = state.qtySize  || 'md'; }
 
-function setGridCols(v){ state.gridCols = v; save(); applyGridCols(); renderOpts(); render(); }
+function setGridCols(v){ state.gridCols = v; save(); applyGridCols(); renderOpts(); render(); requestAnimationFrame(fitTiles); }
 function setGridDir(v){  state.gridDir  = v; save(); applyGridDir();  renderOpts(); }
 function setTextSize(v){ state.textSize = v; save(); applyTextSize(); renderOpts(); }
 function setQtySize(v){  state.qtySize  = v; save(); applyQtySize();  renderOpts(); }
+function setRowFit(v){   state.rowFit   = v; save(); renderOpts(); render(); requestAnimationFrame(fitTiles); }
+
+/* Вычисляет высоту плитки, чтобы в видимую область вошло ровно N рядов. */
+function fitTiles(){
+  const main = document.getElementById('grid');
+  if (!main) return;
+
+  const fitRaw = state.rowFit || 'auto';
+  if (fitRaw === 'auto'){
+    main.removeAttribute('data-fit');
+    main.style.removeProperty('--tile-h');
+    return;
+  }
+
+  const fit = Math.max(1, Math.min(12, parseInt(fitRaw, 10) || 4));
+  main.setAttribute('data-fit', String(fit));
+
+  const vh = (window.visualViewport && window.visualViewport.height)
+             || window.innerHeight || 800;
+
+  const headerH = (document.querySelector('header')?.offsetHeight) || 90;
+
+  /* нижний отступ body — там живёт quickbar + safe-area */
+  const bodyPB = parseFloat(getComputedStyle(document.body).paddingBottom) || 100;
+
+  /* считаем сколько заголовков категорий реально отрисуется */
+  let visibleCats = 0;
+  for (const cat of (state.categories || [])){
+    if (state.items.some(i => i.category === cat)) visibleCats++;
+  }
+
+  const catHeaderH = 32;
+  const mainPad = 20;
+  const gap = 8;
+
+  const available =
+    vh - headerH - bodyPB - mainPad -
+    (visibleCats * catHeaderH) -
+    ((fit - 1) * gap);
+
+  const tileH = Math.max(48, Math.floor(available / fit));
+  main.style.setProperty('--tile-h', tileH + 'px');
+}
+
+window.addEventListener('resize', () => requestAnimationFrame(fitTiles));
+window.addEventListener('orientationchange', () => setTimeout(fitTiles, 200));
+if (window.visualViewport){
+  visualViewport.addEventListener('resize', () => requestAnimationFrame(fitTiles));
+}
 
 function openSettings(){ renderOpts(); document.getElementById('settings').classList.add('on'); }
 function closeSettings(){ document.getElementById('settings').classList.remove('on'); }
@@ -906,6 +975,10 @@ function renderOpts(){
   const curCols = String(state.gridCols || '4');
   document.querySelectorAll('#sizeRow button').forEach(b =>
     b.classList.toggle('active', b.dataset.cols === curCols));
+
+  const curFit = String(state.rowFit || 'auto');
+  document.querySelectorAll('#rowFitRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.rowfit === curFit));
 
   const curDir = String(state.gridDir || 'ltr');
   document.querySelectorAll('#dirRow button').forEach(b =>
@@ -991,6 +1064,13 @@ function buildUpdatedHtml(){
     mainClone.setAttribute('data-dir',   state.gridDir  || 'ltr');
     mainClone.setAttribute('data-tsize', state.textSize || 'md');
     mainClone.setAttribute('data-qsize', state.qtySize  || 'md');
+    if (state.rowFit && state.rowFit !== 'auto'){
+      mainClone.setAttribute('data-fit', state.rowFit);
+    } else {
+      mainClone.removeAttribute('data-fit');
+    }
+    /* вычисленную высоту плитки не сохраняем — она пересчитается при загрузке */
+    mainClone.removeAttribute('style');
   }
 
   ['#modal','#editor','#cats','#pick','#calc','#settings','#counter'].forEach(sel => {
@@ -1092,6 +1172,7 @@ async function resetAll(){
   document.getElementById('counter').classList.remove('on');
   save();
   render();
+  requestAnimationFrame(fitTiles);
 }
 
 /* ================= отрисовка ================= */
@@ -1136,7 +1217,6 @@ function render(){
 
   document.getElementById('total').textContent = total.toLocaleString('ru-RU');
 
-  /* если открыта панель счётчика, освежим число */
   if (activeId && document.getElementById('counter').classList.contains('on')){
     const it = state.items.find(i => i.id === activeId);
     if (it) document.getElementById('cNum').textContent = it.qty.toLocaleString('ru-RU');
@@ -2096,6 +2176,7 @@ applyGridDir();
 applyTextSize();
 applyQtySize();
 render();
+requestAnimationFrame(fitTiles);
 if (state.lastItem && state.items.find(i => i.id === state.lastItem)){
   qbShow(state.lastItem);
 }
