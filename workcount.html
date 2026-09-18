@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111">
+<title>Подсчёт</title>
+
+<script id="embeddedState" type="application/json">null</script>
+
+<style>
+  :root{
+    --bg:#111; --card:#1e1e1e; --fg:#eee; --dim:#888;
+    --accent:#4ade80;
+    --select:#fbbf24;
+    --border:#333;
+    --danger:#f87171;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font:16px/1.3 system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--fg);
+    padding-bottom:calc(100px + env(safe-area-inset-bottom));
+    overscroll-behavior:none;
+  }
+  button{
+    background:#333;color:var(--fg);border:0;border-radius:12px;
+    padding:12px 16px;font-size:15px;font-weight:700;
+    font-family:inherit;cursor:pointer;
+    touch-action:manipulation;
+    transition:transform .06s ease, background .12s;
+  }
+  button:active{transform:scale(.94)}
+  button.accent{background:var(--accent);color:#000}
+  button.danger{background:#3a1f1f;color:var(--danger)}
+
+  header{
+    position:sticky;top:0;z-index:5;
+    background:#000c;backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    padding:10px 12px;
+    padding-top:calc(10px + env(safe-area-inset-top));
+    display:flex;flex-direction:column;gap:6px;
+    border-bottom:1px solid var(--border);
+  }
+  .label{
+    width:100%;background:transparent;border:0;outline:none;
+    color:var(--fg);font:700 18px/1.2 system-ui,sans-serif;
+    padding:2px 0;border-bottom:2px solid transparent;
+    transition:border-color .15s;
+    text-overflow:ellipsis;
+  }
+  .label::placeholder{color:#555;font-weight:600}
+  .label:focus{border-bottom-color:var(--accent)}
+
+  .hdr-bottom{
+    display:flex;align-items:center;gap:6px;
+    justify-content:space-between;flex-wrap:wrap;
+  }
+  .date{font-size:12px;color:var(--dim)}
+  .hdr-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .total{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums;margin-right:2px}
+  .hdr-right button{padding:8px 10px;font-size:13px}
+  .hdr-right button.save{background:#1e3a1e;color:#86efac}
+
+  /* ================= СЕТКА ================= */
+  main{
+    padding:10px;
+    display:grid;gap:8px;
+    grid-template-columns:repeat(4, 1fr);
+
+    /* переменные размера — переопределяются ниже */
+    --name-fs: 13px;
+    --name-pad-top: 6px;
+    --name-pad-bottom: 18px;
+
+    --qty-fs: 20px;
+    --qty-pad-y: 4px;
+    --qty-pad-x: 9px;
+    --qty-min-w: 34px;
+    --qty-radius: 10px;
+  }
+
+  /* пользовательский размер текста */
+  main[data-tsize="sm"]{
+    --name-fs: 11px;
+    --name-pad-bottom: 16px;
+  }
+  main[data-tsize="lg"]{
+    --name-fs: 15px;
+    --name-pad-bottom: 20px;
+  }
+
+  /* пользовательский размер счётчика */
+  main[data-qsize="sm"]{
+    --qty-fs: 16px;
+    --qty-pad-y: 3px;
+    --qty-pad-x: 7px;
+    --qty-min-w: 28px;
+    --qty-radius: 8px;
+  }
+  main[data-qsize="lg"]{
+    --qty-fs: 26px;
+    --qty-pad-y: 5px;
+    --qty-pad-x: 12px;
+    --qty-min-w: 42px;
+    --qty-radius: 12px;
+  }
+
+  main[data-cols="auto"]{
+    grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+    gap:10px;
+  }
+  main[data-cols="2"]{ grid-template-columns:repeat(2, 1fr); }
+  main[data-cols="3"]{ grid-template-columns:repeat(3, 1fr); }
+  main[data-cols="4"]{ grid-template-columns:repeat(4, 1fr); }
+  main[data-cols="5"]{ grid-template-columns:repeat(5, 1fr); gap:6px; }
+  main[data-cols="6"]{ grid-template-columns:repeat(6, 1fr); gap:5px; }
+
+  main[data-dir="rtl"]{ direction: rtl; }
+  main[data-dir="rtl"] > *{ direction: ltr; }
+
+  .cat-title{
+    grid-column:1 / -1;
+    font-size:13px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--dim);
+    margin:14px 2px 2px;
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .cat-title:first-child{margin-top:2px}
+  .cat-title .cat-sum{
+    font-size:13px;color:var(--fg);font-weight:800;
+    font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;
+  }
+  main[data-cols="6"] .cat-title{ font-size:11px; }
+
+  .tile{
+    background:var(--card);border-radius:14px;overflow:hidden;
+    position:relative;aspect-ratio:1;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid transparent;cursor:pointer;
+    transition:transform .06s ease,
+               border-color .2s ease,
+               box-shadow .2s ease;
+    user-select:none;-webkit-user-select:none;
+    -webkit-touch-callout:none;
+  }
+  .tile:active{transform:scale(.96)}
+  .tile.counted{border-color:var(--accent)}
+  .tile.selected{
+    border-color:var(--select);
+    box-shadow:0 0 0 3px #fbbf2455, 0 0 20px #fbbf2466;
+    z-index:1;
+  }
+  .tile img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+
+  .tile .name{
+    position:absolute;left:0;right:0;top:0;
+    padding:var(--name-pad-top) 6px var(--name-pad-bottom);
+    font-size:var(--name-fs);
+    font-weight:700;line-height:1.2;
+    background:linear-gradient(#000e 40%, #000a 75%, transparent);
+    text-align:center;
+    word-break:break-word;
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    pointer-events:none;
+    z-index:2;
+  }
+
+  .tile .qty{
+    position:absolute;
+    right:8px;
+    bottom:8px;
+    z-index:3;
+    min-width:var(--qty-min-w);
+    padding:var(--qty-pad-y) var(--qty-pad-x);
+    max-width:calc(100% - 16px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:var(--qty-fs);
+    font-weight:800;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+    color:#fff;
+    background:rgba(0,0,0,.6);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+    border-radius:var(--qty-radius);
+    pointer-events:none;
+  }
+  .tile .qty.zero{
+    color:#999;
+    background:rgba(0,0,0,.45);
+  }
+  .tile.selected .qty{
+    color:var(--select);
+    background:rgba(0,0,0,.65);
+  }
+
+  .add-tile{
+    background:transparent;
+    border:2px dashed #444;
+    border-radius:14px;
+    aspect-ratio:1;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    color:#666;font-size:52px;font-weight:200;line-height:1;
+    user-select:none;-webkit-user-select:none;
+    -webkit-touch-callout:none;
+    transition:transform .06s ease, background .12s, border-color .12s, color .12s;
+  }
+  .add-tile:active{
+    transform:scale(.96);
+    background:#1a1a1a;border-color:#666;color:#999;
+  }
+  main[data-cols="5"] .add-tile,
+  main[data-cols="6"] .add-tile{
+    font-size:34px;
+  }
+
+  #modal,#editor,#cats,#calc,#settings{
+    position:fixed;inset:0;background:#000b;z-index:20;
+    display:none;align-items:flex-end;
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  }
+  #modal.on,#editor.on,#cats.on,#calc.on,#settings.on{display:flex}
+  #editor{z-index:30}
+  #calc{z-index:30}
+  #settings{z-index:30}
+
+  .sheet{
+    background:#222;width:100%;
+    border-radius:22px 22px 0 0;
+    padding:20px;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom));
+    max-height:90vh;overflow:auto;
+    animation:slideup .2s ease;
+  }
+  @keyframes slideup{from{transform:translateY(30px);opacity:0}}
+  .sheet h2{margin:0 0 4px;font-size:19px}
+  .sheet .sub{color:var(--dim);font-size:13px;margin-bottom:14px}
+  .sheet input[type=number]{
+    width:100%;font-size:48px;font-weight:800;text-align:center;
+    padding:8px;background:#111;color:var(--fg);
+    border:2px solid #444;border-radius:14px;
+    font-variant-numeric:tabular-nums;
+    -moz-appearance:textfield;
+  }
+  .sheet input[type=number]::-webkit-outer-spin-button,
+  .sheet input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none;margin:0;
+  }
+  .row{display:flex;gap:8px;margin-top:12px}
+  .row button{flex:1;padding:14px 0}
+  .row.quick button{background:#2a2a2a;font-size:18px;padding:16px 0}
+  .row.quick .add1{
+    flex:2;font-size:26px;font-weight:800;
+    background:var(--accent);color:#000;
+  }
+
+  .opt-row{
+    display:flex;gap:6px;margin:8px 0 4px;
+  }
+  .opt-row button{
+    flex:1;padding:14px 0;font-size:15px;font-weight:700;
+    background:#2a2a2a;color:var(--fg);
+    border:2px solid transparent;border-radius:12px;
+  }
+  .opt-row button[data-cols="auto"]{flex:1.6;font-size:13px}
+  .opt-row button[data-dir]{font-size:13px}
+  .opt-row button.active{
+    background:var(--accent);color:#000;
+    border-color:var(--accent);
+  }
+  .settings-block{margin-bottom:18px}
+  .settings-block:last-child{margin-bottom:0}
+  .settings-block .block-label{
+    font-size:12px;color:var(--dim);
+    text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+    margin:0 0 6px;
+  }
+
+  .calc-row{
+    display:flex;align-items:flex-end;gap:10px;
+    margin:14px 0 4px;
+  }
+  .calc-field{
+    flex:1;min-width:0;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .calc-field label{
+    font-size:12px;color:var(--dim);font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;
+    text-align:center;
+  }
+  .calc-field input{
+    width:100%;font-size:40px;font-weight:800;text-align:center;
+    padding:10px 6px;background:#111;color:var(--fg);
+    border:2px solid #444;border-radius:14px;
+    font-variant-numeric:tabular-nums;
+    -moz-appearance:textfield;
+    font-family:inherit;outline:none;
+    transition:border-color .15s;
+  }
+  .calc-field input:focus{border-color:var(--accent)}
+  .calc-field input::-webkit-outer-spin-button,
+  .calc-field input::-webkit-inner-spin-button{
+    -webkit-appearance:none;margin:0;
+  }
+  .calc-x{
+    font-size:32px;font-weight:300;color:var(--dim);
+    padding-bottom:20px;flex-shrink:0;
+  }
+  .calc-total{
+    display:flex;align-items:baseline;justify-content:center;
+    gap:14px;margin:18px 0 4px;
+    padding:16px;background:#111;border-radius:14px;
+    border:2px solid var(--border);
+  }
+  .calc-total span{
+    font-size:13px;color:var(--dim);
+    text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+  }
+  .calc-total strong{
+    font-size:40px;font-weight:800;color:var(--accent);
+    font-variant-numeric:tabular-nums;line-height:1;
+  }
+  .calc-total strong.zero{color:#555}
+
+  .img-block{margin-top:14px}
+  .img-label{
+    font-size:12px;color:var(--dim);font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;
+    margin-bottom:6px;
+  }
+  .img-preview{
+    display:none;
+    width:100%;height:140px;object-fit:cover;
+    border-radius:12px;margin-bottom:8px;
+    background:#111;
+  }
+  .img-preview.on{display:block}
+  .img-row{display:flex;gap:8px}
+  .img-row button{
+    flex:1;background:#2a2a2a;font-size:14px;padding:14px 4px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .img-row button .ico{font-size:20px;line-height:1}
+  .img-row button .lbl{font-size:12px;font-weight:600}
+  .img-clear{width:100%;margin-top:8px;padding:10px;font-size:13px}
+
+  .ed-label{
+    display:block;font-size:12px;color:var(--dim);
+    font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    margin:14px 0 6px;
+  }
+  .ed-input{
+    width:100%;background:#111;color:var(--fg);
+    border:2px solid #444;border-radius:12px;
+    padding:12px 14px;font-size:17px;
+    font-family:inherit;outline:none;
+    transition:border-color .15s;
+  }
+  .ed-input:focus{border-color:var(--accent)}
+
+  .cats-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .cat-row{
+    display:flex;align-items:center;gap:8px;
+    background:#2a2a2a;border-radius:12px;padding:10px 12px;
+  }
+  .cat-row-name{
+    flex:1;font-size:15px;font-weight:600;
+    min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .cat-row-count{
+    font-size:12px;color:var(--dim);
+    font-variant-numeric:tabular-nums;
+    background:#1a1a1a;padding:3px 8px;border-radius:8px;
+    flex-shrink:0;
+  }
+  .cat-row button{
+    padding:8px 10px;font-size:14px;
+    border-radius:9px;min-width:38px;flex-shrink:0;
+  }
+  .cats-add{
+    width:100%;background:#2a2a2a;
+    border:2px dashed #444;color:#888;
+    padding:14px;font-size:15px;
+    margin-bottom:4px;
+  }
+  .cats-add:active{background:#333;color:#bbb}
+  .cats-empty{
+    color:var(--dim);font-size:14px;
+    text-align:center;padding:20px 0;
+  }
+
+  #pick{
+    position:fixed;inset:0;background:#000b;z-index:40;
+    display:none;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  #pick.on{display:flex}
+  .pick-sheet{
+    background:#2a2a2a;border-radius:18px;
+    padding:20px;max-width:400px;width:100%;
+    box-shadow:0 20px 60px #000a;
+    animation:slideup .15s ease;
+  }
+  .pick-sheet h3{margin:0 0 8px;font-size:17px}
+  .pick-msg{
+    color:#bbb;font-size:14px;line-height:1.45;
+    margin-bottom:16px;white-space:pre-line;
+  }
+  .pick-btns{display:flex;flex-direction:column;gap:8px}
+  .pick-btns button{width:100%;padding:14px;font-size:15px}
+
+  #quickbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:10;
+    display:flex;align-items:stretch;gap:8px;
+    padding:10px calc(12px + env(safe-area-inset-right))
+             calc(10px + env(safe-area-inset-bottom))
+             12px;
+    background:#1a1a1aee;
+    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+    border-top:1px solid var(--border);
+    transition:transform .2s ease;
+  }
+  #quickbar.hidden{transform:translateY(140%)}
+  .qb-info{
+    flex:1;min-width:0;text-align:left;
+    background:#2a2a2a;border-radius:16px;
+    padding:10px 14px;
+    display:flex;flex-direction:column;justify-content:center;
+    color:var(--fg);font-family:inherit;
+    border:2px solid var(--select);
+    overflow:hidden;
+  }
+  .qb-name{
+    font-size:13px;color:var(--dim);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .qb-qty{
+    font-size:26px;font-weight:800;line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .qb-btn{
+    flex:0 0 56px;height:64px;font-size:22px;font-weight:800;
+    background:#333;color:var(--fg);border-radius:16px;padding:0;
+  }
+  .qb-btn.plus{
+    flex:0 0 100px;font-size:28px;
+    background:var(--accent);color:#000;
+  }
+  .qb-btn.calc{
+    flex:0 0 48px;
+    background:#2a2a2a;color:var(--select);
+    font-size:22px;
+    border:2px solid var(--select);
+  }
+
+  .mic{
+    background:#2a2a2a;
+    padding:8px 12px;font-size:16px;
+    transition:background .15s, color .15s, transform .06s;
+  }
+  .mic.on{
+    background:#7f1d1d;color:#fca5a5;
+    animation:micpulse 1.4s infinite;
+  }
+  @keyframes micpulse{
+    0%,100%{ box-shadow:0 0 0 0 #f8717188 }
+    70%    { box-shadow:0 0 0 10px #f8717100 }
+  }
+
+  #voiceToast{
+    position:fixed;left:50%;
+    bottom:calc(180px + env(safe-area-inset-bottom));
+    transform:translateX(-50%) translateY(16px);
+    background:#000e;color:#fff;
+    padding:10px 18px;border-radius:14px;
+    font-size:14px;font-weight:600;line-height:1.3;
+    pointer-events:none;z-index:60;
+    opacity:0;transition:opacity .18s, transform .18s;
+    max-width:88vw;text-align:center;
+    box-shadow:0 6px 24px #000a;
+  }
+  #voiceToast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  #voiceToast.warn{background:#7f1d1dee;color:#fecaca}
+  #voiceToast.ok  {background:#14532dee;color:#bbf7d0}
+</style>
+</head>
+<body>
+
+<header>
+  <input id="label" class="label" type="text"
+         placeholder="Без названия" maxlength="80"
+         autocomplete="off" spellcheck="false">
+  <div class="hdr-bottom">
+    <div class="date" id="date"></div>
+    <div class="hdr-right">
+      <span id="total" class="total">0</span>
+      <button id="micBtn" class="mic" onclick="toggleVoice()" title="Голосовой ввод">🎤</button>
+      <button onclick="openSettings()" title="Настройки">⚙</button>
+      <button onclick="openCats()">Категории</button>
+      <button onclick="exportCSV()">CSV</button>
+      <button onclick="resetAll()">Сброс</button>
+      <button class="save" onclick="saveToFile()">💾 Сохранить</button>
+    </div>
+  </div>
+</header>
+
+<main id="grid" data-cols="4" data-dir="ltr" data-tsize="md" data-qsize="md"></main>
+
+<div id="quickbar" class="hidden">
+  <button class="qb-info" onclick="openModal(qbId)">
+    <div class="qb-name" id="qbName"></div>
+    <div class="qb-qty"  id="qbQty">0</div>
+  </button>
+  <button class="qb-btn calc" onclick="openCalc()" title="Умножить ряды">×</button>
+  <button class="qb-btn" onclick="qbBump(-1)">−1</button>
+  <button class="qb-btn plus" onclick="qbBump(1)">+1</button>
+</div>
+
+<div id="modal">
+  <div class="sheet">
+    <h2 id="mName"></h2>
+    <div class="sub" id="mCat"></div>
+    <input id="mInput" type="number" inputmode="numeric" step="1" value="0">
+    <div class="row quick">
+      <button onclick="setZero()">0</button>
+      <button onclick="bump(10)">+10</button>
+      <button onclick="bump(5)">+5</button>
+      <button class="add1" onclick="bump(1)">+1</button>
+    </div>
+
+    <div class="img-block">
+      <div class="img-label">Фото позиции</div>
+      <img id="mPreview" class="img-preview" alt="">
+      <div class="img-row">
+        <button onclick="takePhoto()">
+          <span class="ico">📷</span>
+          <span class="lbl">Снять фото</span>
+        </button>
+        <button onclick="pickFromGallery()">
+          <span class="ico">🖼</span>
+          <span class="lbl">Из галереи</span>
+        </button>
+      </div>
+      <button id="mClear" class="img-clear danger"
+              onclick="clearImage()">🗑 Убрать фото</button>
+    </div>
+
+    <div class="row">
+      <button onclick="editCurrent()">✏️ Изменить</button>
+      <button class="danger" onclick="deleteCurrent()">🗑 Удалить</button>
+    </div>
+
+    <div class="row">
+      <button onclick="closeModal()">Отмена</button>
+      <button class="accent" onclick="saveModal()">✓ Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div id="calc">
+  <div class="sheet">
+    <h2 id="calcTitle">Умножить</h2>
+    <div class="sub">Ряды × В ряду</div>
+
+    <div class="calc-row">
+      <div class="calc-field">
+        <label for="calcRows">Рядов</label>
+        <input id="calcRows" type="number" inputmode="numeric" min="0" value="1">
+      </div>
+      <div class="calc-x">×</div>
+      <div class="calc-field">
+        <label for="calcCols">В ряду</label>
+        <input id="calcCols" type="number" inputmode="numeric" min="0" value="1">
+      </div>
+    </div>
+
+    <div class="calc-total">
+      <span>Итого</span>
+      <strong id="calcTotal" class="zero">0</strong>
+    </div>
+
+    <div class="row">
+      <button onclick="closeCalc()">Отмена</button>
+    </div>
+    <div class="row">
+      <button onclick="calcCommit(-1)">− Вычесть</button>
+      <button class="accent" onclick="calcCommit(1)">+ Добавить</button>
+    </div>
+  </div>
+</div>
+
+<div id="settings">
+  <div class="sheet">
+    <h2>Настройки</h2>
+    <div class="sub">Вид плиток</div>
+
+    <div class="settings-block">
+      <div class="block-label">Плиток в ряду</div>
+      <div class="opt-row" id="sizeRow">
+        <button data-cols="auto" onclick="setGridCols('auto')">Авто</button>
+        <button data-cols="3" onclick="setGridCols('3')">3</button>
+        <button data-cols="4" onclick="setGridCols('4')">4</button>
+        <button data-cols="5" onclick="setGridCols('5')">5</button>
+        <button data-cols="6" onclick="setGridCols('6')">6</button>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <div class="block-label">Направление</div>
+      <div class="opt-row" id="dirRow">
+        <button data-dir="ltr" onclick="setGridDir('ltr')">Слева → вправо</button>
+        <button data-dir="rtl" onclick="setGridDir('rtl')">Справа → влево</button>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <div class="block-label">Размер текста</div>
+      <div class="opt-row" id="tsizeRow">
+        <button data-tsize="sm" onclick="setTextSize('sm')">Мелкий</button>
+        <button data-tsize="md" onclick="setTextSize('md')">Обычный</button>
+        <button data-tsize="lg" onclick="setTextSize('lg')">Крупный</button>
+      </div>
+    </div>
+
+    <div class="settings-block">
+      <div class="block-label">Размер счётчика</div>
+      <div class="opt-row" id="qsizeRow">
+        <button data-qsize="sm" onclick="setQtySize('sm')">Мелкий</button>
+        <button data-qsize="md" onclick="setQtySize('md')">Обычный</button>
+        <button data-qsize="lg" onclick="setQtySize('lg')">Крупный</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <button onclick="closeSettings()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div id="editor">
+  <div class="sheet">
+    <h2 id="edTitle">Новая позиция</h2>
+    <div class="sub" id="edSub">Введите название и категорию</div>
+
+    <div id="edFieldName">
+      <label class="ed-label" for="edName" id="edNameLabel">Название</label>
+      <input id="edName" class="ed-input" type="text" maxlength="60"
+             autocomplete="off" spellcheck="false"
+             placeholder="Например: Кега 20 л">
+    </div>
+
+    <div id="edFieldCat">
+      <label class="ed-label" for="edCat">Категория</label>
+      <input id="edCat" class="ed-input" type="text" maxlength="30"
+             list="catList" autocomplete="off" spellcheck="false"
+             placeholder="Например: Кеги">
+      <datalist id="catList"></datalist>
+    </div>
+
+    <div class="row">
+      <button onclick="closeEditor()">Отмена</button>
+      <button class="accent" onclick="saveEditor()">✓ Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div id="cats">
+  <div class="sheet">
+    <h2>Категории</h2>
+    <div class="sub">Переименуйте, удалите или добавьте раздел</div>
+    <div id="catsList" class="cats-list"></div>
+    <button class="cats-add" onclick="openEditor(null, 'category')">+ Добавить категорию</button>
+    <div class="row">
+      <button onclick="closeCats()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div id="pick">
+  <div class="pick-sheet">
+    <h3 id="pickTitle"></h3>
+    <div id="pickMsg" class="pick-msg"></div>
+    <div id="pickBtns" class="pick-btns"></div>
+  </div>
+</div>
+
+<input id="camInput" type="file" accept="image/*"
+       capture="environment" style="display:none">
+<input id="galInput" type="file" accept="image/*" style="display:none">
+
+<div id="voiceToast"></div>
+
+<script>
+'use strict';
+
+const KEY = 'countlist.v3';
+
+const DEFAULTS = [
+  {id:'crateGrnE', name:'Ящик зелёный',         category:'Ящики пустые',      image:'', qty:0, counted:false},
+  {id:'crateBluE', name:'Ящик синий',           category:'Ящики пустые',      image:'', qty:0, counted:false},
+
+  {id:'crateGrnF', name:'Зелёный с бутылками',  category:'Ящики с бутылками', image:'', qty:0, counted:false},
+  {id:'crateBluF', name:'Синий с прозрачными',  category:'Ящики с бутылками', image:'', qty:0, counted:false},
+  {id:'crateTub',  name:'Синий с Tuborg',       category:'Ящики с бутылками', image:'', qty:0, counted:false},
+
+  {id:'keg15',     name:'Кега 15 л',            category:'Кеги',              image:'', qty:0, counted:false},
+  {id:'keg20',     name:'Кега 20 л',            category:'Кеги',              image:'', qty:0, counted:false},
+  {id:'keg20slim', name:'Кега 20 л узкая',      category:'Кеги',              image:'', qty:0, counted:false},
+  {id:'keg30',     name:'Кега 30 л',            category:'Кеги',              image:'', qty:0, counted:false},
+
+  {id:'palEUR',    name:'Паллета EUR',          category:'Паллеты',           image:'', qty:0, counted:false},
+];
+
+let state       = load();
+let activeId    = null;
+let qbId        = null;
+let editingId   = null;
+let editingCat  = null;
+let editorMode  = 'item';
+
+let calcRowsLast = 1;
+let calcColsLast = 1;
+
+/* ================= состояние ================= */
+function readEmbedded(){
+  try{
+    const el = document.getElementById('embeddedState');
+    if (!el) return null;
+    const text = (el.textContent || '').trim();
+    if (!text || text === 'null') return null;
+    return JSON.parse(text);
+  }catch(e){ console.warn('embedded state повреждён', e); return null; }
+}
+
+function readLocal(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  }catch{ return null; }
+}
+
+function load(){
+  const emb = readEmbedded();
+  const loc = readLocal();
+
+  let chosen = null;
+  if (emb && loc){
+    const e = emb.savedAt || 0;
+    const l = loc.savedAt || 0;
+    chosen = l > e ? loc : emb;
+  } else {
+    chosen = emb || loc;
+  }
+
+  if (!chosen || !Array.isArray(chosen.items)) return seed();
+
+  if (!Array.isArray(chosen.categories)){
+    const seen = new Set();
+    chosen.categories = [];
+    for (const it of chosen.items){
+      const c = it.category || '';
+      if (c && !seen.has(c)){ seen.add(c); chosen.categories.push(c); }
+    }
+  }
+  const set = new Set(chosen.categories);
+  for (const it of chosen.items){
+    const c = it.category || '';
+    if (c && !set.has(c)){ chosen.categories.push(c); set.add(c); }
+  }
+  if (!chosen.gridCols) chosen.gridCols = '4';
+  if (!chosen.gridDir)  chosen.gridDir  = 'ltr';
+  if (!chosen.textSize) chosen.textSize = 'md';
+  if (!chosen.qtySize)  chosen.qtySize  = 'md';
+  return chosen;
+}
+
+function seed(){
+  const items = structuredClone(DEFAULTS);
+  const seen = new Set();
+  const categories = [];
+  for (const it of items){
+    const c = it.category || '';
+    if (c && !seen.has(c)){ seen.add(c); categories.push(c); }
+  }
+  return {
+    date: new Date().toISOString().slice(0,10),
+    label: '',
+    categories,
+    items,
+    lastItem: null,
+    gridCols: '4',
+    gridDir: 'ltr',
+    textSize: 'md',
+    qtySize: 'md',
+    savedAt: 0
+  };
+}
+
+function save(){
+  state.savedAt = Date.now();
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ console.warn('не удалось сохранить', e); }
+}
+
+/* ================= настройки ================= */
+function applyGridCols(){
+  document.getElementById('grid').dataset.cols = state.gridCols || '4';
+}
+function applyGridDir(){
+  document.getElementById('grid').dataset.dir = state.gridDir || 'ltr';
+}
+function applyTextSize(){
+  document.getElementById('grid').dataset.tsize = state.textSize || 'md';
+}
+function applyQtySize(){
+  document.getElementById('grid').dataset.qsize = state.qtySize || 'md';
+}
+
+function setGridCols(v){ state.gridCols = v; save(); applyGridCols(); renderOpts(); render(); }
+function setGridDir(v){  state.gridDir  = v; save(); applyGridDir();  renderOpts(); }
+function setTextSize(v){ state.textSize = v; save(); applyTextSize(); renderOpts(); }
+function setQtySize(v){  state.qtySize  = v; save(); applyQtySize();  renderOpts(); }
+
+function openSettings(){
+  renderOpts();
+  document.getElementById('settings').classList.add('on');
+}
+function closeSettings(){
+  document.getElementById('settings').classList.remove('on');
+}
+
+function renderOpts(){
+  const curCols = String(state.gridCols || '4');
+  document.querySelectorAll('#sizeRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.cols === curCols));
+
+  const curDir = String(state.gridDir || 'ltr');
+  document.querySelectorAll('#dirRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.dir === curDir));
+
+  const curTs = String(state.textSize || 'md');
+  document.querySelectorAll('#tsizeRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.tsize === curTs));
+
+  const curQs = String(state.qtySize || 'md');
+  document.querySelectorAll('#qsizeRow button').forEach(b =>
+    b.classList.toggle('active', b.dataset.qsize === curQs));
+}
+
+/* ================= сохранение в файл ================= */
+async function saveToFile(){
+  let html;
+  try{ html = buildUpdatedHtml(); }
+  catch(e){
+    console.error(e);
+    alert('Не удалось собрать файл: ' + e.message);
+    return;
+  }
+
+  const filename = suggestedFilename();
+
+  if (typeof window.showSaveFilePicker === 'function'){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{description:'HTML', accept:{'text/html':['.html']}}]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(html);
+      await writable.close();
+      await showPick({
+        title: 'Сохранено',
+        message: 'Файл перезаписан. Все изменения теперь внутри него.',
+        options: [{label:'Понятно', value:null}]
+      });
+      return;
+    }catch(e){
+      if (e && e.name === 'AbortError') return;
+      console.warn('showSaveFilePicker не сработал, откат к скачиванию', e);
+    }
+  }
+
+  downloadHtml(html, filename);
+
+  await showPick({
+    title: 'Файл сохранён',
+    message: `Файл «${filename}» скачан в папку «Загрузки».\n\nЗамените им текущий файл приложения — тогда все изменения сохранятся внутри HTML и поедут вместе с ним на любое устройство.`,
+    options: [{label:'Понятно', value:null}]
+  });
+}
+
+function downloadHtml(html, filename){
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function suggestedFilename(){
+  return `${slug(state.label || 'подсчёт')}-${state.date}.html`;
+}
+
+function buildUpdatedHtml(){
+  const clone = document.documentElement.cloneNode(true);
+
+  ['#grid','#catsList','#catList','#pickBtns'].forEach(sel => {
+    const el = clone.querySelector(sel);
+    if (el) el.innerHTML = '';
+  });
+  const mainClone = clone.querySelector('#grid');
+  if (mainClone){
+    mainClone.setAttribute('data-cols',  state.gridCols || '4');
+    mainClone.setAttribute('data-dir',   state.gridDir  || 'ltr');
+    mainClone.setAttribute('data-tsize', state.textSize || 'md');
+    mainClone.setAttribute('data-qsize', state.qtySize  || 'md');
+  }
+
+  ['#modal','#editor','#cats','#pick','#calc','#settings'].forEach(sel => {
+    const el = clone.querySelector(sel);
+    if (el) el.classList.remove('on');
+  });
+  const qb = clone.querySelector('#quickbar');
+  if (qb) qb.classList.add('hidden');
+
+  const preview = clone.querySelector('#mPreview');
+  if (preview){
+    preview.removeAttribute('src');
+    preview.classList.remove('on');
+  }
+  const mClear = clone.querySelector('#mClear');
+  if (mClear) mClear.removeAttribute('style');
+
+  ['#mName','#mCat','#qbName','#qbQty','#pickTitle','#pickMsg',
+   '#edTitle','#edSub','#total','#date','#voiceToast','#calcTitle'].forEach(sel => {
+    const el = clone.querySelector(sel);
+    if (el) el.textContent = '';
+  });
+
+  ['#edName','#edCat','#label'].forEach(sel => {
+    const el = clone.querySelector(sel);
+    if (el) el.value = '';
+  });
+  const mInput = clone.querySelector('#mInput');
+  if (mInput) mInput.value = '0';
+
+  const calcRows = clone.querySelector('#calcRows');
+  if (calcRows) calcRows.value = '1';
+  const calcCols = clone.querySelector('#calcCols');
+  if (calcCols) calcCols.value = '1';
+  const calcTotal = clone.querySelector('#calcTotal');
+  if (calcTotal){ calcTotal.textContent = '0'; calcTotal.className = 'zero'; }
+
+  const micBtn = clone.querySelector('#micBtn');
+  if (micBtn) micBtn.classList.remove('on');
+
+  const toast = clone.querySelector('#voiceToast');
+  if (toast) toast.className = '';
+
+  clone.querySelectorAll('#settings .opt-row button')
+    .forEach(b => b.classList.remove('active'));
+
+  let es = clone.querySelector('#embeddedState');
+  if (!es){
+    es = document.createElement('script');
+    es.id = 'embeddedState';
+    es.type = 'application/json';
+    const head = clone.querySelector('head');
+    if (head) head.appendChild(es);
+    else clone.appendChild(es);
+  }
+  es.textContent = safeJson(state);
+
+  return '<!DOCTYPE html>\n' + clone.outerHTML;
+}
+
+function safeJson(obj){
+  return JSON.stringify(obj).replace(/</g, '\\u003c');
+}
+
+/* ================= сброс ================= */
+async function resetAll(){
+  const ok = await showPick({
+    title: 'Сбросить всё?',
+    message: 'Текущий подсчёт и список позиций будут удалены, вернётся исходный набор.',
+    options: [
+      {label:'Сбросить и начать заново', value:'yes', style:'danger'},
+      {label:'Отмена', value:null}
+    ]
+  });
+  if (ok !== 'yes') return;
+
+  const keep = {
+    gridCols: state.gridCols || '4',
+    gridDir:  state.gridDir  || 'ltr',
+    textSize: state.textSize || 'md',
+    qtySize:  state.qtySize  || 'md'
+  };
+
+  localStorage.removeItem(KEY);
+  state = seed();
+  Object.assign(state, keep);
+
+  qbId = null;
+  activeId = null;
+  document.getElementById('quickbar').classList.add('hidden');
+  document.getElementById('modal').classList.remove('on');
+  document.getElementById('editor').classList.remove('on');
+  document.getElementById('cats').classList.remove('on');
+  document.getElementById('calc').classList.remove('on');
+  document.getElementById('settings').classList.remove('on');
+  save();
+  applyGridCols();
+  applyGridDir();
+  applyTextSize();
+  applyQtySize();
+  render();
+}
+
+/* ================= отрисовка ================= */
+function render(){
+  document.getElementById('date').textContent =
+    new Date(state.date + 'T00:00').toLocaleDateString('ru-RU',
+      {day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('label').value = state.label || '';
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  let total = 0;
+
+  for (const it of state.items.filter(i => !i.category)){
+    total += it.qty;
+    grid.appendChild(makeTile(it));
+  }
+
+  for (const cat of state.categories){
+    const list = state.items.filter(i => i.category === cat);
+    if (list.length === 0) continue;
+
+    const catSum = list.reduce((s, it) => s + it.qty, 0);
+    const hdr = document.createElement('div');
+    hdr.className = 'cat-title';
+    hdr.innerHTML = `<span>${escapeHtml(cat)}</span>
+                     <span class="cat-sum">${catSum.toLocaleString('ru-RU')}</span>`;
+    grid.appendChild(hdr);
+
+    for (const it of list){
+      total += it.qty;
+      grid.appendChild(makeTile(it));
+    }
+  }
+
+  const addTile = document.createElement('div');
+  addTile.className = 'add-tile';
+  addTile.textContent = '+';
+  addTile.title = 'Добавить позицию';
+  addTile.onclick = () => openEditor(null, 'item');
+  grid.appendChild(addTile);
+
+  document.getElementById('total').textContent = total.toLocaleString('ru-RU');
+}
+
+function makeTile(it){
+  const el = document.createElement('div');
+  el.className = 'tile'
+    + (it.qty > 0 ? ' counted' : '')
+    + (it.id === qbId ? ' selected' : '');
+  el.dataset.id = it.id;
+  el.innerHTML = `
+    ${it.image ? `<img src="${it.image}" alt="">` : ''}
+    <div class="name">${escapeHtml(it.name)}</div>
+    <div class="qty ${it.qty ? '' : 'zero'}">${it.qty}</div>`;
+  return el;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+/* ================= название документа ================= */
+const labelEl = document.getElementById('label');
+labelEl.addEventListener('input', () => { state.label = labelEl.value; save(); });
+labelEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); labelEl.blur(); }
+});
+labelEl.addEventListener('blur', () => {
+  state.label = labelEl.value.trim();
+  labelEl.value = state.label;
+  save();
+});
+window.addEventListener('beforeunload', () => {
+  state.label = labelEl.value.trim();
+  save();
+});
+
+/* ================= тап / долгое нажатие ================= */
+const gridEl = document.getElementById('grid');
+let pressTimer  = null;
+let pressTarget = null;
+let longPressed = false;
+let moved       = false;
+let startX = 0, startY = 0;
+
+gridEl.addEventListener('pointerdown', e => {
+  if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
+  const tile = e.target.closest('.tile');
+  if (!tile) return;
+
+  longPressed = false;
+  moved       = false;
+  startX = e.clientX;
+  startY = e.clientY;
+  pressTarget = tile;
+  pressTimer = setTimeout(() => {
+    longPressed = true;
+    openModal(tile.dataset.id);
+    navigator.vibrate?.(15);
+  }, 500);
+});
+
+document.addEventListener('pointermove', e => {
+  if (!pressTimer) return;
+  if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10){
+    moved = true;
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+});
+
+document.addEventListener('pointerup', () => {
+  const wasPressing = pressTimer !== null;
+  clearTimeout(pressTimer);
+  pressTimer = null;
+  if (!wasPressing || longPressed || moved || !pressTarget) return;
+
+  const id = pressTarget.dataset.id;
+  if (id === qbId){
+    openModal(id);
+  } else {
+    qbShow(id);
+  }
+  pressTarget = null;
+});
+
+document.addEventListener('pointercancel', () => {
+  clearTimeout(pressTimer);
+  pressTimer = null;
+});
+
+gridEl.addEventListener('contextmenu', e => {
+  const tile = e.target.closest('.tile');
+  if (tile){ e.preventDefault(); openModal(tile.dataset.id); }
+});
+
+/* ================= нижняя панель ================= */
+function qbShow(id){
+  const it = state.items.find(i => i.id === id);
+  if (!it) return;
+  qbId = id;
+  state.lastItem = id;
+  save();
+  document.getElementById('qbName').textContent = it.name;
+  document.getElementById('qbQty').textContent  = it.qty;
+  document.getElementById('quickbar').classList.remove('hidden');
+  document.querySelectorAll('.tile.selected')
+    .forEach(t => t.classList.remove('selected'));
+  const tile = document.querySelector(`.tile[data-id="${id}"]`);
+  if (tile) tile.classList.add('selected');
+}
+
+function qbBump(n){
+  if (!qbId) return;
+  const it = state.items.find(i => i.id === qbId);
+  if (!it) return;
+  it.qty = Math.max(0, it.qty + n);
+  it.counted = true;
+  document.getElementById('qbQty').textContent = it.qty;
+  save(); render();
+  navigator.vibrate?.(8);
+}
+
+/* ================= калькулятор ================= */
+function openCalc(){
+  if (!qbId) return;
+  const it = state.items.find(i => i.id === qbId);
+  if (!it) return;
+
+  document.getElementById('calcTitle').textContent = it.name;
+
+  const rowsEl = document.getElementById('calcRows');
+  const colsEl = document.getElementById('calcCols');
+  rowsEl.value = calcRowsLast;
+  colsEl.value = calcColsLast;
+  updateCalcTotal();
+
+  document.getElementById('calc').classList.add('on');
+  setTimeout(() => { rowsEl.focus(); rowsEl.select(); }, 60);
+}
+
+function closeCalc(){
+  document.getElementById('calc').classList.remove('on');
+}
+
+function updateCalcTotal(){
+  const rows = parseInt(document.getElementById('calcRows').value) || 0;
+  const cols = parseInt(document.getElementById('calcCols').value) || 0;
+  const n = rows * cols;
+  const el = document.getElementById('calcTotal');
+  el.textContent = n.toLocaleString('ru-RU');
+  el.className = n > 0 ? '' : 'zero';
+}
+
+function calcCommit(sign){
+  const rows = parseInt(document.getElementById('calcRows').value) || 0;
+  const cols = parseInt(document.getElementById('calcCols').value) || 0;
+  const n = rows * cols;
+
+  if (n <= 0){
+    closeCalc();
+    return;
+  }
+
+  calcRowsLast = rows;
+  calcColsLast = cols;
+
+  qbBump(sign * n);
+  closeCalc();
+  showToast(`${sign > 0 ? '+' : '−'}${n.toLocaleString('ru-RU')}`,
+            sign > 0 ? 'ok' : '');
+}
+
+['calcRows','calcCols'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', updateCalcTotal);
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); calcCommit(1); }
+    if (e.key === 'Escape'){ e.preventDefault(); closeCalc(); }
+  });
+});
+
+document.getElementById('calc').addEventListener('click', e => {
+  if (e.target.id === 'calc') closeCalc();
+});
+
+/* ================= окно позиции ================= */
+function openModal(id){
+  activeId = id;
+  const it = state.items.find(i => i.id === id);
+  if (!it) return;
+  document.getElementById('mName').textContent = it.name;
+  document.getElementById('mCat').textContent  = it.category || '';
+  document.getElementById('mInput').value = it.qty;
+  updatePreview();
+  document.getElementById('modal').classList.add('on');
+  document.getElementById('quickbar').classList.add('hidden');
+  setTimeout(() => {
+    const inp = document.getElementById('mInput');
+    inp.focus(); inp.select();
+  }, 60);
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('on');
+  activeId = null;
+  if (qbId) qbShow(qbId);
+}
+
+function bump(n){
+  const inp = document.getElementById('mInput');
+  inp.value = (parseInt(inp.value) || 0) + n;
+}
+function setZero(){ document.getElementById('mInput').value = 0; }
+
+function saveModal(){
+  if (!activeId) return;
+  const it = state.items.find(i => i.id === activeId);
+  if (!it) return;
+  it.qty = Math.max(0, parseInt(document.getElementById('mInput').value) || 0);
+  it.counted = true;
+  const done = activeId;
+  activeId = null;
+  document.getElementById('modal').classList.remove('on');
+  save(); render();
+  qbShow(done);
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+/* ================= изменение / удаление позиции ================= */
+function editCurrent(){
+  if (!activeId) return;
+  const it = state.items.find(i => i.id === activeId);
+  if (!it) return;
+  it.qty = Math.max(0, parseInt(document.getElementById('mInput').value) || 0);
+  it.counted = true;
+  save(); render();
+  const id = activeId;
+  activeId = null;
+  document.getElementById('modal').classList.remove('on');
+  openEditor(id, 'item');
+}
+
+async function deleteCurrent(){
+  if (!activeId) return;
+  const id = activeId;
+  const it = state.items.find(i => i.id === id);
+  if (!it) return;
+
+  const ok = await showPick({
+    title: 'Удалить позицию?',
+    message: `«${it.name}» будет удалена вместе с количеством и фото.`,
+    options: [
+      {label:'Удалить', value:'yes', style:'danger'},
+      {label:'Отмена', value:null}
+    ]
+  });
+  if (ok !== 'yes') return;
+
+  state.items = state.items.filter(i => i.id !== id);
+  if (qbId === id){
+    qbId = null;
+    document.getElementById('quickbar').classList.add('hidden');
+  }
+  if (state.lastItem === id) state.lastItem = null;
+  activeId = null;
+  document.getElementById('modal').classList.remove('on');
+  save(); render();
+}
+
+/* ================= редактор позиции / категории ================= */
+function openEditor(idOrIdx, mode){
+  editorMode = mode;
+  editingId  = null;
+  editingCat = null;
+
+  const titleEl = document.getElementById('edTitle');
+  const subEl   = document.getElementById('edSub');
+  const nameEl  = document.getElementById('edName');
+  const catEl   = document.getElementById('edCat');
+  const nameLbl = document.getElementById('edNameLabel');
+  const fldCat  = document.getElementById('edFieldCat');
+
+  document.getElementById('catList').innerHTML =
+    state.categories.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
+
+  if (mode === 'category'){
+    fldCat.style.display = 'none';
+    nameLbl.textContent = 'Название категории';
+    nameEl.placeholder = 'Например: Кеги';
+    if (idOrIdx === null){
+      titleEl.textContent = 'Новая категория';
+      subEl.textContent   = 'Введите название раздела';
+      nameEl.value = '';
+    } else {
+      editingCat = idOrIdx;
+      titleEl.textContent = 'Изменить категорию';
+      subEl.textContent   = 'Новое имя отобразится у всех её позиций';
+      nameEl.value = state.categories[idOrIdx];
+    }
+  } else {
+    fldCat.style.display = '';
+    nameLbl.textContent = 'Название';
+    nameEl.placeholder = 'Например: Кега 20 л';
+    if (idOrIdx === null){
+      titleEl.textContent = 'Новая позиция';
+      subEl.textContent   = 'Введите название и категорию';
+      nameEl.value = '';
+      catEl.value  = '';
+    } else {
+      editingId = idOrIdx;
+      const it = state.items.find(i => i.id === idOrIdx);
+      if (!it) return;
+      titleEl.textContent = 'Изменить позицию';
+      subEl.textContent   = 'Переименуйте или смените категорию';
+      nameEl.value = it.name;
+      catEl.value  = it.category || '';
+    }
+  }
+
+  document.getElementById('editor').classList.add('on');
+  setTimeout(() => nameEl.focus(), 60);
+}
+
+function closeEditor(){
+  document.getElementById('editor').classList.remove('on');
+  editingId  = null;
+  editingCat = null;
+}
+
+function saveEditor(){
+  const name = document.getElementById('edName').value.trim();
+  if (!name){
+    alert(editorMode === 'category'
+      ? 'Введите название категории'
+      : 'Введите название позиции');
+    document.getElementById('edName').focus();
+    return;
+  }
+
+  if (editorMode === 'category'){
+    const dup = state.categories.findIndex((c, i) =>
+      c.toLowerCase() === name.toLowerCase() && i !== editingCat);
+    if (dup !== -1){ alert('Такая категория уже есть'); return; }
+
+    if (editingCat === null){
+      state.categories.push(name);
+    } else {
+      const old = state.categories[editingCat];
+      state.categories[editingCat] = name;
+      for (const it of state.items){
+        if (it.category === old) it.category = name;
+      }
+    }
+    save(); render(); renderCatList();
+    closeEditor();
+    return;
+  }
+
+  const cat = document.getElementById('edCat').value.trim();
+  if (cat && !state.categories.includes(cat)) state.categories.push(cat);
+
+  if (editingId){
+    const it = state.items.find(i => i.id === editingId);
+    if (it){ it.name = name; it.category = cat; }
+  } else {
+    const id = 'i' + Date.now().toString(36)
+             + Math.random().toString(36).slice(2,6);
+    state.items.push({
+      id, name, category: cat,
+      image: '', qty: 0, counted: false
+    });
+  }
+
+  const touched = editingId;
+  save(); render();
+  closeEditor();
+  if (touched && qbId === touched) qbShow(qbId);
+}
+
+document.getElementById('editor').addEventListener('click', e => {
+  if (e.target.id === 'editor') closeEditor();
+});
+
+['edName','edCat'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); saveEditor(); }
+    if (e.key === 'Escape'){ e.preventDefault(); closeEditor(); }
+  });
+});
+
+/* ================= управление категориями ================= */
+function openCats(){
+  renderCatList();
+  document.getElementById('cats').classList.add('on');
+}
+function closeCats(){
+  document.getElementById('cats').classList.remove('on');
+}
+
+function renderCatList(){
+  const box = document.getElementById('catsList');
+  box.innerHTML = '';
+
+  if (state.categories.length === 0){
+    box.innerHTML = '<div class="cats-empty">Пока нет ни одной категории</div>';
+    return;
+  }
+
+  state.categories.forEach((cat, idx) => {
+    const count = state.items.filter(i => i.category === cat).length;
+
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+
+    const name = document.createElement('div');
+    name.className = 'cat-row-name';
+    name.textContent = cat;
+    row.appendChild(name);
+
+    const cnt = document.createElement('div');
+    cnt.className = 'cat-row-count';
+    cnt.textContent = count;
+    row.appendChild(cnt);
+
+    const rn = document.createElement('button');
+    rn.textContent = '✏️';
+    rn.title = 'Переименовать';
+    rn.onclick = () => openEditor(idx, 'category');
+    row.appendChild(rn);
+
+    const dl = document.createElement('button');
+    dl.textContent = '🗑';
+    dl.title = 'Удалить';
+    dl.className = 'danger';
+    dl.onclick = () => deleteCategory(idx);
+    row.appendChild(dl);
+
+    box.appendChild(row);
+  });
+}
+
+async function deleteCategory(idx){
+  const cat = state.categories[idx];
+  if (cat === undefined) return;
+  const inCat = state.items.filter(i => i.category === cat);
+  const n = inCat.length;
+
+  if (n === 0){
+    const ok = await showPick({
+      title: 'Удалить категорию?',
+      message: `Категория «${cat}» пуста.`,
+      options: [
+        {label:'Удалить', value:'yes', style:'danger'},
+        {label:'Отмена', value:null}
+      ]
+    });
+    if (ok !== 'yes') return;
+    state.categories.splice(idx, 1);
+  } else {
+    const choice = await showPick({
+      title: `Категория «${cat}»`,
+      message: `Содержит ${n} ${plural(n,'позицию','позиции','позиций')}. Что сделать?`,
+      options: [
+        {label:'Удалить вместе с позициями', value:'delAll', style:'danger'},
+        {label:'Перенести в «Без категории»', value:'orphan'},
+        {label:'Отмена', value:null}
+      ]
+    });
+
+    if (choice === 'delAll'){
+      state.items = state.items.filter(i => i.category !== cat);
+      state.categories.splice(idx, 1);
+      if (qbId && !state.items.find(i => i.id === qbId)){
+        qbId = null;
+        document.getElementById('quickbar').classList.add('hidden');
+      }
+      if (state.lastItem && !state.items.find(i => i.id === state.lastItem)){
+        state.lastItem = null;
+      }
+    } else if (choice === 'orphan'){
+      for (const it of inCat) it.category = '';
+      state.categories.splice(idx, 1);
+    } else {
+      return;
+    }
+  }
+
+  save(); render(); renderCatList();
+}
+
+function plural(n, one, few, many){
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+document.getElementById('cats').addEventListener('click', e => {
+  if (e.target.id === 'cats') closeCats();
+});
+
+document.getElementById('settings').addEventListener('click', e => {
+  if (e.target.id === 'settings') closeSettings();
+});
+
+/* ================= мини-диалог ================= */
+function showPick({title, message, options}){
+  return new Promise(resolve => {
+    const el = document.getElementById('pick');
+    document.getElementById('pickTitle').textContent = title;
+    document.getElementById('pickMsg').textContent = message || '';
+
+    const btns = document.getElementById('pickBtns');
+    btns.innerHTML = '';
+
+    for (const opt of options){
+      const b = document.createElement('button');
+      b.textContent = opt.label;
+      if (opt.style) b.className = opt.style;
+      b.onclick = () => {
+        el.classList.remove('on');
+        resolve(opt.value);
+      };
+      btns.appendChild(b);
+    }
+    el.classList.add('on');
+  });
+}
+
+/* ================= фото ================= */
+function updatePreview(){
+  const img = document.getElementById('mPreview');
+  const clearBtn = document.getElementById('mClear');
+  const it = state.items.find(i => i.id === activeId);
+  if (it && it.image){
+    img.src = it.image;
+    img.classList.add('on');
+    clearBtn.style.display = '';
+  } else {
+    img.removeAttribute('src');
+    img.classList.remove('on');
+    clearBtn.style.display = 'none';
+  }
+}
+
+function takePhoto(){
+  if (!activeId) return;
+  const inp = document.getElementById('camInput');
+  inp.value = '';
+  inp.onchange = () => handleImageFile(inp.files?.[0]);
+  inp.click();
+}
+
+function pickFromGallery(){
+  if (!activeId) return;
+  const inp = document.getElementById('galInput');
+  inp.value = '';
+  inp.onchange = () => handleImageFile(inp.files?.[0]);
+  inp.click();
+}
+
+async function handleImageFile(file){
+  if (!file) return;
+  try{
+    const data = await compressImage(file, 360, 0.75);
+    const it = state.items.find(i => i.id === activeId);
+    if (!it) return;
+    it.image = data;
+    save();
+    updatePreview();
+  }catch(e){
+    console.warn(e);
+    alert('Не удалось прочитать изображение');
+  }
+}
+
+function clearImage(){
+  if (!activeId) return;
+  const it = state.items.find(i => i.id === activeId);
+  if (!it) return;
+  it.image = '';
+  save();
+  updatePreview();
+}
+
+async function compressImage(file, max = 360, quality = 0.75){
+  let source = null;
+  let w = 0, h = 0;
+  let objectUrl = null;
+
+  if (typeof createImageBitmap === 'function'){
+    try{
+      source = await createImageBitmap(file, {imageOrientation:'from-image'});
+      w = source.width;
+      h = source.height;
+    }catch{ source = null; }
+  }
+
+  if (!source){
+    objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = objectUrl;
+    await img.decode();
+    source = img;
+    w = img.naturalWidth  || img.width;
+    h = img.naturalHeight || img.height;
+  }
+
+  try{
+    const s = Math.min(1, max / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width  = Math.max(1, Math.round(w * s));
+    c.height = Math.max(1, Math.round(h * s));
+    c.getContext('2d').drawImage(source, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', quality);
+  }finally{
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    if (source && source.close) source.close();
+  }
+}
+
+/* ================= экспорт CSV ================= */
+function slug(s){
+  return (s || '')
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, '')
+    .replace(/\s+/g, '-')
+    .slice(0, 50) || 'подсчёт';
+}
+
+function exportCSV(){
+  const rows = [
+    ['Название', state.label || ''],
+    ['Дата',     state.date],
+    [],
+    ['Категория','Позиция','Количество']
+  ];
+  for (const it of state.items.filter(i => !i.category))
+    rows.push(['', it.name, it.qty]);
+  for (const cat of state.categories){
+    for (const it of state.items.filter(i => i.category === cat))
+      rows.push([cat, it.name, it.qty]);
+  }
+
+  const csv = rows
+    .map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(';'))
+    .join('\r\n');
+
+  const bom = '\uFEFF';
+  const url = URL.createObjectURL(
+    new Blob([bom + csv], {type:'text/csv;charset=utf-8'})
+  );
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `подсчёт-${slug(state.label)}-${state.date}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ================= Esc ================= */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('settings').classList.contains('on')){ closeSettings(); return; }
+  if (document.getElementById('calc').classList.contains('on')){ closeCalc(); return; }
+  if (document.getElementById('editor').classList.contains('on')){ closeEditor(); return; }
+  if (document.getElementById('cats').classList.contains('on')){ closeCats(); return; }
+  if (activeId) closeModal();
+});
+
+/* ================= голосовой ввод ================= */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let recognition  = null;
+let listening    = false;
+let restartTimer = null;
+
+const RU_NUMS = {
+  ноль:0, нуль:0,
+  один:1, одна:1, одну:1, одно:1,
+  два:2, две:2, двух:2,
+  три:3, трех:3, трёх:3,
+  четыре:4, четырех:4, четырёх:4,
+  пять:5, пяти:5,
+  шесть:6, шести:6,
+  семь:7, семи:7,
+  восемь:8, восьми:8,
+  девять:9, девяти:9,
+  десять:10, десяти:10,
+  одиннадцать:11, двенадцать:12, тринадцать:13, четырнадцать:14,
+  пятнадцать:15, шестнадцать:16, семнадцать:17, восемнадцать:18,
+  девятнадцать:19,
+  двадцать:20, тридцать:30, сорок:40, пятьдесят:50,
+  шестьдесят:60, семьдесят:70, восемьдесят:80, девяносто:90,
+  сто:100, двести:200, триста:300, четыреста:400,
+  пятьсот:500, шестьсот:600, семьсот:700, восемьсот:800, девятьсот:900,
+};
+
+function normalizeRu(s){
+  return String(s || '')
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function extractNumber(text){
+  const digits = text.match(/\d+/);
+  if (digits) return parseInt(digits[0], 10);
+
+  const words = normalizeRu(text).split(/\s+/);
+  let sum = 0, found = false;
+  for (const w of words){
+    const n = RU_NUMS[w];
+    if (n !== undefined){ sum += n; found = true; }
+  }
+  return found ? sum : null;
+}
+
+function matchItem(text){
+  const t = normalizeRu(text);
+  if (!t) return null;
+
+  const stop = new Set([
+    'плюс','минус','добавь','прибавь','убери','отними',
+    'и','в','на','для','с','к','по','мл','шт','штук','штуки','л','литров','литра'
+  ]);
+
+  const tWords = t.split(' ').filter(w =>
+    w.length >= 2 && !stop.has(w)
+  );
+  if (tWords.length === 0) return null;
+
+  let best = null, bestRatio = 0;
+  for (const it of state.items){
+    const nWords = normalizeRu(it.name).split(' ').filter(w => w.length >= 2);
+    if (nWords.length === 0) continue;
+
+    let hit = 0;
+    for (const tw of tWords){
+      if (nWords.some(nw =>
+        nw === tw || nw.startsWith(tw) || tw.startsWith(nw)
+      )) hit++;
+    }
+    const ratio = hit / tWords.length;
+    if (ratio > bestRatio){
+      bestRatio = ratio;
+      best = it;
+    }
+  }
+  return bestRatio >= 0.5 ? best : null;
+}
+
+let toastTimer = null;
+function showToast(msg, kind){
+  const el = document.getElementById('voiceToast');
+  el.textContent = msg;
+  el.className = 'on' + (kind ? ' ' + kind : '');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = kind || ''; }, 2200);
+}
+
+function processVoiceCommand(rawText){
+  const t = normalizeRu(rawText);
+  if (!t) return;
+  console.log('[voice] heard:', rawText);
+
+  if (/(^| )(стоп|хватит|закончить|выключи|выключить)( |$)/.test(t)){
+    stopVoice();
+    showToast('Голосовой ввод выключен');
+    return;
+  }
+
+  const isPlus  = /(^| )(плюс|добав|прибав|плюсуй)( |$)/.test(t) || /\+/.test(t);
+  const isMinus = /(^| )(минус|убери|уменьши|отними)( |$)/.test(t)   || /-/.test(t);
+
+  if (isPlus || isMinus){
+    if (!qbId){
+      showToast('Сначала выберите позицию', 'warn');
+      return;
+    }
+    const n = extractNumber(t) || 1;
+    const delta = isMinus ? -n : n;
+    qbBump(delta);
+    const it = state.items.find(i => i.id === qbId);
+    showToast(`${delta > 0 ? '+' : ''}${delta} — ${it ? it.name : ''}`.trim(),
+              delta > 0 ? 'ok' : '');
+    return;
+  }
+
+  const it = matchItem(rawText);
+  if (it){
+    qbShow(it.id);
+    showToast('Выбрано: ' + it.name, 'ok');
+    return;
+  }
+
+  showToast('Не понял: ' + rawText, 'warn');
+}
+
+function startVoice(){
+  if (!recognition || !listening) return;
+  try{
+    recognition.start();
+  }catch(e){ /* уже запущено */ }
+}
+
+function stopVoice(){
+  listening = false;
+  const btn = document.getElementById('micBtn');
+  if (btn) btn.classList.remove('on');
+  if (restartTimer){ clearTimeout(restartTimer); restartTimer = null; }
+  if (recognition){
+    try{ recognition.stop(); }catch{}
+  }
+}
+
+function toggleVoice(){
+  if (!recognition){
+    showToast('Голосовой ввод не поддерживается. Откройте в Chrome, Edge или Safari.',
+              'warn');
+    return;
+  }
+  if (listening){
+    stopVoice();
+    showToast('Голосовой ввод выключен');
+  } else {
+    listening = true;
+    const btn = document.getElementById('micBtn');
+    if (btn) btn.classList.add('on');
+    startVoice();
+    showToast('Слушаю...');
+  }
+}
+
+if (SpeechRecognition){
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ru-RU';
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (event) => {
+    for (let i = event.resultIndex; i < event.results.length; i++){
+      const res = event.results[i];
+      if (!res.isFinal) continue;
+      const text = (res[0].transcript || '').trim();
+      if (text) processVoiceCommand(text);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    console.warn('[voice] error:', e.error);
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+      stopVoice();
+      showToast('Нет доступа к микрофону. Проверьте HTTPS и разрешения.', 'warn');
+    }
+  };
+
+  recognition.onend = () => {
+    if (listening){
+      if (restartTimer) clearTimeout(restartTimer);
+      restartTimer = setTimeout(() => { startVoice(); }, 400);
+    }
+  };
+
+  recognition.onstart = () => {
+    if (restartTimer){ clearTimeout(restartTimer); restartTimer = null; }
+  };
+}
+
+/* ================= запуск ================= */
+applyGridCols();
+applyGridDir();
+applyTextSize();
+applyQtySize();
+render();
+if (state.lastItem && state.items.find(i => i.id === state.lastItem)){
+  qbShow(state.lastItem);
+}
+</script>
+</body>
+</html>
