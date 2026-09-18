@@ -212,6 +212,24 @@
   main[data-cols="5"] .add-tile,
   main[data-cols="6"] .add-tile{ font-size:34px; }
 
+  /* --- reorder mode (drag tiles to rearrange) --- */
+  body.reorder main .tile{
+    cursor:grab;
+    touch-action:none;
+    box-shadow:inset 0 0 0 2px #ffffff1f;
+  }
+  body.reorder main .tile:active{ transform:none; }
+  body.reorder main .tile.dragging{
+    cursor:grabbing;
+    z-index:10;
+    opacity:.92;
+    transform:scale(1.06);
+    border-color:var(--accent);
+    box-shadow:0 10px 26px #000c;
+    transition:none;
+  }
+  #reorderBtn.active{ background:var(--accent); color:#000; }
+
   #modal,#editor,#cats,#calc,#settings,#counter{
     position:fixed;inset:0;background:#000b;z-index:20;
     display:none;align-items:flex-end;
@@ -573,6 +591,7 @@
     <div class="hdr-right">
       <span id="total" class="total">0</span>
       <button id="micBtn" class="mic" onclick="toggleVoice()" title="Voice input" data-i18n-title="voice.title">🎤</button>
+      <button id="reorderBtn" onclick="toggleReorder()" title="Rearrange tiles" data-i18n-title="reorder.title">↕</button>
       <button onclick="openSettings()" title="Settings" data-i18n-title="settings.title">⚙</button>
       <button onclick="openCats()" data-i18n="categories.title">Categories</button>
       <button onclick="exportCSV()" data-i18n="csv">CSV</button>
@@ -864,6 +883,9 @@ const I18N = {
     'settings.medium':'Обычный',
     'settings.large':'Крупный',
     'settings.language':'Язык',
+    'reorder.title':'Перестановка плиток',
+    'reorder.on':'Перетащите плитки, чтобы изменить порядок',
+    'reorder.done':'Порядок сохранён',
     'editor.newItem':'Новая позиция',
     'editor.subItem':'Введите название и категорию',
     'editor.name':'Название',
@@ -963,6 +985,9 @@ const I18N = {
     'settings.medium':'Normal',
     'settings.large':'Large',
     'settings.language':'Language',
+    'reorder.title':'Rearrange tiles',
+    'reorder.on':'Drag tiles to change the order',
+    'reorder.done':'Order saved',
     'editor.newItem':'New item',
     'editor.subItem':'Enter name and category',
     'editor.name':'Name',
@@ -1062,6 +1087,9 @@ const I18N = {
     'settings.medium':'Parasts',
     'settings.large':'Liels',
     'settings.language':'Valoda',
+    'reorder.title':'Pārkārtot flīzes',
+    'reorder.on':'Velciet flīzes, lai mainītu secību',
+    'reorder.done':'Secība saglabāta',
     'editor.newItem':'Jauna pozīcija',
     'editor.subItem':'Ievadiet nosaukumu un kategoriju',
     'editor.name':'Nosaukums',
@@ -1161,6 +1189,9 @@ const I18N = {
     'settings.medium':'正常',
     'settings.large':'大',
     'settings.language':'语言',
+    'reorder.title':'排列方块',
+    'reorder.on':'拖动方块以更改顺序',
+    'reorder.done':'顺序已保存',
     'editor.newItem':'新项目',
     'editor.subItem':'输入名称和分类',
     'editor.name':'名称',
@@ -1275,9 +1306,9 @@ const DEFAULT_ITEMS = {
   ru: [
     {id:'crateGrnE', name:'Ящик зелёный',        category:'Ящики пустые'},
     {id:'crateBluE', name:'Ящик синий',          category:'Ящики пустые'},
-    {id:'crateGrnF', name:'Зелёный с бутылками', category:'Ящики с бутылками'},
     {id:'crateBluF', name:'Синий с прозрачными', category:'Ящики с бутылками'},
     {id:'crateTub',  name:'Синий с Tuborg',      category:'Ящики с бутылками'},
+    {id:'crateGrnF', name:'Зелёный с бутылками', category:'Ящики с бутылками'},
     {id:'crateGrnGarage', name:'Зелёный с Garage', category:'Ящики с бутылками'},
     {id:'keg15',     name:'Кега 15 л',           category:'Кеги'},
     {id:'keg20',     name:'Кега 20 л',           category:'Кеги'},
@@ -1288,9 +1319,9 @@ const DEFAULT_ITEMS = {
   en: [
     {id:'crateGrnE', name:'Green crate',             category:'Empty crates'},
     {id:'crateBluE', name:'Blue crate',              category:'Empty crates'},
-    {id:'crateGrnF', name:'Green with bottles',      category:'Crates with bottles'},
     {id:'crateBluF', name:'Blue with clear bottles', category:'Crates with bottles'},
     {id:'crateTub',  name:'Blue with Tuborg',        category:'Crates with bottles'},
+    {id:'crateGrnF', name:'Green with bottles',      category:'Crates with bottles'},
     {id:'crateGrnGarage', name:'Green with Garage',  category:'Crates with bottles'},
     {id:'keg15',     name:'Keg 15 L',                category:'Kegs'},
     {id:'keg20',     name:'Keg 20 L',                category:'Kegs'},
@@ -1301,9 +1332,9 @@ const DEFAULT_ITEMS = {
   lv: [
     {id:'crateGrnE', name:'Zaļā kaste',           category:'Tukšas kastes'},
     {id:'crateBluE', name:'Zilā kaste',           category:'Tukšas kastes'},
-    {id:'crateGrnF', name:'Zaļā ar pudelēm',      category:'Kastes ar pudelēm'},
     {id:'crateBluF', name:'Zilā ar caurspīdīgām', category:'Kastes ar pudelēm'},
     {id:'crateTub',  name:'Zilā ar Tuborg',       category:'Kastes ar pudelēm'},
+    {id:'crateGrnF', name:'Zaļā ar pudelēm',      category:'Kastes ar pudelēm'},
     {id:'crateGrnGarage', name:'Zaļā ar Garage',  category:'Kastes ar pudelēm'},
     {id:'keg15',     name:'Kega 15 l',            category:'Kegas'},
     {id:'keg20',     name:'Kega 20 l',            category:'Kegas'},
@@ -1314,9 +1345,9 @@ const DEFAULT_ITEMS = {
   zh: [
     {id:'crateGrnE', name:'绿色箱',       category:'空箱'},
     {id:'crateBluE', name:'蓝色箱',       category:'空箱'},
-    {id:'crateGrnF', name:'绿色带瓶',     category:'带瓶箱'},
     {id:'crateBluF', name:'蓝色带透明瓶', category:'带瓶箱'},
     {id:'crateTub',  name:'蓝色带Tuborg', category:'带瓶箱'},
+    {id:'crateGrnF', name:'绿色带瓶',     category:'带瓶箱'},
     {id:'crateGrnGarage', name:'绿色带Garage', category:'带瓶箱'},
     {id:'keg15',     name:'15升桶',       category:'桶'},
     {id:'keg20',     name:'20升桶',       category:'桶'},
@@ -1351,6 +1382,7 @@ function defaultItemsFor(lang){
 let state       = load();
 let activeId    = null;
 let qbId        = null;
+let reorderMode = false;
 let editingId   = null;
 let editingCat  = null;
 let editorMode  = 'item';
@@ -1434,6 +1466,17 @@ function load(){
       }
     }
     chosen.newDefaultsV1 = 1;
+  }
+
+  /* one-time: order the bottle crates so their colors line up on screen */
+  if (!chosen.crateOrderV1){
+    const order = ['crateBluF','crateTub','crateGrnF','crateGrnGarage'];
+    const slots = [];
+    chosen.items.forEach((it, i) => { if (order.indexOf(it.id) >= 0) slots.push(i); });
+    const picked = slots.map(i => chosen.items[i])
+      .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+    slots.forEach((i, k) => { chosen.items[i] = picked[k]; });
+    chosen.crateOrderV1 = 1;
   }
   return chosen;
 }
@@ -1893,8 +1936,12 @@ let moved       = false;
 let startX = 0, startY = 0;
 
 gridEl.addEventListener('pointerdown', e => {
-  if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
   const tile = e.target.closest('.tile');
+  if (reorderMode){
+    if (tile) startDrag(e, tile);
+    return;
+  }
+  if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
   if (!tile) return;
 
   longPressed = false;
@@ -1910,6 +1957,7 @@ gridEl.addEventListener('pointerdown', e => {
 });
 
 document.addEventListener('pointermove', e => {
+  if (dragState){ moveDrag(e); return; }
   if (!pressTimer) return;
   if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10){
     moved = true;
@@ -1918,7 +1966,8 @@ document.addEventListener('pointermove', e => {
   }
 });
 
-document.addEventListener('pointerup', () => {
+document.addEventListener('pointerup', e => {
+  if (dragState){ endDrag(e); return; }
   const wasPressing = pressTimer !== null;
   clearTimeout(pressTimer);
   pressTimer = null;
@@ -1934,14 +1983,111 @@ document.addEventListener('pointerup', () => {
 });
 
 document.addEventListener('pointercancel', () => {
+  if (dragState){ endDrag(); return; }
   clearTimeout(pressTimer);
   pressTimer = null;
 });
 
 gridEl.addEventListener('contextmenu', e => {
   const tile = e.target.closest('.tile');
-  if (tile){ e.preventDefault(); openModal(tile.dataset.id); }
+  if (tile){
+    e.preventDefault();
+    if (!reorderMode) openModal(tile.dataset.id);
+  }
 });
+
+/* ================= drag to reorder ================= */
+let dragState = null;
+
+function itemCat(id){
+  const it = state.items.find(i => i.id === id);
+  return it ? (it.category || '') : '';
+}
+
+function toggleReorder(){
+  reorderMode = !reorderMode;
+  document.body.classList.toggle('reorder', reorderMode);
+  const btn = document.getElementById('reorderBtn');
+  if (btn) btn.classList.toggle('active', reorderMode);
+
+  if (reorderMode){
+    if (document.getElementById('counter').classList.contains('on')) closeCounter();
+    showToast(t('reorder.on'));
+  } else {
+    save();
+    render();
+    requestAnimationFrame(fitTiles);
+    showToast(t('reorder.done'), 'ok');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && reorderMode) toggleReorder();
+});
+
+function startDrag(e, tile){
+  e.preventDefault();
+  dragState = {
+    el: tile,
+    id: tile.dataset.id,
+    cat: itemCat(tile.dataset.id),
+    pointerId: e.pointerId,
+    startX: e.clientX,
+    startY: e.clientY,
+    moved: false
+  };
+  tile.classList.add('dragging');
+  tile.style.pointerEvents = 'none';
+  try{ gridEl.setPointerCapture(e.pointerId); }catch(_){}
+  navigator.vibrate?.(8);
+}
+
+function moveDrag(e){
+  const ds = dragState;
+  if (!ds) return;
+  if (!ds.moved){
+    if (Math.abs(e.clientX - ds.startX) < 6 &&
+        Math.abs(e.clientY - ds.startY) < 6) return;
+    ds.moved = true;
+  }
+  e.preventDefault();
+
+  const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.tile');
+  if (!over || over === ds.el) return;
+  if (itemCat(over.dataset.id) !== ds.cat) return;
+
+  const r = over.getBoundingClientRect();
+  const rtl = (state.gridDir || 'ltr') === 'rtl';
+  let before;
+  if (e.clientY < r.top)         before = true;
+  else if (e.clientY > r.bottom) before = false;
+  else before = rtl ? (e.clientX > r.left + r.width / 2)
+                    : (e.clientX < r.left + r.width / 2);
+
+  if (before) over.before(ds.el);
+  else        over.after(ds.el);
+}
+
+function endDrag(){
+  const ds = dragState;
+  if (!ds) return;
+  dragState = null;
+  ds.el.classList.remove('dragging');
+  ds.el.style.pointerEvents = '';
+  try{ gridEl.releasePointerCapture(ds.pointerId); }catch(_){}
+  if (ds.moved) persistOrder();
+}
+
+function persistOrder(){
+  const ids = Array.from(gridEl.querySelectorAll('.tile')).map(t => t.dataset.id);
+  const pos = new Map(ids.map((id, i) => [id, i]));
+  state.items.sort((a, b) => {
+    const pa = pos.has(a.id) ? pos.get(a.id) : Infinity;
+    const pb = pos.has(b.id) ? pos.get(b.id) : Infinity;
+    return pa - pb;
+  });
+  save();
+}
 
 /* ================= bottom bar ================= */
 function qbShow(id){
