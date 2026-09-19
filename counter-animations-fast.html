@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Counter effects — 20 fast styles</title>
+<style>
+  :root{
+    --bg:#111;
+    --card:#1e1e1e;
+    --surface-2:#2a2a2a;
+    --fg:#eee;
+    --dim:#888;
+    --border:#333;
+    --accent:#4ade80;
+    --accent-fg:#000;
+    --danger:#f87171;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --surface-2:#eceef1;
+    --fg:#14171a;
+    --dim:#5f6b76;
+    --border:#d7dbe0;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --danger:#dc2626;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#14171a;
+    --qty-ring:rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 72px;
+    font:15px/1.4 system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:1180px;margin:0 auto 18px}
+  h1{font-size:20px;margin:0 0 4px}
+  header p{margin:0 0 10px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .controls button{
+    font:inherit;font-weight:700;padding:8px 12px;border-radius:10px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  main{
+    max-width:1180px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:12px;display:flex;flex-direction:column;gap:8px;
+  }
+  .card-name{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px}
+  .ms{font-size:10px;font-weight:800;color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);padding:2px 7px;border-radius:999px;letter-spacing:.4px}
+  .card-desc{color:var(--dim);font-size:12px;min-height:34px}
+  .stage{
+    display:flex;align-items:center;justify-content:center;
+    padding:26px 0;background:var(--bg);border-radius:10px;
+    overflow:visible;
+  }
+  .badge{
+    min-width:58px;height:46px;padding:0 14px;border-radius:11px;
+    background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+    font-weight:800;font-size:24px;line-height:1;
+    font-variant-numeric:tabular-nums;
+    display:inline-flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+    cursor:pointer;user-select:none;-webkit-user-select:none;
+    will-change:transform,opacity;
+  }
+  .num{display:inline-flex;align-items:center;position:relative}
+  .btns{display:flex;gap:6px}
+  .btns button{
+    flex:1;font:inherit;font-weight:700;padding:8px 0;border-radius:9px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .btns .plus{background:var(--accent);color:var(--accent-fg)}
+  .btns .rapid{flex:0 0 auto;padding:8px 10px;background:var(--surface-2);color:var(--dim)}
+
+  /* ---------- shared fast odometer ---------- */
+  .badge .ghost{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;will-change:transform}
+  @keyframes inUp{from{transform:translateY(70%)}to{transform:translateY(0)}}
+  @keyframes outUp{from{transform:translateY(0)}to{transform:translateY(-70%)}}
+  @keyframes inDown{from{transform:translateY(-70%)}to{transform:translateY(0)}}
+  @keyframes outDown{from{transform:translateY(0)}to{transform:translateY(70%)}}
+  @keyframes inLeft{from{transform:translateX(65%)}to{transform:translateX(0)}}
+  @keyframes outLeft{from{transform:translateX(0)}to{transform:translateX(-65%)}}
+  @keyframes inRight{from{transform:translateX(-65%)}to{transform:translateX(0)}}
+  @keyframes outRight{from{transform:translateX(0)}to{transform:translateX(65%)}}
+  .badge .num.in-up{animation:inUp 90ms ease-out}
+  .badge .num.in-down{animation:inDown 90ms ease-out}
+  .badge .num.in-left{animation:inLeft 90ms ease-out}
+  .badge .num.in-right{animation:inRight 90ms ease-out}
+  .badge .ghost.out-up{animation:outUp 90ms ease-out forwards}
+  .badge .ghost.out-down{animation:outDown 90ms ease-out forwards}
+  .badge .ghost.out-left{animation:outLeft 90ms ease-out forwards}
+  .badge .ghost.out-right{animation:outRight 90ms ease-out forwards}
+
+  /* ---------- 1 instant ---------- */
+  .v-instant .badge{}
+
+  /* ---------- 2 micro punch (80ms) ---------- */
+  @keyframes microPunch{0%{transform:scale(1)}45%{transform:scale(1.07)}100%{transform:scale(1)}}
+  .v-micro .badge.up,.v-micro .badge.down{animation:microPunch 80ms ease-out}
+  .v-micro .badge{overflow:visible}
+
+  /* ---------- 3 quick pop (100ms) ---------- */
+  @keyframes quickPop{0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+  .v-pop .badge.up,.v-pop .badge.down{animation:quickPop 100ms ease-out}
+  .v-pop .badge{overflow:visible}
+
+  /* ---------- 4 drop in (90ms) ---------- */
+  @keyframes dropIn{from{transform:scale(1.22);opacity:.35}to{transform:scale(1);opacity:1}}
+  .v-drop .badge.up,.v-drop .badge.down{animation:dropIn 90ms ease-out}
+  .v-drop .badge{overflow:visible}
+
+  /* ---------- 5 grow in (90ms) ---------- */
+  @keyframes growIn{from{transform:scale(.8);opacity:.35}to{transform:scale(1);opacity:1}}
+  .v-grow .badge.up,.v-grow .badge.down{animation:growIn 90ms ease-out}
+  .v-grow .badge{overflow:visible}
+
+  /* ---------- 6 nudge up (80ms) ---------- */
+  @keyframes nudgeUp{0%{transform:translateY(0)}40%{transform:translateY(-3px)}100%{transform:translateY(0)}}
+  .v-nudge .badge.up,.v-nudge .badge.down{animation:nudgeUp 80ms ease-out}
+  .v-nudge .badge{overflow:visible}
+
+  /* ---------- 7-9 slides (90ms) ---------- */
+
+  /* ---------- 10 fade (70ms) ---------- */
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .v-fade .badge.up,.v-fade .badge.down{animation:fadeIn 70ms ease-out}
+
+  /* ---------- 11 tick (120ms, JS-driven) ---------- */
+
+  /* ---------- 12 color flash (120ms) ---------- */
+  @keyframes colorUp{0%{color:var(--accent)}100%{color:var(--qty-fg)}}
+  @keyframes colorDown{0%{color:var(--danger)}100%{color:var(--qty-fg)}}
+  .v-color .badge.up{animation:colorUp 120ms ease-out}
+  .v-color .badge.down{animation:colorDown 120ms ease-out}
+
+  /* ---------- 13 bg flash (110ms) ---------- */
+  @keyframes bgUp{0%{background:var(--accent);color:var(--accent-fg)}100%{background:var(--qty-bg);color:var(--qty-fg)}}
+  @keyframes bgDown{0%{background:var(--danger);color:#fff}100%{background:var(--qty-bg);color:var(--qty-fg)}}
+  .v-bg .badge.up{animation:bgUp 110ms ease-out}
+  .v-bg .badge.down{animation:bgDown 110ms ease-out}
+
+  /* ---------- 14 ring pop (160ms) ---------- */
+  @keyframes ringPopUp{0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 var(--accent)}100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 12px rgba(0,0,0,0)}}
+  @keyframes ringPopDown{0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 var(--danger)}100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 12px rgba(0,0,0,0)}}
+  .v-ring .badge.up{animation:ringPopUp 160ms ease-out}
+  .v-ring .badge.down{animation:ringPopDown 160ms ease-out}
+
+  /* ---------- 15 glow flash (130ms) ---------- */
+  @keyframes glowUp{0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 14px 3px var(--accent)}100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 rgba(0,0,0,0)}}
+  @keyframes glowDown{0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 14px 3px var(--danger)}100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 rgba(0,0,0,0)}}
+  .v-glow .badge.up{animation:glowUp 130ms ease-out}
+  .v-glow .badge.down{animation:glowDown 130ms ease-out}
+
+  /* ---------- 16 shake (110ms) ---------- */
+  @keyframes shakeX{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+  .v-shake .badge.up,.v-shake .badge.down{animation:shakeX 110ms ease-out}
+  .v-shake .badge{overflow:visible}
+
+  /* ---------- 17-18 flips (140ms) ---------- */
+  @keyframes flipX{0%{transform:perspective(300px) rotateY(0)}50%{transform:perspective(300px) rotateY(90deg)}100%{transform:perspective(300px) rotateY(0)}}
+  @keyframes flipY{0%{transform:perspective(300px) rotateX(0)}50%{transform:perspective(300px) rotateX(90deg)}100%{transform:perspective(300px) rotateX(0)}}
+  .v-flipx .badge.flip-x{animation:flipX 140ms ease}
+  .v-flipy .badge.flip-y{animation:flipY 140ms ease}
+
+  /* ---------- 19 digit spin (90ms) ---------- */
+  .digit{display:inline-block;position:relative;overflow:hidden;height:1em;line-height:1;vertical-align:bottom}
+  .digit.rolling .d-out,.digit.rolling .d-in{display:block}
+  .digit.rolling .d-in{position:absolute;left:0;top:0}
+  @keyframes dInUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes dOutUp{from{transform:translateY(0)}to{transform:translateY(-100%)}}
+  @keyframes dInDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+  @keyframes dOutDown{from{transform:translateY(0)}to{transform:translateY(100%)}}
+  .digit.spin-up .d-out{animation:dOutUp 90ms ease-out}
+  .digit.spin-up .d-in{animation:dInUp 90ms ease-out}
+  .digit.spin-down .d-out{animation:dOutDown 90ms ease-out}
+  .digit.spin-down .d-in{animation:dInDown 90ms ease-out}
+
+  /* ---------- 20 combo (100ms) ---------- */
+  .v-combo .badge.up{animation:microPunch 100ms ease-out,colorUp 100ms ease-out}
+  .v-combo .badge.down{animation:microPunch 100ms ease-out,colorDown 100ms ease-out}
+  .v-combo .badge{overflow:visible}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Counter effects — 20 fast styles</h1>
+  <p>Every effect is 0&ndash;160ms, transform/opacity only, and fires on <b>pointerdown</b> (not click) for instant feedback. Hit <b>&times;8</b> or <b>Stress</b> to check how each holds up under rapid taps.</p>
+  <div class="controls">
+    <button id="autoBtn" class="on">Auto demo: on</button>
+    <button id="themeBtn">Theme: dark</button>
+    <button id="stressBtn">Stress 12/s: off</button>
+    <button id="seedBtn">Seed 98</button>
+    <button id="resetBtn">Reset to 5</button>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+var REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+var VARIANTS = [
+  { id:'instant',  name:'1. Instant swap',     ms:'0ms',   desc:'No animation at all. The baseline for raw responsiveness.' },
+  { id:'micro',    name:'2. Micro punch',      ms:'80ms',  desc:'A tiny 7% scale kick. Barely there, always instant.' },
+  { id:'pop',      name:'3. Quick pop',        ms:'100ms', desc:'A 14% pop with a fast ease-out.' },
+  { id:'drop',     name:'4. Drop in',          ms:'90ms',  desc:'Number drops in from 122% and settles.' },
+  { id:'grow',     name:'5. Grow in',          ms:'90ms',  desc:'Number grows up from 80%.' },
+  { id:'nudge',    name:'6. Nudge up',         ms:'80ms',  desc:'A 3px upward nudge and back.' },
+  { id:'slideup',  name:'7. Slide up',         ms:'90ms',  desc:'Fast vertical odometer: new number slides up from below.' },
+  { id:'slideleft',name:'8. Slide left',       ms:'90ms',  desc:'Fast horizontal odometer: the number slides left, like a tape.' },
+  { id:'slidedir', name:'9. Directional slide',ms:'90ms',  desc:'Horizontal: +1 slides left, \u22121 slides right.' },
+  { id:'fade',     name:'10. Fade',            ms:'70ms',  desc:'Just a quick opacity fade. The lightest of all.' },
+  { id:'tick',     name:'11. Tick (fast)',      ms:'120ms', desc:'Counts through intermediate values in ~120ms. The count-up, roughly 2\u00d7 faster.' },
+  { id:'color',    name:'12. Color flash',     ms:'120ms', desc:'Text flashes accent on +1, danger on \u22121.' },
+  { id:'bg',       name:'13. Bg flash',        ms:'110ms', desc:'The badge background flashes accent/danger.' },
+  { id:'ring',     name:'14. Ring pop',        ms:'160ms', desc:'A fast ring expands from the badge edge.' },
+  { id:'glow',     name:'15. Glow flash',      ms:'130ms', desc:'A quick coloured glow flash.' },
+  { id:'shake',    name:'16. Shake',           ms:'110ms', desc:'A quick horizontal shake. Same both directions.' },
+  { id:'flipx',    name:'17. Flip X',          ms:'140ms', desc:'Fast 3D horizontal flip; number swaps at 70ms.' },
+  { id:'flipy',    name:'18. Flip Y',          ms:'140ms', desc:'Fast 3D vertical flip; number swaps at 70ms.' },
+  { id:'digit',    name:'19. Digit spin',      ms:'90ms',  desc:'Only the changed digits spin; carries roll the next column.' },
+  { id:'combo',    name:'20. Punch + flash',   ms:'100ms', desc:'Micro punch plus colour flash. Fast and still readable.' }
+];
+
+var list = document.getElementById('list');
+
+VARIANTS.forEach(function (v) {
+  var card = document.createElement('div');
+  card.className = 'card v-' + v.id;
+  card.dataset.variant = v.id;
+  card.dataset.val = '5';
+  card.dataset.dir = '1';
+  card.innerHTML =
+    '<div class="card-name"><span class="t"></span><span class="ms"></span></div>' +
+    '<div class="card-desc"></div>' +
+    '<div class="stage"><div class="badge"></div></div>' +
+    '<div class="btns"><button class="minus">\u22121</button><button class="plus">+1</button><button class="rapid" title="Eight taps in a row">\u00d78</button></div>';
+  card.querySelector('.t').textContent = v.name;
+  card.querySelector('.ms').textContent = v.ms;
+  card.querySelector('.card-desc').textContent = v.desc;
+  list.appendChild(card);
+
+  renderStatic(card, 5);
+
+  bindPress(card.querySelector('.plus'), function () { trigger(card, 1); });
+  bindPress(card.querySelector('.minus'), function () { trigger(card, -1); });
+  bindPress(card.querySelector('.rapid'), function () { rapid(card, 1); });
+  bindPress(card.querySelector('.badge'), function () { trigger(card, 1); });
+});
+
+function bindPress(el, fn) {
+  el.addEventListener('pointerdown', fn);
+  el.addEventListener('click', function (e) { if (e.detail === 0) fn(); });
+}
+
+function renderStatic(card, value) {
+  card.dataset.val = String(value);
+  var badge = card.querySelector('.badge');
+  badge.classList.remove('up', 'down', 'flip-x', 'flip-y');
+  var v = card.dataset.variant;
+  if (v === 'digit') {
+    badge.innerHTML = '<span class="num">' + String(value).split('').map(function (c) { return '<span class="digit">' + c + '</span>'; }).join('') + '</span>';
+  } else {
+    badge.innerHTML = '<span class="num">' + value + '</span>';
+  }
+}
+
+function setNum(card, value) { card.querySelector('.num').textContent = String(value); }
+
+function trigger(card, dir) {
+  var val = Number(card.dataset.val) || 0;
+  var nv = Math.max(0, Math.min(999, val + dir));
+  if (nv === val) return;
+  card.dataset.val = String(nv);
+
+  if (REDUCED) { renderStatic(card, nv); return; }
+
+  var v = card.dataset.variant;
+  switch (v) {
+    case 'instant':   setNum(card, nv); break;
+    case 'tick':      tick(card, nv); break;
+    case 'slideup':   roll(card, dir, nv, 'y'); break;
+    case 'slideleft': roll(card, dir, nv, 'left'); break;
+    case 'slidedir':  roll(card, dir, nv, dir >= 0 ? 'left' : 'right'); break;
+    case 'flipx':     flip(card, nv, 'flip-x'); break;
+    case 'flipy':     flip(card, nv, 'flip-y'); break;
+    case 'digit':     digitSpin(card, val, nv, dir); break;
+    default:
+      setNum(card, nv);
+      var badge = card.querySelector('.badge');
+      badge.classList.remove('up', 'down');
+      void badge.offsetWidth;
+      badge.classList.add(dir >= 0 ? 'up' : 'down');
+      clearTimeout(badge._t);
+      badge._t = setTimeout(function () { badge.classList.remove('up', 'down'); }, 200);
+  }
+}
+
+function tick(card, nv) {
+  cancelAnimationFrame(card._tick);
+  var num = card.querySelector('.num');
+  var from = Number(num.textContent) || 0;
+  var dur = 120;
+  var t0 = performance.now();
+  function step(now) {
+    var p = Math.min(1, (now - t0) / dur);
+    var e = 1 - Math.pow(1 - p, 3);
+    num.textContent = String(Math.round(from + (nv - from) * e));
+    if (p < 1) card._tick = requestAnimationFrame(step);
+    else num.textContent = String(nv);
+  }
+  card._tick = requestAnimationFrame(step);
+}
+
+function roll(card, dir, nv, axis) {
+  var badge = card.querySelector('.badge');
+  var num = card.querySelector('.num');
+  badge.querySelectorAll('.ghost').forEach(function (g) { g.remove(); });
+  var ghost = document.createElement('span');
+  ghost.className = 'ghost';
+  ghost.textContent = num.textContent;
+  badge.appendChild(ghost);
+  num.textContent = String(nv);
+  num.classList.remove('in-up', 'in-down', 'in-left', 'in-right');
+  ghost.classList.remove('out-up', 'out-down', 'out-left', 'out-right');
+  void num.offsetWidth;
+  var inC, outC;
+  if (axis === 'y') { inC = dir >= 0 ? 'in-up' : 'in-down'; outC = dir >= 0 ? 'out-up' : 'out-down'; }
+  else if (axis === 'right') { inC = 'in-right'; outC = 'out-right'; }
+  else { inC = 'in-left'; outC = 'out-left'; }
+  num.classList.add(inC);
+  ghost.classList.add(outC);
+  setTimeout(function () { ghost.remove(); }, 130);
+}
+
+function digitSpin(card, val, nv, dir) {
+  var num = card.querySelector('.num');
+  var oldStr = String(val), newStr = String(nv);
+  var len = Math.max(oldStr.length, newStr.length);
+  var oldP = oldStr.padStart(len, ' ');
+  var newP = newStr.padStart(len, ' ');
+  num.innerHTML = newP.split('').map(function (ch, i) {
+    var oc = oldP[i];
+    if (oc !== ch && oc !== ' ' && ch !== ' ') {
+      return '<span class="digit rolling"><span class="d-out">' + oc + '</span><span class="d-in">' + ch + '</span></span>';
+    }
+    return '<span class="digit">' + (ch === ' ' ? '' : ch) + '</span>';
+  }).join('');
+  var token = (card._dToken = (card._dToken || 0) + 1);
+  requestAnimationFrame(function () {
+    if (card._dToken !== token) return;
+    num.querySelectorAll('.digit.rolling').forEach(function (d) {
+      d.classList.remove('spin-up', 'spin-down');
+      void d.offsetWidth;
+      d.classList.add(dir >= 0 ? 'spin-up' : 'spin-down');
+    });
+  });
+  clearTimeout(card._dClean);
+  card._dClean = setTimeout(function () {
+    if (card._dToken !== token) return;
+    num.innerHTML = String(nv).split('').map(function (ch) { return '<span class="digit">' + ch + '</span>'; }).join('');
+  }, 130);
+}
+
+function flip(card, nv, cls) {
+  var badge = card.querySelector('.badge');
+  var token = (card._flip = (card._flip || 0) + 1);
+  badge.classList.remove('flip-x', 'flip-y');
+  void badge.offsetWidth;
+  badge.classList.add(cls);
+  setTimeout(function () { if (card._flip === token) setNum(card, nv); }, 70);
+  setTimeout(function () { if (card._flip === token) badge.classList.remove(cls); }, 160);
+}
+
+function rapid(card, dir) {
+  var n = 0;
+  var timer = setInterval(function () {
+    trigger(card, dir);
+    if (++n >= 8) clearInterval(timer);
+  }, 45);
+}
+
+/* ---------- global controls ---------- */
+var auto = true;
+var autoTimer = setInterval(function () {
+  if (!auto) return;
+  document.querySelectorAll('.card').forEach(function (card) {
+    var val = Number(card.dataset.val);
+    var dir = Number(card.dataset.dir) || 1;
+    if (val >= 9) dir = -1;
+    else if (val <= 0) dir = 1;
+    card.dataset.dir = String(dir);
+    trigger(card, dir);
+  });
+}, 900);
+
+var autoBtn = document.getElementById('autoBtn');
+autoBtn.addEventListener('click', function () {
+  auto = !auto;
+  autoBtn.classList.toggle('on', auto);
+  autoBtn.textContent = 'Auto demo: ' + (auto ? 'on' : 'off');
+});
+
+var themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', function () {
+  var light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+
+var stress = null;
+var stressBtn = document.getElementById('stressBtn');
+stressBtn.addEventListener('click', function () {
+  if (stress) { clearInterval(stress); stress = null; }
+  else {
+    auto = false; autoBtn.classList.remove('on'); autoBtn.textContent = 'Auto demo: off';
+    stress = setInterval(function () {
+      document.querySelectorAll('.card').forEach(function (card) {
+        trigger(card, Math.random() < 0.5 ? 1 : -1);
+      });
+    }, 80);
+  }
+  stressBtn.classList.toggle('on', !!stress);
+  stressBtn.textContent = 'Stress 12/s: ' + (stress ? 'on' : 'off');
+});
+
+document.getElementById('seedBtn').addEventListener('click', function () {
+  document.querySelectorAll('.card').forEach(function (card) { renderStatic(card, 98); });
+});
+document.getElementById('resetBtn').addEventListener('click', function () {
+  document.querySelectorAll('.card').forEach(function (card) { renderStatic(card, 5); });
+});
+</script>
+</body>
+</html>

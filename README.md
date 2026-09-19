@@ -27,7 +27,7 @@ The first command runs rewrite acceptance tests. The second reproduces five issu
 - The bottom correction bar follows the selected item. Undo and redo retain the most recent 30 changes during the current page lifetime.
 - **New count** preserves the current session and starts today's count with the same catalog. **Sessions** lets you return to earlier counts. **Clear this count** resets an existing session without changing its historical date.
 - **More → Download backup** exports all sessions and preferences as JSON. **Restore backup** validates the data, asks for confirmation, and replaces current data; restore is undoable until reload. **Export this count** produces spreadsheet-compatible CSV.
-- The tile details dialog contains **Edit**, including item deletion. Categories are managed from **More**. Reorder mode exposes touch and keyboard accessible arrows within each category.
+- The tile details dialog contains **Edit**, including item deletion. Categories are managed from **More** and stay in exports, but every item is shown in one shared grid. Reorder mode lets you drag a tile onto another to swap their places, with arrow buttons kept for keyboard use. Grid settings and the settings panel include picture zoom plus a nudge pad that shifts every item picture together.
 - English, Latvian, Russian and Chinese are supported. Default names translate; custom names and category membership remain intact.
 
 ## Data and migration

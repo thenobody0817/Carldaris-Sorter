@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 
-const order = ['catalog.js', 'strings.js', 'model.js', 'storage.js', 'voice.js', 'app.js'];
+const order = ['catalog.js', 'strings.js', 'model.js', 'storage.js', 'voice.js', 'cloud.js', 'app.js'];
 
 const strip = source => source
   .replace(/^\s*import\s+[^;]*;\s*$/gm, '')

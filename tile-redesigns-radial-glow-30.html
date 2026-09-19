@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tile redesigns · radial glow (30)</title>
+<style>
+  :root{
+    --bg:#111512;
+    --card:#1b211d;
+    --surface-2:#28302a;
+    --surface-3:#333c35;
+    --fg:#eef2ee;
+    --dim:#8b968e;
+    --border:#333d36;
+    --accent:#4ade80;
+    --accent-fg:#08130c;
+    --accent-2:#38bdf8;
+    --accent-2-fg:#04121a;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+    --shadow:0 10px 24px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.4);
+  }
+  html[data-theme="light"]{
+    --bg:#eef1ea;
+    --card:#ffffff;
+    --surface-2:#e8ece4;
+    --surface-3:#dde2d8;
+    --fg:#141813;
+    --dim:#5f6b61;
+    --border:#d8ddd4;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --accent-2:#0284c7;
+    --accent-2-fg:#ffffff;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#141813;
+    --qty-ring:rgba(0,0,0,.14);
+    --shadow:0 10px 24px rgba(20,40,25,.14),0 2px 6px rgba(20,40,25,.08);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 72px;
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:960px;margin:0 auto 18px}
+  h1{font-size:21px;margin:0 0 4px;letter-spacing:-.3px}
+  header p{margin:0 0 12px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .controls button{
+    font:inherit;font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px;
+    border:1px solid transparent;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button:hover{background:var(--surface-3)}
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  .controls .label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-left:6px}
+  .pick{font-size:13px;font-weight:800;color:var(--accent);margin-left:auto}
+
+  main{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+  .card{
+    position:relative;
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:14px 16px 16px;cursor:pointer;
+    transition:border-color .12s,box-shadow .12s;
+  }
+  .card:hover{border-color:var(--dim)}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+  .card-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:8px;background:var(--surface-2);
+    font-size:12px;font-weight:900;color:var(--dim);flex:0 0 auto;
+  }
+  .card.sel .num{background:var(--accent);color:var(--accent-fg)}
+  .card-head h2{font-size:15px;margin:0;font-weight:800}
+  .tag{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--dim);border:1px solid var(--border);border-radius:999px;padding:2px 8px}
+  .tag.bloom{color:#a78bfa;border-color:color-mix(in srgb,#a78bfa 45%,transparent)}
+  .tag.halo{color:#f59e0b;border-color:color-mix(in srgb,#f59e0b 45%,transparent)}
+  .tag.edge{color:#7dd3fc;border-color:color-mix(in srgb,#7dd3fc 45%,transparent)}
+  .tag.wash{color:#34d399;border-color:color-mix(in srgb,#34d399 45%,transparent)}
+  .tag.state{color:#f472b6;border-color:color-mix(in srgb,#f472b6 45%,transparent)}
+  .pick-badge{display:none;font-size:11px;font-weight:800;color:var(--accent-fg);
+    background:var(--accent);border-radius:999px;padding:3px 10px}
+  .card.sel .pick-badge{display:inline-block}
+  .card-desc{margin:7px 0 12px;color:var(--dim);font-size:12.5px;max-width:72ch}
+
+  .stage{background:var(--bg);border-radius:12px;padding:14px;display:flex;justify-content:center}
+  .stage-inner{display:grid;gap:12px;width:100%;
+    grid-template-columns:repeat(var(--cols,4),minmax(0,1fr))}
+  body.phone .stage-inner{--cols:2;max-width:360px}
+  body.desktop .stage-inner{--cols:4;max-width:820px}
+
+  /* ============ shared tile (mirrors the app markup) ============ */
+  .tile{
+    position:relative;border:1px solid var(--border);border-radius:16px;
+    background:var(--card);overflow:hidden;aspect-ratio:1/1;
+  }
+  .tile .count{
+    position:relative;display:grid;grid-template-rows:1fr auto;
+    width:100%;height:100%;margin:0;border:0;padding:0;
+    background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;
+  }
+  .tile .count:focus-visible{outline:3px solid var(--accent);outline-offset:-3px;border-radius:16px}
+  .pic{grid-row:1;grid-column:1;min-height:0;display:flex;align-items:center;justify-content:center;
+    padding:12px;position:relative}
+  .pic img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+  .meta{grid-row:2;grid-column:1;display:flex;align-items:center;justify-content:space-between;
+    gap:8px;padding:8px 12px 12px;pointer-events:none}
+  .name{font-size:12px;font-weight:650;line-height:1.35;overflow-wrap:anywhere}
+  .qty{
+    font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px;
+    min-width:34px;min-height:34px;display:flex;align-items:center;justify-content:center;
+    padding:2px 8px;border-radius:10px;background:var(--surface-2);color:var(--fg);flex:0 0 auto;
+  }
+  .tile.counted .qty{background:var(--accent);color:var(--accent-fg)}
+  .menu{
+    position:absolute;top:5px;right:5px;z-index:6;width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border:0;border-radius:9px;background:transparent;color:var(--dim);
+    font:800 16px/1 system-ui;cursor:pointer;
+  }
+  .menu:hover{background:var(--surface-2);color:var(--fg)}
+  .tile.bump .qty{animation:pop .22s ease-out}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+
+  /* ================= 1–8 · BLOOM (position + intensity) ================= */
+  /* 1 · soft top bloom */
+  .g1 .tile{border-color:transparent;background:radial-gradient(130% 85% at 50% 0%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 58%),var(--card)}
+  .g1 .qty{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+  /* 2 · center bloom (current, toned down) */
+  .g2 .tile{border-color:transparent;background:radial-gradient(120% 90% at 50% 32%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),var(--card)}
+  .g2 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 3 · tight product halo */
+  .g3 .tile{border-color:transparent;background:radial-gradient(62% 55% at 50% 38%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 72%),var(--card)}
+  .g3 .qty{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+  /* 4 · wide low bloom */
+  .g4 .tile{border-color:transparent;background:radial-gradient(150% 95% at 50% 82%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 62%),var(--card)}
+  .g4 .qty{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+  /* 5 · corner spotlight top-left */
+  .g5 .tile{border-color:transparent;background:radial-gradient(95% 85% at 0% 0%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 58%),var(--card)}
+  .g5 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 6 · corner spotlight bottom-right (secondary) */
+  .g6 .tile{border-color:transparent;background:radial-gradient(95% 85% at 100% 100%,color-mix(in srgb,var(--accent-2) 20%,transparent),transparent 58%),var(--card)}
+  .g6 .qty{background:color-mix(in srgb,var(--accent-2) 18%,transparent)}
+  /* 7 · top sheen (linear) */
+  .g7 .tile{border-color:transparent;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 16%,transparent),transparent 46%),var(--card)}
+  .g7 .qty{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+  /* 8 · bottom horizon */
+  .g8 .tile{border-color:transparent;background:radial-gradient(130% 65% at 50% 100%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 60%),var(--card)}
+  .g8 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+
+  /* ================= 9–14 · HALO (tight / shaped) ================= */
+  /* 9 · bright core halo */
+  .g9 .tile{border-color:transparent;background:radial-gradient(48% 44% at 50% 40%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 66%),var(--card)}
+  .g9 .qty{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+  /* 10 · glow + vignette */
+  .g10 .tile{border-color:transparent;background:radial-gradient(90% 80% at 50% 40%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 60%),var(--card);box-shadow:inset 0 0 44px rgba(0,0,0,.55)}
+  .g10 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 11 · dual halo (green + blue) */
+  .g11 .tile{border-color:transparent;background:radial-gradient(70% 60% at 22% 18%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),radial-gradient(70% 60% at 82% 88%,color-mix(in srgb,var(--accent-2) 22%,transparent),transparent 60%),var(--card)}
+  .g11 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 12 · halo behind image panel only */
+  .g12 .tile{border-color:transparent;background:var(--card)}
+  .g12 .pic{background:radial-gradient(70% 70% at 50% 45%,color-mix(in srgb,var(--accent) 26%,transparent),transparent 70%);margin:8px 8px 0;border-radius:12px}
+  .g12 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 13 · halo ring */
+  .g13 .tile{border-color:transparent;background:var(--card)}
+  .g13 .pic{background:radial-gradient(circle at 50% 46%,transparent 46%,color-mix(in srgb,var(--accent) 30%,transparent) 52%,transparent 68%);margin:8px 8px 0;border-radius:12px}
+  .g13 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 14 · glow + hairline accent border */
+  .g14 .tile{border-color:color-mix(in srgb,var(--accent) 28%,var(--border));background:radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),var(--card)}
+  .g14 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+
+  /* ================= 15–19 · EDGE / RIM ================= */
+  /* 15 · inner rim glow */
+  .g15 .tile{border-color:transparent;background:var(--card);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent),inset 0 0 28px color-mix(in srgb,var(--accent) 16%,transparent)}
+  .g15 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 16 · outer glow */
+  .g16 .tile{border-color:transparent;background:var(--card);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 0 22px color-mix(in srgb,var(--accent) 24%,transparent)}
+  .g16 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 17 · gradient border glow */
+  .g17 .tile{border:1px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(145deg,color-mix(in srgb,var(--accent) 65%,transparent),transparent 72%) border-box}
+  .g17 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 18 · top rim light */
+  .g18 .tile{border-color:transparent;background:var(--card);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--accent) 55%,transparent),inset 0 26px 42px -26px color-mix(in srgb,var(--accent) 45%,transparent)}
+  .g18 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  /* 19 · bottom rim accent */
+  .g19 .tile{border-color:transparent;background:var(--card);box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--accent) 50%,transparent),inset 0 -32px 46px -32px color-mix(in srgb,var(--accent) 50%,transparent)}
+  .g19 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+
+  /* ================= 20–24 · WASH (barely-there ambient) ================= */
+  /* 20 · barely-there wash */
+  .g20 .tile{border-color:transparent;background:radial-gradient(160% 120% at 50% 0%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 70%),var(--card)}
+  .g20 .qty{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+  /* 21 · diagonal wash + radial */
+  .g21 .tile{border-color:transparent;background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 14%,transparent),transparent 55%),radial-gradient(100% 80% at 80% 100%,color-mix(in srgb,var(--accent-2) 12%,transparent),transparent 60%),var(--card)}
+  .g21 .qty{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+  /* 22 · ambient + fine texture */
+  .g22 .tile{border-color:transparent;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 5%,transparent) 0 6px,transparent 6px 12px),radial-gradient(120% 90% at 50% 20%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),var(--card)}
+  .g22 .qty{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+  /* 23 · two-tone ambient */
+  .g23 .tile{border-color:transparent;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 12%,transparent),transparent 50%),radial-gradient(80% 70% at 100% 0%,color-mix(in srgb,var(--accent-2) 16%,transparent),transparent 60%),var(--card)}
+  .g23 .qty{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+  /* 24 · corner accent + soft center */
+  .g24 .tile{border-color:transparent;background:radial-gradient(60% 55% at 88% 12%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 62%),radial-gradient(90% 80% at 30% 90%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 65%),var(--card)}
+  .g24 .qty{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+
+  /* ================= 25–30 · COUNTED / STATE ================= */
+  /* 25 · counted ring + soft glow */
+  .g25 .tile{border-color:transparent;background:radial-gradient(120% 90% at 50% 25%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),var(--card);transition:box-shadow .2s}
+  .g25 .tile.counted{box-shadow:0 0 0 2px var(--accent),0 0 20px color-mix(in srgb,var(--accent) 30%,transparent)}
+  /* 26 · counted glow only (no ring) */
+  .g26 .tile{border-color:transparent;background:radial-gradient(120% 90% at 50% 25%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),var(--card);transition:box-shadow .2s}
+  .g26 .tile.counted{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 36%,transparent)}
+  /* 27 · tinted quantity chip */
+  .g27 .tile{border-color:transparent;background:radial-gradient(120% 90% at 50% 25%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),var(--card)}
+  .g27 .qty{background:color-mix(in srgb,var(--accent) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}
+  /* 28 · glass quantity chip over glow */
+  .g28 .tile{border-color:transparent;background:radial-gradient(120% 90% at 50% 25%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),var(--card)}
+  .g28 .qty{background:color-mix(in srgb,var(--card) 55%,transparent);backdrop-filter:blur(6px);box-shadow:inset 0 0 0 1px var(--qty-ring)}
+  /* 29 · counted brightens the bloom */
+  .g29 .tile{border-color:transparent;background:radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 58%),var(--card);transition:background .25s}
+  .g29 .tile.counted{background:radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 62%),var(--card)}
+  /* 30 · halo behind the count chip */
+  .g30 .tile{border-color:transparent;background:var(--card)}
+  .g30 .qty{background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--accent) 32%,transparent)}
+
+  .code{
+    display:block;margin-top:12px;padding:9px 11px;border-radius:10px;
+    background:var(--bg);color:var(--dim);
+    font:11.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    white-space:pre-wrap;word-break:break-word;
+  }
+</style>
+</head>
+<body class="desktop">
+<header>
+  <h1>Tile redesigns — radial glow (30)</h1>
+  <p>Thirty takes on the <b>Radial glow</b> tile, from a gentle reduction (#2, #20) to full redesigns: top/corner light, tight product halos, rim glows and counted-state behaviour. Tap a tile to count; tap <b>···</b> to toggle counted. Click a card to mark your pick, then tell me its number.</p>
+  <div class="controls">
+    <button id="themeBtn">Theme: dark</button>
+    <span class="label">Preview</span>
+    <button id="deskBtn" class="on">Desktop 4-col</button>
+    <button id="phoneBtn">Phone 2-col</button>
+    <span class="label">Counted state</span>
+    <button id="mixBtn" class="on">Mixed</button>
+    <button id="allBtn">All</button>
+    <button id="noneBtn">None</button>
+    <span class="pick" id="pickText"></span>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+const ITEMS = [
+  { name:'Keg 20 L',      img:'images/keg20.webp',       qty:4,  counted:true  },
+  { name:'Green crate',   img:'images/crateGrnF.webp',   qty:12, counted:false },
+  { name:'Euro pallet',   img:'images/palEUR.webp',      qty:3,  counted:false },
+  { name:'Tub crate',     img:'images/crateTub.webp',    qty:7,  counted:true  },
+  { name:'Slim keg',      img:'images/keg20slim.webp',   qty:2,  counted:false },
+  { name:'Blue crate',    img:'images/crateBluF.webp',   qty:9,  counted:false },
+  { name:'Blue crate E',  img:'images/crateBluE.webp',   qty:5,  counted:false },
+  { name:'Green crate E', img:'images/crateGrnE.webp',   qty:6,  counted:false }
+];
+
+const VARIANTS = [
+  [1,'g1','bloom','Soft top bloom','Light spills in from the top edge — a calm, reduced glow.','background:radial-gradient(130% 85% at 50% 0%,color-mix(in srgb,var(--accent) 15%,transparent),transparent 58%),var(--surface)'],
+  [2,'g2','bloom','Center bloom (toned)','The current glow with the accent dialled from 26% down to 16%.','background:radial-gradient(120% 90% at 50% 32%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),var(--surface)'],
+  [3,'g3','bloom','Tight product halo','The glow hugs the product instead of flooding the whole card.','background:radial-gradient(62% 55% at 50% 38%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 72%),var(--surface)'],
+  [4,'g4','bloom','Wide low bloom','Soft accent rises from the bottom, like a shelf light.','background:radial-gradient(150% 95% at 50% 82%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 62%),var(--surface)'],
+  [5,'g5','bloom','Corner spotlight','A directional glow from the top-left corner — modern and asymmetric.','background:radial-gradient(95% 85% at 0% 0%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 58%),var(--surface)'],
+  [6,'g6','bloom','Corner spotlight (blue)','Same corner light using the secondary blue accent.','background:radial-gradient(95% 85% at 100% 100%,color-mix(in srgb,var(--accent-2) 20%,transparent),transparent 58%),var(--surface)'],
+  [7,'g7','bloom','Top sheen','A straight linear sheen down from the top — no bloom at all.','background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 16%,transparent),transparent 46%),var(--surface)'],
+  [8,'g8','bloom','Bottom horizon','Accent pools along the bottom edge and fades upward.','background:radial-gradient(130% 65% at 50% 100%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 60%),var(--surface)'],
+
+  [9,'g9','halo','Bright core halo','A smaller, brighter halo right behind the product.','background:radial-gradient(48% 44% at 50% 40%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 66%),var(--surface)'],
+  [10,'g10','halo','Glow + vignette','Accent halo in the middle, darkened corners for depth.','background:radial-gradient(90% 80% at 50% 40%,color-mix(in srgb,var(--accent) 18%,transparent),transparent 60%),var(--surface)\nbox-shadow:inset 0 0 44px rgba(0,0,0,.55)'],
+  [11,'g11','halo','Dual halo','Two soft pools — green top-left, blue bottom-right.','background:radial-gradient(...var(--accent) 22%...),radial-gradient(...var(--accent-2) 22%...),var(--surface)'],
+  [12,'g12','halo','Halo behind image','Only the image panel glows; the card surface stays flat.','.tile-picture{background:radial-gradient(70% 70% at 50% 45%,color-mix(in srgb,var(--accent) 26%,transparent),transparent 70%)}'],
+  [13,'g13','halo','Halo ring','A soft ring of light rather than a filled bloom.','.tile-picture{background:radial-gradient(circle at 50% 46%,transparent 46%,color-mix(in srgb,var(--accent) 30%,transparent) 52%,transparent 68%)}'],
+  [14,'g14','halo','Glow + hairline','Reduced bloom plus a crisp accent hairline border.','border-color:color-mix(in srgb,var(--accent) 28%,var(--border))\nbackground:radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),var(--surface)'],
+
+  [15,'g15','edge','Inner rim glow','Light catches the inside edge of the card.','box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent),inset 0 0 28px color-mix(in srgb,var(--accent) 16%,transparent)'],
+  [16,'g16','edge','Outer glow','The card emits a soft accent halo onto the background.','box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 0 22px color-mix(in srgb,var(--accent) 24%,transparent)'],
+  [17,'g17','edge','Gradient border','A gradient edge glow that fades around the card.','background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(145deg,color-mix(in srgb,var(--accent) 65%,transparent),transparent 72%) border-box'],
+  [18,'g18','edge','Top rim light','A bright top rim that falls off into the card.','box-shadow:inset 0 1px 0 color-mix(in srgb,var(--accent) 55%,transparent),inset 0 26px 42px -26px color-mix(in srgb,var(--accent) 45%,transparent)'],
+  [19,'g19','edge','Bottom rim accent','A bright bottom rim that rises into the card.','box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--accent) 50%,transparent),inset 0 -32px 46px -32px color-mix(in srgb,var(--accent) 50%,transparent)'],
+
+  [20,'g20','wash','Barely-there wash','The most subtle option — 8% accent, only a hint of colour.','background:radial-gradient(160% 120% at 50% 0%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 70%),var(--surface)'],
+  [21,'g21','wash','Diagonal wash','A gentle diagonal tint plus a blue pool in the far corner.','background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 14%,transparent),transparent 55%),radial-gradient(...var(--accent-2) 12%...),var(--surface)'],
+  [22,'g22','wash','Ambient + texture','A faint diagonal stripe texture under the bloom adds material.','background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 5%,transparent) 0 6px,transparent 6px 12px),radial-gradient(120% 90% at 50% 20%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),var(--surface)'],
+  [23,'g23','wash','Two-tone ambient','Green fades from the top, blue pools in the top-right.','background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 12%,transparent),transparent 50%),radial-gradient(...var(--accent-2) 16%...),var(--surface)'],
+  [24,'g24','wash','Corner + center','A corner accent with a very soft second pool behind the product.','background:radial-gradient(60% 55% at 88% 12%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 62%),radial-gradient(90% 80% at 30% 90%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 65%),var(--surface)'],
+
+  [25,'g25','state','Counted ring + glow','Subtle surface; counted tiles get an accent ring and a soft glow.','.counted{box-shadow:0 0 0 2px var(--accent),0 0 20px color-mix(in srgb,var(--accent) 30%,transparent)}'],
+  [26,'g26','state','Counted glow only','No ring — counted tiles simply emit a soft glow.','.counted{box-shadow:0 0 28px color-mix(in srgb,var(--accent) 36%,transparent)}'],
+  [27,'g27','state','Tinted count chip','The quantity chip carries a tinted fill and hairline ring.','.tile-quantity{background:color-mix(in srgb,var(--accent) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}'],
+  [28,'g28','state','Glass count chip','A frosted count chip floats over the glow.','.tile-quantity{background:color-mix(in srgb,var(--surface) 55%,transparent);backdrop-filter:blur(6px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 16%,transparent)}'],
+  [29,'g29','state','Counted brightens','The bloom itself intensifies when the item is counted.','.counted{background:radial-gradient(120% 90% at 50% 30%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 62%),var(--surface)}'],
+  [30,'g30','state','Chip halo','A halo sits behind the count chip instead of the card.','.tile-quantity{background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--accent) 32%,transparent)}']
+];
+
+const list = document.getElementById('list');
+let picked = null;
+
+function tileHTML(item){
+  return '<article class="tile' + (item.counted ? ' counted' : '') + '" data-qty="' + item.qty + '" data-counted="' + item.counted + '">' +
+    '<button class="count" aria-label="' + item.name + ': +1">' +
+      '<span class="pic"><img src="' + item.img + '" alt="" loading="lazy" draggable="false"></span>' +
+      '<span class="meta"><span class="name">' + item.name + '</span><span class="qty">' + item.qty + '</span></span>' +
+    '</button>' +
+    '<button class="menu" aria-label="Options">···</button>' +
+  '</article>';
+}
+
+const FAMILY_LABEL = { bloom:'Bloom', halo:'Halo', edge:'Edge / rim', wash:'Wash', state:'Counted' };
+
+for (const [n, cls, family, name, desc, code] of VARIANTS){
+  const card = document.createElement('article');
+  card.className = 'card ' + cls;
+  card.dataset.n = n;
+  card.dataset.name = name;
+
+  const head = document.createElement('div');
+  head.className = 'card-head';
+  head.innerHTML = '<span class="num">' + n + '</span><h2></h2>' +
+    '<span class="tag ' + family + '">' + FAMILY_LABEL[family] + '</span>' +
+    '<span class="pick-badge">Picked</span>';
+  head.querySelector('h2').textContent = name;
+
+  const p = document.createElement('p');
+  p.className = 'card-desc';
+  p.textContent = desc;
+
+  const stage = document.createElement('div');
+  stage.className = 'stage';
+  const inner = document.createElement('div');
+  inner.className = 'stage-inner';
+  inner.innerHTML = ITEMS.map(tileHTML).join('');
+  stage.appendChild(inner);
+
+  const codeEl = document.createElement('code');
+  codeEl.className = 'code';
+  codeEl.textContent = code;
+
+  card.append(head, p, stage, codeEl);
+
+  inner.addEventListener('click', event => {
+    const menu = event.target.closest('.menu');
+    const tile = event.target.closest('.tile');
+    if (!tile) return;
+    if (menu){
+      tile.classList.toggle('counted');
+      return;
+    }
+    if (event.target.closest('.count')){
+      tile.dataset.qty = String(Number(tile.dataset.qty || 0) + 1);
+      tile.classList.add('counted');
+      tile.querySelector('.qty').textContent = tile.dataset.qty;
+      tile.classList.remove('bump');
+      requestAnimationFrame(() => tile.classList.add('bump'));
+    }
+  });
+
+  card.addEventListener('click', () => {
+    picked = n;
+    document.querySelectorAll('.card').forEach(c => c.classList.toggle('sel', c === card));
+    document.getElementById('pickText').textContent = 'Picked: #' + n + ' — ' + name;
+  });
+
+  list.appendChild(card);
+}
+
+function applyCounted(mode){
+  document.querySelectorAll('.tile').forEach(tile => {
+    if (mode === 'mixed') tile.classList.toggle('counted', tile.dataset.counted === 'true');
+    else tile.classList.toggle('counted', mode === 'all');
+  });
+}
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+
+const deskBtn = document.getElementById('deskBtn');
+const phoneBtn = document.getElementById('phoneBtn');
+deskBtn.addEventListener('click', () => {
+  document.body.classList.remove('phone'); document.body.classList.add('desktop');
+  deskBtn.classList.add('on'); phoneBtn.classList.remove('on');
+});
+phoneBtn.addEventListener('click', () => {
+  document.body.classList.remove('desktop'); document.body.classList.add('phone');
+  phoneBtn.classList.add('on'); deskBtn.classList.remove('on');
+});
+
+const mixBtn = document.getElementById('mixBtn');
+const allBtn = document.getElementById('allBtn');
+const noneBtn = document.getElementById('noneBtn');
+function setCounted(btn, mode){
+  applyCounted(mode);
+  [mixBtn, allBtn, noneBtn].forEach(b => b.classList.toggle('on', b === btn));
+}
+mixBtn.addEventListener('click', () => setCounted(mixBtn, 'mixed'));
+allBtn.addEventListener('click', () => setCounted(allBtn, 'all'));
+noneBtn.addEventListener('click', () => setCounted(noneBtn, 'none'));
+</script>
+</body>
+</html>

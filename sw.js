@@ -1,10 +1,10 @@
 'use strict';
 // Bump the release identifier whenever any application asset changes.
 const CACHE_PREFIX = 'count-app-' + new URL(self.registration.scope).pathname + '-';
-const CACHE = CACHE_PREFIX + 'v4.0.2';
+const CACHE = CACHE_PREFIX + 'v4.0.16';
 const PRECACHE = [
   './', './index.html', './manifest.webmanifest', './app.bundle.js',
-  './src/app.js', './src/model.js', './src/storage.js', './src/catalog.js', './src/strings.js', './src/voice.js', './src/styles.css',
+  './src/app.js', './src/model.js', './src/storage.js', './src/catalog.js', './src/strings.js', './src/voice.js', './src/cloud.js', './src/styles.css',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png',
   './images/crateGrnE.webp', './images/crateBluE.webp', './images/crateGrnF.webp', './images/crateBluF.webp',
   './images/crateGrnGarage.webp', './images/crateTub.webp', './images/keg20.webp', './images/keg20slim.webp', './images/palEUR.webp'
