@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Counter placement — thumb test gallery</title>
+<style>
+  :root{
+    --bg:#111512;
+    --card:#1b211d;
+    --surface-2:#28302a;
+    --surface-3:#333c35;
+    --fg:#eef2ee;
+    --dim:#8b968e;
+    --border:#333d36;
+    --accent:#4ade80;
+    --accent-fg:#08130c;
+    --danger:#f87171;
+    --tile-shadow:0 10px 24px rgba(0,0,0,.5);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f6f2;
+    --card:#ffffff;
+    --surface-2:#ecefe9;
+    --surface-3:#e0e4dd;
+    --fg:#141813;
+    --dim:#5f6b61;
+    --border:#d8ddd4;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --danger:#dc2626;
+    --tile-shadow:0 10px 24px rgba(20,40,25,.14);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 72px;
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:1000px;margin:0 auto 18px}
+  h1{font-size:21px;margin:0 0 4px;letter-spacing:-.3px}
+  header p{margin:0 0 12px;color:var(--dim);font-size:13px;max-width:80ch}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .controls button{
+    font:inherit;font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px;
+    border:1px solid transparent;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button:hover{background:var(--surface-3)}
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  .controls .label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-left:6px}
+  .pick{font-size:13px;font-weight:800;color:var(--accent);margin-left:auto}
+
+  main{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+  .card{
+    position:relative;
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:14px 16px 16px;cursor:pointer;
+    transition:border-color .12s,box-shadow .12s;
+  }
+  .card:hover{border-color:var(--dim)}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+  .card-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:8px;background:var(--surface-2);
+    font-size:12px;font-weight:900;color:var(--dim);flex:0 0 auto;
+  }
+  .card.sel .num{background:var(--accent);color:var(--accent-fg)}
+  .card-head h2{font-size:15px;margin:0;font-weight:800}
+  .verdict{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:3px 9px}
+  .verdict.safe{color:var(--accent-fg);background:var(--accent)}
+  .verdict.risk{color:var(--fg);background:var(--surface-3)}
+  .verdict.bad{color:#fff;background:var(--danger)}
+  .pick-badge{display:none;font-size:11px;font-weight:800;color:var(--accent-fg);
+    background:var(--accent);border-radius:999px;padding:3px 10px}
+  .card.sel .pick-badge{display:inline-block}
+  .card-desc{margin:7px 0 12px;color:var(--dim);font-size:12.5px;max-width:78ch}
+
+  .stage{
+    background:var(--bg);border-radius:12px;padding:14px;
+    display:flex;justify-content:center;
+  }
+  .stage-inner{
+    display:grid;gap:12px;width:100%;
+    grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));
+  }
+  body.phone .stage-inner{--cols:2;max-width:360px}
+  body.desktop .stage-inner{--cols:4;max-width:820px}
+
+  /* ============ tile (mirrors app markup) ============ */
+  .tile{
+    position:relative;border:1px solid var(--border);border-radius:16px;
+    background:var(--card);overflow:hidden;aspect-ratio:1/1;
+  }
+  .tile.counted .qty{background:var(--accent);color:var(--accent-fg)}
+  .count{
+    position:relative;display:grid;grid-template-rows:1fr auto;
+    width:100%;height:100%;margin:0;border:0;padding:0;
+    background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;
+  }
+  .count:focus-visible{outline:3px solid var(--accent);outline-offset:-3px;border-radius:16px}
+  .pic{grid-row:1;grid-column:1;min-height:0;display:flex;align-items:center;justify-content:center;
+    padding:12px;position:relative}
+  .pic img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+  .meta{grid-row:2;grid-column:1;display:flex;align-items:center;justify-content:center;
+    gap:8px;padding:8px 12px 12px;pointer-events:none}
+  .name{font-size:12px;font-weight:650;line-height:1.35;overflow-wrap:anywhere;text-align:center}
+  .qty{
+    position:absolute;top:7px;left:7px;z-index:3;
+    font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.6px;
+    min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;
+    padding:4px 9px;border-radius:11px;
+    background:color-mix(in srgb,var(--bg) 66%,transparent);color:var(--fg);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--fg) 22%,transparent),0 4px 14px #0004;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    pointer-events:none;
+  }
+  .menu{
+    position:absolute;top:5px;right:5px;z-index:5;width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border:0;border-radius:9px;background:transparent;color:var(--dim);
+    font:800 16px/1 system-ui;cursor:pointer;
+  }
+  .menu:hover{background:var(--surface-2);color:var(--fg)}
+
+  /* ============ thumb overlay ============ */
+  .thumb{
+    position:absolute;z-index:4;pointer-events:none;
+    width:80%;height:64%;bottom:-10%;left:50%;transform:translateX(-50%);
+    border-radius:50% 50% 46% 46%/60% 60% 40% 40%;
+    background:radial-gradient(115% 120% at 50% 22%, #8b968ea6, #161a17f0);
+    box-shadow:0 12px 34px #0007, inset 0 3px 12px #ffffff26;
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+    opacity:0;transition:opacity .15s;
+  }
+  .thumb::after{
+    content:'thumb';position:absolute;left:0;right:0;bottom:20%;
+    text-align:center;font-size:10px;font-weight:900;letter-spacing:.18em;
+    text-transform:uppercase;color:#fff;opacity:.75;
+  }
+  body.show-thumb .thumb{opacity:1}
+  body.hand-right .thumb{left:58%}
+  body.hand-left .thumb{left:42%}
+  .thumb-note{font-size:11px;color:var(--dim);margin:10px 0 0;text-align:center}
+
+  /* ============ placement variants ============ */
+
+  /* 1 · top-left (current app) */
+  .p1 .qty{}
+
+  /* 2 · top-centre */
+  .p2 .qty{left:50%;transform:translateX(-50%)}
+
+  /* 3 · top-right, menu moved down */
+  .p3 .qty{left:auto;right:7px}
+  .p3 .menu{top:auto;bottom:5px;right:5px}
+
+  /* 4 · full-width top bar */
+  .p4 .qty{
+    top:0;left:0;right:0;min-width:0;min-height:34px;padding:5px 12px;
+    justify-content:flex-end;border-radius:0 0 12px 12px;
+    background:color-mix(in srgb,var(--surface-2) 82%,transparent);
+    box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--fg) 14%,transparent);
+  }
+  .p4 .pic{padding-top:40px}
+
+  /* 5 · centre overlay (for comparison) */
+  .p5 .qty{
+    top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:44px;font-weight:900;min-width:0;min-height:0;padding:0;
+    background:transparent;box-shadow:none;backdrop-filter:none;
+    color:color-mix(in srgb,var(--fg) 55%,transparent);
+  }
+
+  /* 6 · bottom-right (the original problem) */
+  .p6 .qty{top:auto;left:auto;bottom:12px;right:12px}
+
+  /* 7 · bottom-left */
+  .p7 .qty{top:auto;bottom:12px;left:12px}
+
+  /* 8 · floating tab straddling the top edge */
+  .p8 .tile{overflow:visible}
+  .p8 .thumb{bottom:0}
+  .p8 .qty{top:-12px;left:50%;transform:translateX(-50%);border:2px solid var(--card);box-shadow:0 8px 20px #0006}
+
+  /* 9 · right rail, vertically centred */
+  .p9 .qty{top:50%;left:auto;right:0;transform:translateY(-50%);border-radius:12px 0 0 12px;padding:9px 7px}
+
+  /* 10 · left rail, vertically centred */
+  .p10 .qty{top:50%;left:0;transform:translateY(-50%);border-radius:0 12px 12px 0;padding:9px 7px}
+
+  .code{
+    display:block;margin-top:12px;padding:9px 11px;border-radius:10px;
+    background:var(--bg);color:var(--dim);
+    font:11.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    white-space:pre-wrap;word-break:break-word;
+  }
+</style>
+</head>
+<body class="desktop show-thumb hand-right">
+<header>
+  <h1>Counter placement — thumb test</h1>
+  <p>Same tile, same product photos, the count in ten positions. The grey blob is where your thumb lands when you press a tile. Toggle <b>Thumb</b> off to see the clean design, switch <b>Hand</b> to check the other thumb, then tap a card to pick.</p>
+  <div class="controls">
+    <button id="themeBtn">Theme: dark</button>
+    <span class="label">Preview</span>
+    <button id="deskBtn" class="on">Desktop 4-col</button>
+    <button id="phoneBtn">Phone 2-col</button>
+    <span class="label">Thumb</span>
+    <button id="thumbBtn" class="on">Thumb: on</button>
+    <button id="handBtn">Hand: right</button>
+    <span class="pick" id="pickText"></span>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+var ITEMS = [
+  { name:'Keg 20 L',      img:'images/keg20.webp',       qty:4,  counted:true  },
+  { name:'Green crate',   img:'images/crateGrnF.webp',   qty:12, counted:false },
+  { name:'Euro pallet',   img:'images/palEUR.webp',      qty:3,  counted:false },
+  { name:'Tub crate',     img:'images/crateTub.webp',    qty:7,  counted:true  }
+];
+
+var VARIANTS = [
+  [1,'p1','Top-left badge','Current app change. Frosted count badge pinned to the top-left corner, item name centred underneath. Clear for a right thumb; a left thumb can reach the left edge on low tiles.','safe','thumb-safe \u00b7 current',
+   '.qty{position:absolute;top:7px;left:7px}'],
+  [2,'p2','Top-centre badge','Badge centred on the tile top edge. Symmetrical, so it clears a thumb from either side, but it sits over the middle of the product image.','safe','thumb-safe',
+   '.qty{left:50%;transform:translateX(-50%)}'],
+  [3,'p3','Top-right badge (menu moved)','Count takes the top-right and the \u00b7\u00b7\u00b7 menu moves to the bottom-right. Thumb-safe, but the menu is now in the press zone.','risk','thumb-safe \u00b7 menu at risk',
+   '.qty{right:7px}\n.menu{top:auto;bottom:5px}'],
+  [4,'p4','Full-width top bar','A slim bar across the tile top with the count right-aligned. Nothing near the thumb, reads at a glance; adds a little chrome.','safe','thumb-safe \u00b7 most explicit',
+   '.qty{top:0;left:0;right:0;justify-content:flex-end}\n.pic{padding-top:40px}'],
+  [5,'p5','Centre overlay','Big ghosted number in the middle. Looks great until a thumb covers the exact centre. Kept as the cautionary case.','bad','blocked by thumb',
+   '.qty{top:50%;left:50%;transform:translate(-50%,-50%)}'],
+  [6,'p6','Bottom-right pill','The original layout. The thumb lands straight on it while pressing.','bad','blocked by thumb',
+   '.qty{bottom:12px;right:12px}'],
+  [7,'p7','Bottom-left pill','Moved to the other bottom corner; still under the thumb pad, and worse for a left hand.','bad','blocked by thumb',
+   '.qty{bottom:12px;left:12px}'],
+  [8,'p8','Floating top tab','Count sits half outside the top edge, like a notification bubble. Very visible and completely clear of the thumb; needs the tile overflow unlocked.','safe','thumb-safe \u00b7 highest contrast',
+   '.tile{overflow:visible}\n.qty{top:-12px;left:50%;transform:translateX(-50%)}'],
+  [9,'p9','Right rail','Count centred on the right edge. Clear on wide tiles, but the right thumb can clip it on narrow ones.','risk','hand-dependent',
+   '.qty{top:50%;right:0;transform:translateY(-50%);border-radius:12px 0 0 12px}'],
+  [10,'p10','Left rail','Count centred on the left edge. Mirror of the right rail; safest for a right hand, risky for a left hand.','risk','hand-dependent',
+   '.qty{top:50%;left:0;transform:translateY(-50%);border-radius:0 12px 12px 0}']
+];
+
+var list = document.getElementById('list');
+var picked = null;
+
+function tileHTML(item){
+  return '<article class="tile' + (item.counted ? ' counted' : '') + '" data-qty="' + item.qty + '" data-counted="' + item.counted + '">' +
+    '<button class="count" aria-label="' + item.name + ': +1">' +
+      '<span class="pic"><img src="' + item.img + '" alt="" loading="lazy" draggable="false"></span>' +
+      '<span class="qty">' + item.qty + '</span>' +
+      '<span class="meta"><span class="name">' + item.name + '</span></span>' +
+    '</button>' +
+    '<button class="menu" aria-label="Options">\u00b7\u00b7\u00b7</button>' +
+    '<span class="thumb" aria-hidden="true"></span>' +
+  '</article>';
+}
+
+VARIANTS.forEach(function (row) {
+  var n = row[0], cls = row[1], name = row[2], desc = row[3], level = row[4], verdict = row[5], code = row[6];
+
+  var card = document.createElement('article');
+  card.className = 'card ' + cls;
+  card.dataset.n = n;
+
+  var head = document.createElement('div');
+  head.className = 'card-head';
+  head.innerHTML = '<span class="num">' + n + '</span><h2></h2><span class="verdict ' + level + '"></span><span class="pick-badge">Picked</span>';
+  head.querySelector('h2').textContent = name;
+  head.querySelector('.verdict').textContent = verdict;
+
+  var p = document.createElement('p');
+  p.className = 'card-desc';
+  p.textContent = desc;
+
+  var stage = document.createElement('div');
+  stage.className = 'stage';
+  var inner = document.createElement('div');
+  inner.className = 'stage-inner';
+  inner.innerHTML = ITEMS.map(tileHTML).join('');
+  stage.appendChild(inner);
+
+  var note = document.createElement('p');
+  note.className = 'thumb-note';
+  note.textContent = 'Grey blob = thumb contact while pressing.';
+
+  var codeEl = document.createElement('code');
+  codeEl.className = 'code';
+  codeEl.textContent = code;
+
+  card.append(head, p, stage, note, codeEl);
+
+  inner.addEventListener('click', function (event) {
+    var menu = event.target.closest('.menu');
+    var tile = event.target.closest('.tile');
+    if (!tile) return;
+    if (menu) { tile.classList.toggle('counted'); return; }
+    if (event.target.closest('.count')) {
+      tile.dataset.qty = String(Number(tile.dataset.qty || 0) + 1);
+      tile.classList.add('counted');
+      tile.querySelector('.qty').textContent = tile.dataset.qty;
+    }
+  });
+
+  card.addEventListener('click', function () {
+    picked = n;
+    document.querySelectorAll('.card').forEach(function (c) { c.classList.toggle('sel', c === card); });
+    document.getElementById('pickText').textContent = 'Picked: #' + n + ' \u2014 ' + name;
+  });
+
+  list.appendChild(card);
+});
+
+var themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', function () {
+  var light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+
+var deskBtn = document.getElementById('deskBtn');
+var phoneBtn = document.getElementById('phoneBtn');
+deskBtn.addEventListener('click', function () {
+  document.body.classList.remove('phone'); document.body.classList.add('desktop');
+  deskBtn.classList.add('on'); phoneBtn.classList.remove('on');
+});
+phoneBtn.addEventListener('click', function () {
+  document.body.classList.remove('desktop'); document.body.classList.add('phone');
+  phoneBtn.classList.add('on'); deskBtn.classList.remove('on');
+});
+
+var thumbBtn = document.getElementById('thumbBtn');
+thumbBtn.addEventListener('click', function () {
+  var on = document.body.classList.toggle('show-thumb');
+  thumbBtn.classList.toggle('on', on);
+  thumbBtn.textContent = 'Thumb: ' + (on ? 'on' : 'off');
+});
+
+var handBtn = document.getElementById('handBtn');
+handBtn.addEventListener('click', function () {
+  var right = document.body.classList.contains('hand-right');
+  document.body.classList.toggle('hand-right', !right);
+  document.body.classList.toggle('hand-left', right);
+  handBtn.textContent = 'Hand: ' + (right ? 'left' : 'right');
+});
+</script>
+</body>
+</html>

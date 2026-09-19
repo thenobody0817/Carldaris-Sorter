@@ -21,14 +21,61 @@ test('count commands keep immutable valid integers and clamp subtraction to zero
   for(const value of [NaN,Infinity,-1,0.5,MAX_QUANTITY+1,'oops'])assert.throws(()=>quantity(value));
   assert.throws(()=>applyAction(state,{type:'count',id,delta:1.1}));
 });
-test('new count retains history, resets checked flags and uses local date',()=>{
+test('new count retains history and uses local date',()=>{
   let state=createState();const id=activeSession(state).items[0].id;
   state=applyAction(state,{type:'count',id,delta:7});state=applyAction(state,{type:'new-session',name:'Morning'});
-  assert.equal(state.sessions.length,2);assert.equal(activeSession(state).name,'Morning');assert.equal(activeSession(state).date,localDate());assert.equal(totals(activeSession(state)).quantity,0);assert.equal(totals(activeSession(state)).counted,0);assert.equal(state.sessions[1].items[0].qty,7);
+  assert.equal(state.sessions.length,2);assert.equal(activeSession(state).name,'Morning');assert.equal(activeSession(state).date,localDate());assert.equal(totals(activeSession(state)).quantity,0);assert.equal(state.sessions[1].items[0].qty,7);
   const local=new Date(2025,0,2,0,15);assert.equal(localDate(local),'2025-01-02');
 });
-test('explicit zero counts as checked, spacers do not affect progress',()=>{
-  let state=migrateLegacy({items:[{id:'a',name:'A',qty:0},{id:'gap',spacer:true,qty:8}]});state=applyAction(state,{type:'set',id:'a',value:0});assert.deepEqual(totals(activeSession(state)),{quantity:0,counted:1,items:1});
+test('explicit zero is stored and spacers do not affect quantity',()=>{
+  let state=migrateLegacy({items:[{id:'a',name:'A',qty:0},{id:'gap',spacer:true,qty:8}]});state=applyAction(state,{type:'set',id:'a',value:0});assert.deepEqual(totals(activeSession(state)),{quantity:0});
+});
+test('reorder accepts a full permutation and move swaps neighbours across categories',()=>{
+  let state=createState();
+  const ids=activeSession(state).items.map(item=>item.id),reversed=[...ids].reverse();
+  state=applyAction(state,{type:'reorder',ids:reversed});assert.deepEqual(activeSession(state).items.map(item=>item.id),reversed);
+  assert.throws(()=>applyAction(state,{type:'reorder',ids:reversed.slice(1)}));
+  assert.throws(()=>applyAction(state,{type:'reorder',ids:[...reversed.slice(0,-1),reversed[0]]}));
+  const first=reversed[0],second=reversed[1];
+  state=applyAction(state,{type:'move',id:first,direction:1});
+  assert.equal(activeSession(state).items[0].id,second);assert.equal(activeSession(state).items[1].id,first);
+});
+test('place moves a tile to a grid cell, swapping occupants and materialising gaps',()=>{
+  const base=migrateLegacy({items:[{id:'a',name:'A'},{id:'b',name:'B'},{id:'c',name:'C'},{id:'d',name:'D'}]});
+  const swapped=activeSession(applyAction(base,{type:'place',id:'a',index:3}));
+  assert.deepEqual(swapped.items.map(item=>item.id),['d','b','c','a']);
+  const dropped=activeSession(applyAction(base,{type:'place',id:'a',index:6}));
+  assert.equal(dropped.items.length,7);assert.equal(dropped.items[6].id,'a');
+  assert.deepEqual(dropped.items.filter(item=>!item.spacer).map(item=>item.id),['b','c','d','a']);
+  assert.equal(dropped.items.filter(item=>item.spacer).length,3);
+  assert.throws(()=>applyAction(base,{type:'place',id:'missing',index:0}));
+  assert.throws(()=>applyAction(base,{type:'place',id:'a',index:-1}));
+});
+test('changing tiles per row keeps positions and adds columns on the left',()=>{
+  const state=migrateLegacy({items:[{id:'a',name:'A'},{id:'b',name:'B'},{id:'c',name:'C'},{id:'d',name:'D'},{id:'e',name:'E'}]});
+  const grownState=applyAction(state,{type:'preferences',value:{gridCols:'5'},fromColumns:4}),grown=activeSession(grownState);
+  assert.equal(grownState.preferences.gridCols,'5');
+  assert.equal(grown.items.length,7);
+  assert.deepEqual(grown.items.filter(item=>!item.spacer).map(item=>item.id),['a','b','c','d','e']);
+  assert.equal(grown.items[0].spacer,true);
+  assert.deepEqual(grown.items.slice(1,5).map(item=>item.id),['a','b','c','d']);
+  assert.equal(grown.items[5].spacer,true);
+  assert.equal(grown.items[6].id,'e');
+  const shrunk=activeSession(applyAction(grownState,{type:'preferences',value:{gridCols:'4'},fromColumns:5}));
+  assert.deepEqual(shrunk.items.map(item=>item.id),['a','b','c','d','e']);
+  assert.equal(shrunk.items.some(item=>item.spacer),false);
+});
+test('grid columns and rows accept up to twelve and reject beyond',()=>{
+  let state=createState();
+  state=applyAction(state,{type:'preferences',value:{gridCols:'12',gridRows:'12'}});
+  assert.equal(state.preferences.gridCols,'12');assert.equal(state.preferences.gridRows,'12');
+  const fallback=applyAction(state,{type:'preferences',value:{gridCols:'13'}});
+  assert.equal(fallback.preferences.gridCols,'auto');
+});
+test('remove-gap deletes only spacers',()=>{
+  const state=migrateLegacy({items:[{id:'a',name:'A'},{id:'gap',spacer:true,qty:0}]});
+  assert.deepEqual(activeSession(applyAction(state,{type:'remove-gap',id:'gap'})).items.map(item=>item.id),['a']);
+  assert.throws(()=>applyAction(state,{type:'remove-gap',id:'a'}));
 });
 test('category deletion can preserve items and rename never breaks references',()=>{
   let state=createState();const category=activeSession(state).categories[0];const before=activeSession(state).items.length;

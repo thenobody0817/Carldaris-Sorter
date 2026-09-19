@@ -42,7 +42,7 @@ The new service worker precaches one coherent release, waits for user-triggered 
 ## Deliberate changes and limits
 
 - HTML snapshot export becomes JSON backup/restore plus CSV reports. The original app snapshot remains in `legacy/` for reference.
-- Reordering uses explicit arrows instead of the original drag algorithm. Existing imported spacer entries are preserved, but adding new arbitrary blank layout slots is not exposed.
+- Reordering is a grid layout tool. Enabling it squares every cell and pads the final row with empty slots; a tile can be dragged onto any cell, moving freely and leaving a persisted gap behind, or swapping with an occupied cell. Gaps are removable by tapping and repositionable by dragging. Explicit arrows remain for keyboard access. This replaces the original drag algorithm while preserving imported spacer entries and now exposing new blank layout slots.
 - Row-fit settings control approximate tile density; they do not promise that the entire catalog and all category headings fit in a fixed number of viewport rows.
 - Undo/redo is in memory, bounded to 30 changes, and resets on reload. Session history is persisted.
 - Data is device-local. Revision checks detect stale tabs but do not provide multi-device synchronization or atomic collaborative editing across simultaneously writing tabs.
@@ -52,7 +52,7 @@ The new service worker precaches one coherent release, waits for user-triggered 
 
 ## Validation
 
-Automated tests cover legacy migration, language/category integrity, quantity constraints, immutable count changes, session history/local dates, checked-zero semantics, category deletion, malformed backup rejection, CSV safety, legacy-key preservation, write-failure rollback, undo/redo, stale-tab detection, voice zero/ambiguity and precache completeness.
+Automated tests cover legacy migration, language/category integrity, quantity constraints, immutable count changes, session history/local dates, checked-zero semantics, category deletion, malformed backup rejection, CSV safety, legacy-key preservation, write-failure rollback, undo/redo, stale-tab detection, grid placement/gap removal, voice zero/ambiguity and precache completeness.
 
 Browser checks cover initial rendering, tap counting, bulk addition, undo, session creation and switching, adding a custom item, language switching, persistence across reload, and a narrow phone viewport. Product images load successfully, the phone page has no horizontal overflow, and the inspected browser error log is empty.
 

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tile redesigns · gradient / neumorphic / heavy frost</title>
+<style>
+  :root{
+    --bg:#111512;
+    --card:#1b211d;
+    --surface-2:#28302a;
+    --surface-3:#333c35;
+    --fg:#eef2ee;
+    --dim:#8b968e;
+    --border:#333d36;
+    --accent:#4ade80;
+    --accent-fg:#08130c;
+    --accent-2:#38bdf8;
+    --accent-2-fg:#04121a;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+    --shadow:0 10px 24px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.4);
+    --neu-1:rgba(0,0,0,.5);
+    --neu-2:rgba(255,255,255,.045);
+    --clay-light:rgba(255,255,255,.10);
+    --clay-dark:rgba(0,0,0,.35);
+  }
+  html[data-theme="light"]{
+    --bg:#eef1ea;
+    --card:#ffffff;
+    --surface-2:#e8ece4;
+    --surface-3:#dde2d8;
+    --fg:#141813;
+    --dim:#5f6b61;
+    --border:#d8ddd4;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --accent-2:#0284c7;
+    --accent-2-fg:#ffffff;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#141813;
+    --qty-ring:rgba(0,0,0,.14);
+    --shadow:0 10px 24px rgba(20,40,25,.14),0 2px 6px rgba(20,40,25,.08);
+    --neu-1:rgba(20,40,25,.18);
+    --neu-2:rgba(255,255,255,.95);
+    --clay-light:rgba(255,255,255,.9);
+    --clay-dark:rgba(20,40,25,.13);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 72px;
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:960px;margin:0 auto 18px}
+  h1{font-size:21px;margin:0 0 4px;letter-spacing:-.3px}
+  header p{margin:0 0 12px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .controls button{
+    font:inherit;font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px;
+    border:1px solid transparent;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button:hover{background:var(--surface-3)}
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  .controls .label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-left:6px}
+  .pick{font-size:13px;font-weight:800;color:var(--accent);margin-left:auto}
+
+  main{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+  .card{
+    position:relative;
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:14px 16px 16px;cursor:pointer;
+    transition:border-color .12s,box-shadow .12s;
+  }
+  .card:hover{border-color:var(--dim)}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+  .card-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:8px;background:var(--surface-2);
+    font-size:12px;font-weight:900;color:var(--dim);flex:0 0 auto;
+  }
+  .card.sel .num{background:var(--accent);color:var(--accent-fg)}
+  .card-head h2{font-size:15px;margin:0;font-weight:800}
+  .tag{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--dim);border:1px solid var(--border);border-radius:999px;padding:2px 8px}
+  .tag.grad{color:#a78bfa;border-color:color-mix(in srgb,#a78bfa 45%,transparent)}
+  .tag.neu{color:#f59e0b;border-color:color-mix(in srgb,#f59e0b 45%,transparent)}
+  .tag.frost{color:#7dd3fc;border-color:color-mix(in srgb,#7dd3fc 45%,transparent)}
+  .pick-badge{display:none;font-size:11px;font-weight:800;color:var(--accent-fg);
+    background:var(--accent);border-radius:999px;padding:3px 10px}
+  .card.sel .pick-badge{display:inline-block}
+  .card-desc{margin:7px 0 12px;color:var(--dim);font-size:12.5px;max-width:72ch}
+
+  .stage{background:var(--bg);border-radius:12px;padding:14px;display:flex;justify-content:center}
+  .stage-inner{display:grid;gap:12px;width:100%;
+    grid-template-columns:repeat(var(--cols,4),minmax(0,1fr))}
+  body.phone .stage-inner{--cols:2;max-width:360px}
+  body.desktop .stage-inner{--cols:4;max-width:820px}
+
+  /* ============ shared tile (mirrors the app markup) ============ */
+  .tile{
+    position:relative;border:1px solid var(--border);border-radius:16px;
+    background:var(--card);overflow:hidden;aspect-ratio:1/1;
+  }
+  .tile .count{
+    position:relative;display:grid;grid-template-rows:1fr auto;
+    width:100%;height:100%;margin:0;border:0;padding:0;
+    background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;
+  }
+  .tile .count:focus-visible{outline:3px solid var(--accent);outline-offset:-3px;border-radius:16px}
+  .pic{grid-row:1;grid-column:1;min-height:0;display:flex;align-items:center;justify-content:center;
+    padding:12px;position:relative}
+  .pic img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+  .meta{grid-row:2;grid-column:1;display:flex;align-items:center;justify-content:space-between;
+    gap:8px;padding:8px 12px 12px;pointer-events:none}
+  .name{font-size:12px;font-weight:650;line-height:1.35;overflow-wrap:anywhere}
+  .qty{
+    font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px;
+    min-width:34px;min-height:34px;display:flex;align-items:center;justify-content:center;
+    padding:2px 8px;border-radius:10px;background:var(--surface-2);color:var(--fg);flex:0 0 auto;
+  }
+  .tile.counted .qty{background:var(--accent);color:var(--accent-fg)}
+  .menu{
+    position:absolute;top:5px;right:5px;z-index:6;width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border:0;border-radius:9px;background:transparent;color:var(--dim);
+    font:800 16px/1 system-ui;cursor:pointer;
+  }
+  .menu:hover{background:var(--surface-2);color:var(--fg)}
+  .tile.bump .qty{animation:pop .22s ease-out}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+
+  /* ================= 1–8 · GRADIENT / TINTED ================= */
+
+  /* 1 · diagonal tint */
+  .t1 .tile{border:0;box-shadow:var(--shadow);
+    background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 28%,var(--card)),var(--card) 68%)}
+  .t1 .pic{background:transparent;margin:8px 8px 0}
+  .t1 .meta{padding:10px 12px 12px}
+  .t1 .qty{background:color-mix(in srgb,var(--accent) 24%,transparent)}
+  .t1 .tile.counted{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
+
+  /* 2 · cool fade (secondary accent) */
+  .t2 .tile{border:0;box-shadow:var(--shadow);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--accent-2) 32%,var(--card)),var(--card) 60%)}
+  .t2 .pic{background:transparent;margin:8px 8px 0}
+  .t2 .meta{padding:10px 12px 12px}
+  .t2 .qty{background:color-mix(in srgb,var(--accent-2) 24%,transparent)}
+  .t2 .tile.counted{box-shadow:0 0 0 2px var(--accent-2),var(--shadow)}
+
+  /* 3 · radial glow behind image */
+  .t3 .tile{border:0;box-shadow:var(--shadow);
+    background:radial-gradient(120% 90% at 50% 34%,color-mix(in srgb,var(--accent) 34%,transparent),transparent 62%),var(--card)}
+  .t3 .pic{background:transparent;margin:8px 8px 0}
+  .t3 .meta{padding:10px 12px 12px}
+  .t3 .tile.counted{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
+
+  /* 4 · mesh tint (two hues) */
+  .t4 .tile{border:0;box-shadow:var(--shadow);
+    background:
+      radial-gradient(80% 70% at 10% 6%,color-mix(in srgb,var(--accent) 42%,transparent),transparent 60%),
+      radial-gradient(80% 70% at 94% 98%,color-mix(in srgb,var(--accent-2) 44%,transparent),transparent 60%),
+      var(--card)}
+  .t4 .pic{background:transparent;margin:8px 8px 0}
+  .t4 .meta{padding:10px 12px 12px}
+  .t4 .tile.counted{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
+
+  /* 5 · gradient border */
+  .t5 .tile{border:2px solid transparent;
+    background:
+      linear-gradient(var(--card),var(--card)) padding-box,
+      linear-gradient(145deg,var(--accent),var(--accent-2)) border-box}
+  .t5 .pic{background:var(--surface-2);margin:8px 8px 0;border-radius:12px}
+  .t5 .meta{padding:10px 12px 12px}
+  .t5 .tile.counted{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+
+  /* 6 · tinted image panel */
+  .t6 .tile{border:0;box-shadow:var(--shadow)}
+  .t6 .pic{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 24%,var(--surface-2)),var(--surface-2));
+    margin:8px 8px 0;border-radius:12px}
+  .t6 .meta{padding:10px 12px 12px}
+  .t6 .tile.counted{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
+
+  /* 7 · gradient card + frosted panel + glass badge */
+  .t7 .tile{border:0;box-shadow:var(--shadow);
+    background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 28%,var(--card)),var(--card) 68%)}
+  .t7 .pic{background:color-mix(in srgb,var(--card) 55%,transparent);backdrop-filter:blur(8px);
+    margin:8px 8px 0;border-radius:12px}
+  .t7 .meta{padding:10px 12px 12px}
+  .t7 .qty{position:absolute;top:14px;right:14px;z-index:3;background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);backdrop-filter:blur(6px)}
+  .t7 .tile.counted{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
+  .t7 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 8 · gradient underline */
+  .t8 .tile{border:0;box-shadow:var(--shadow)}
+  .t8 .pic{background:var(--surface-2);margin:8px 8px 0;border-radius:12px}
+  .t8 .meta{padding:10px 12px 14px}
+  .t8 .meta::before{content:'';position:absolute;left:12px;right:12px;bottom:5px;height:3px;border-radius:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:height .15s}
+  .t8 .tile.counted .meta::before{height:6px}
+  .t8 .tile.counted{box-shadow:0 0 0 2px var(--accent),var(--shadow)}
+
+  /* ================= 9–16 · NEUMORPHIC ================= */
+
+  /* 9 · raised, flat image */
+  .n9 .tile{border:0;background:var(--bg);
+    box-shadow:8px 8px 18px var(--neu-1),-8px -8px 18px var(--neu-2)}
+  .n9 .pic{background:transparent;margin:8px 8px 0}
+  .n9 .meta{padding:8px 12px 12px}
+  .n9 .qty{background:var(--bg);box-shadow:3px 3px 8px var(--neu-1),-3px -3px 8px var(--neu-2)}
+  .n9 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 10 · pressed / inset */
+  .n10 .tile{border:0;background:var(--bg);
+    box-shadow:inset 6px 6px 14px var(--neu-1),inset -6px -6px 14px var(--neu-2)}
+  .n10 .pic{background:transparent;margin:8px 8px 0}
+  .n10 .meta{padding:8px 12px 12px}
+  .n10 .qty{background:var(--bg);box-shadow:inset 3px 3px 7px var(--neu-1),inset -3px -3px 7px var(--neu-2)}
+  .n10 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 11 · accent shadow when counted */
+  .n11 .tile{border:0;background:var(--bg);transition:box-shadow .2s;
+    box-shadow:8px 8px 18px var(--neu-1),-8px -8px 18px var(--neu-2)}
+  .n11 .pic{background:var(--bg);margin:8px;border-radius:14px;
+    box-shadow:inset 5px 5px 12px var(--neu-1),inset -5px -5px 12px var(--neu-2)}
+  .n11 .meta{padding:8px 12px 12px}
+  .n11 .qty{background:var(--bg);box-shadow:3px 3px 8px var(--neu-1),-3px -3px 8px var(--neu-2)}
+  .n11 .tile.counted{box-shadow:5px 5px 16px color-mix(in srgb,var(--accent) 45%,transparent),
+    -5px -5px 16px var(--neu-2),0 0 0 2px var(--accent)}
+  .n11 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 12 · round raised counter */
+  .n12 .tile{border:0;background:var(--bg);
+    box-shadow:8px 8px 18px var(--neu-1),-8px -8px 18px var(--neu-2)}
+  .n12 .pic{background:var(--bg);margin:8px;border-radius:14px;
+    box-shadow:inset 5px 5px 12px var(--neu-1),inset -5px -5px 12px var(--neu-2)}
+  .n12 .meta{padding:8px 12px 12px}
+  .n12 .qty{width:38px;height:38px;min-width:38px;min-height:38px;border-radius:50%;padding:0;
+    background:var(--bg);box-shadow:3px 3px 8px var(--neu-1),-3px -3px 8px var(--neu-2)}
+  .n12 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 50%,transparent)}
+
+  /* 13 · convex gradient */
+  .n13 .tile{border:0;
+    background:linear-gradient(145deg,color-mix(in srgb,var(--fg) 7%,var(--bg)),var(--bg));
+    box-shadow:9px 9px 20px var(--neu-1),-9px -9px 20px var(--neu-2)}
+  .n13 .pic{background:transparent;margin:8px 8px 0}
+  .n13 .meta{padding:8px 12px 12px}
+  .n13 .qty{background:var(--bg);box-shadow:3px 3px 8px var(--neu-1),-3px -3px 8px var(--neu-2)}
+  .n13 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 14 · sheen highlight */
+  .n14 .tile{border:0;background:var(--bg);
+    box-shadow:8px 8px 18px var(--neu-1),-8px -8px 18px var(--neu-2)}
+  .n14 .tile::after{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 44%)}
+  .n14 .pic{background:var(--bg);margin:8px;border-radius:14px;
+    box-shadow:inset 5px 5px 12px var(--neu-1),inset -5px -5px 12px var(--neu-2)}
+  .n14 .meta{padding:8px 12px 12px}
+  .n14 .qty{background:var(--bg);box-shadow:3px 3px 8px var(--neu-1),-3px -3px 8px var(--neu-2)}
+  .n14 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 15 · claymorphism (puffy pastel) */
+  .n15 .tile{border:0;border-radius:26px;
+    background:color-mix(in srgb,var(--accent) 15%,var(--card));
+    box-shadow:inset -8px -8px 16px var(--clay-dark),inset 8px 8px 16px var(--clay-light),
+      0 14px 28px color-mix(in srgb,var(--accent) 22%,transparent)}
+  .n15 .pic{background:color-mix(in srgb,var(--card) 72%,transparent);margin:10px 10px 0;border-radius:20px;
+    box-shadow:inset 4px 4px 10px var(--clay-dark),inset -4px -4px 10px var(--clay-light)}
+  .n15 .meta{padding:12px 16px 16px}
+  .n15 .qty{border-radius:999px;background:color-mix(in srgb,var(--card) 82%,transparent);
+    box-shadow:inset -2px -2px 6px var(--clay-dark),inset 2px 2px 6px var(--clay-light)}
+  .n15 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 16 · raised frame in recessed card */
+  .n16 .tile{border:0;background:var(--bg);
+    box-shadow:inset 5px 5px 12px var(--neu-1),inset -5px -5px 12px var(--neu-2)}
+  .n16 .pic{background:var(--bg);margin:12px 12px 0;border-radius:12px;
+    box-shadow:4px 4px 10px var(--neu-1),-4px -4px 10px var(--neu-2)}
+  .n16 .meta{padding:10px 14px 14px}
+  .n16 .qty{background:var(--bg);box-shadow:3px 3px 8px var(--neu-1),-3px -3px 8px var(--neu-2)}
+  .n16 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* ================= 17–20 · HEAVY FROST ================= */
+
+  /* 17 · heavy frost footer */
+  .f17 .count{grid-template-rows:1fr}
+  .f17 .pic{grid-row:1;grid-column:1;padding:0}
+  .f17 .pic img{object-fit:cover;transform:scale(1.12)}
+  .f17 .meta{grid-row:1;grid-column:1;align-self:end;z-index:2;margin:8px;border-radius:14px;
+    background:color-mix(in srgb,var(--card) 34%,transparent);
+    backdrop-filter:blur(22px) saturate(1.6);
+    box-shadow:inset 0 0 0 1px var(--qty-ring),0 8px 20px rgba(0,0,0,.25)}
+  .f17 .qty{background:color-mix(in srgb,var(--card) 45%,transparent);color:var(--fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring)}
+  .f17 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 18 · full frosted overlay */
+  .f18 .count{grid-template-rows:1fr}
+  .f18 .pic{grid-row:1;grid-column:1;padding:0}
+  .f18 .pic img{object-fit:cover;transform:scale(1.12)}
+  .f18 .meta{grid-row:1;grid-column:1;align-self:stretch;z-index:2;margin:0;align-items:flex-end;padding:14px;
+    background:color-mix(in srgb,var(--card) 40%,transparent);
+    backdrop-filter:blur(16px) saturate(1.5);
+    box-shadow:inset 0 0 0 1px var(--qty-ring)}
+  .f18 .qty{background:var(--qty-bg);color:var(--qty-fg);box-shadow:inset 0 0 0 1px var(--qty-ring)}
+  .f18 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 19 · frost pill + round counter */
+  .f19 .count{grid-template-rows:1fr}
+  .f19 .pic{grid-row:1;grid-column:1;padding:0}
+  .f19 .pic img{object-fit:cover;transform:scale(1.12)}
+  .f19 .meta{grid-row:1;grid-column:1;align-self:end;z-index:2;margin:8px;border-radius:999px;
+    padding:8px 8px 8px 14px;
+    background:color-mix(in srgb,var(--card) 34%,transparent);
+    backdrop-filter:blur(22px) saturate(1.6);
+    box-shadow:inset 0 0 0 1px var(--qty-ring)}
+  .f19 .qty{width:34px;height:34px;min-width:34px;min-height:34px;border-radius:50%;padding:0;
+    background:var(--qty-bg);color:var(--qty-fg);box-shadow:inset 0 0 0 1px var(--qty-ring)}
+  .f19 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  /* 20 · accent frost */
+  .f20 .count{grid-template-rows:1fr}
+  .f20 .pic{grid-row:1;grid-column:1;padding:0}
+  .f20 .pic img{object-fit:cover;transform:scale(1.12)}
+  .f20 .meta{grid-row:1;grid-column:1;align-self:end;z-index:2;margin:8px;border-radius:12px;
+    background:color-mix(in srgb,var(--accent) 36%,transparent);
+    backdrop-filter:blur(20px) saturate(1.5);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 50%,transparent)}
+  .f20 .name{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+  .f20 .qty{background:rgba(0,0,0,.3);color:#fff;box-shadow:none}
+  .f20 .tile.counted .qty{background:var(--accent);color:var(--accent-fg);box-shadow:none}
+
+  .code{
+    display:block;margin-top:12px;padding:9px 11px;border-radius:10px;
+    background:var(--bg);color:var(--dim);
+    font:11.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    white-space:pre-wrap;word-break:break-word;
+  }
+</style>
+</head>
+<body class="desktop">
+<header>
+  <h1>Tile redesigns — gradient · neumorphic · heavy frost (20)</h1>
+  <p>Twenty new directions built from the three you picked. <b>Gradient</b> = tinted surfaces and borders. <b>Neumorphic</b> = soft light/dark relief. <b>Heavy frost</b> = strong blur over a full-bleed photo. Tap a tile to count; tap <b>···</b> to toggle counted. Click a card to mark your pick, then tell me its number.</p>
+  <div class="controls">
+    <button id="themeBtn">Theme: dark</button>
+    <span class="label">Preview</span>
+    <button id="deskBtn" class="on">Desktop 4-col</button>
+    <button id="phoneBtn">Phone 2-col</button>
+    <span class="label">Counted state</span>
+    <button id="mixBtn" class="on">Mixed</button>
+    <button id="allBtn">All</button>
+    <button id="noneBtn">None</button>
+    <span class="pick" id="pickText"></span>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+const ITEMS = [
+  { name:'Keg 20 L',      img:'images/keg20.webp',       qty:4,  counted:true  },
+  { name:'Green crate',   img:'images/crateGrnF.webp',   qty:12, counted:false },
+  { name:'Euro pallet',   img:'images/palEUR.webp',      qty:3,  counted:false },
+  { name:'Tub crate',     img:'images/crateTub.webp',    qty:7,  counted:true  },
+  { name:'Slim keg',      img:'images/keg20slim.webp',   qty:2,  counted:false },
+  { name:'Blue crate',    img:'images/crateBluF.webp',   qty:9,  counted:false },
+  { name:'Blue crate E',  img:'images/crateBluE.webp',   qty:5,  counted:false },
+  { name:'Green crate E', img:'images/crateGrnE.webp',   qty:6,  counted:false }
+];
+
+const VARIANTS = [
+  [1,'t1','grad','Diagonal tint','Accent gradient sweeps across the card; the count chip picks up the tint.','background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 28%,var(--card)),var(--card) 68%)'],
+  [2,'t2','grad','Cool fade','Same idea but the secondary blue accent fades in from the top.','background:linear-gradient(180deg,color-mix(in srgb,var(--accent-2) 32%,var(--card)),var(--card) 60%)'],
+  [3,'t3','grad','Radial glow','A soft accent glow sits behind the product, fading into the card.','background:radial-gradient(120% 90% at 50% 34%,color-mix(in srgb,var(--accent) 34%,transparent),transparent 62%),var(--card)'],
+  [4,'t4','grad','Mesh tint','Two hue pools (green + blue) in opposite corners — a subtle mesh gradient.','background:radial-gradient(...var(--accent)...),radial-gradient(...var(--accent-2)...),var(--card)'],
+  [5,'t5','grad','Gradient border','Plain card with a crisp accent-to-blue gradient outline.','background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(145deg,var(--accent),var(--accent-2)) border-box'],
+  [6,'t6','grad','Tinted panel','The image panel itself carries the gradient; the card stays clean.','.pic{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 24%,var(--surface-2)),var(--surface-2))}'],
+  [7,'t7','grad','Gradient + frost','Tinted card, frosted image panel and a glass count badge floating on top.','.pic{background:color-mix(in srgb,var(--card) 55%,transparent);backdrop-filter:blur(8px)}\n.qty{position:absolute;top:14px;right:14px;backdrop-filter:blur(6px)}'],
+  [8,'t8','grad','Gradient underline','A gradient rule under the footer that grows when the item is counted.','.meta::before{content:\'\';height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}\n.counted .meta::before{height:6px}'],
+
+  [9,'n9','neu','Raised, flat image','Soft raised tile with the product sitting directly on the surface.','box-shadow:8px 8px 18px var(--neu-1),-8px -8px 18px var(--neu-2)'],
+  [10,'n10','neu','Pressed / inset','The whole tile is recessed into the background — a “pressed” look.','box-shadow:inset 6px 6px 14px var(--neu-1),inset -6px -6px 14px var(--neu-2)'],
+  [11,'n11','neu','Accent shadow','Counted tiles swap the dark shadow for a coloured accent glow.','.counted{box-shadow:5px 5px 16px color-mix(in srgb,var(--accent) 45%,transparent),-5px -5px 16px var(--neu-2)}'],
+  [12,'n12','neu','Round raised counter','The count is a raised circular chip that matches the relief.','.qty{width:38px;height:38px;border-radius:50%;box-shadow:3px 3px 8px var(--neu-1),-3px -3px 8px var(--neu-2)}'],
+  [13,'n13','neu','Convex','A faint diagonal gradient makes the tile read as a convex button.','background:linear-gradient(145deg,color-mix(in srgb,var(--fg) 7%,var(--bg)),var(--bg))'],
+  [14,'n14','neu','Sheen','A diagonal light streak glides across the raised surface.','.tile::after{content:\'\';background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 44%)}'],
+  [15,'n15','neu','Claymorphism','Puffy, extra-rounded pastel tile with soft inner highlights.','border-radius:26px;background:color-mix(in srgb,var(--accent) 15%,var(--card))\nbox-shadow:inset -8px -8px 16px var(--clay-dark),inset 8px 8px 16px var(--clay-light)'],
+  [16,'n16','neu','Raised frame','Recessed card with the image sitting in a raised frame inside it.','.tile{box-shadow:inset 5px 5px 12px var(--neu-1),inset -5px -5px 12px var(--neu-2)}\n.pic{box-shadow:4px 4px 10px var(--neu-1),-4px -4px 10px var(--neu-2)}'],
+
+  [17,'f17','frost','Heavy frost footer','Maximum blur (22px) and saturation so the photo glows through the bar.','backdrop-filter:blur(22px) saturate(1.6)\nbackground:color-mix(in srgb,var(--card) 34%,transparent)'],
+  [18,'f18','frost','Full frosted overlay','The entire tile is frosted over the photo; content sits on the glass.','.meta{align-self:stretch;backdrop-filter:blur(16px) saturate(1.5)}'],
+  [19,'f19','frost','Frost pill + circle','A rounded frost pill with a circular count — very soft and pillowy.','.meta{border-radius:999px;backdrop-filter:blur(22px) saturate(1.6)}\n.qty{width:34px;height:34px;border-radius:50%}'],
+  [20,'f20','frost','Accent frost','The frost itself is tinted with the accent colour for a coloured glass bar.','background:color-mix(in srgb,var(--accent) 36%,transparent)\nbackdrop-filter:blur(20px) saturate(1.5)']
+];
+
+const list = document.getElementById('list');
+let picked = null;
+
+function tileHTML(item){
+  return '<article class="tile' + (item.counted ? ' counted' : '') + '" data-qty="' + item.qty + '" data-counted="' + item.counted + '">' +
+    '<button class="count" aria-label="' + item.name + ': +1">' +
+      '<span class="pic"><img src="' + item.img + '" alt="" loading="lazy" draggable="false"></span>' +
+      '<span class="meta"><span class="name">' + item.name + '</span><span class="qty">' + item.qty + '</span></span>' +
+    '</button>' +
+    '<button class="menu" aria-label="Options">···</button>' +
+  '</article>';
+}
+
+const FAMILY_LABEL = { grad:'Gradient', neu:'Neumorphic', frost:'Heavy frost' };
+
+for (const [n, cls, family, name, desc, code] of VARIANTS){
+  const card = document.createElement('article');
+  card.className = 'card ' + cls;
+  card.dataset.n = n;
+  card.dataset.name = name;
+
+  const head = document.createElement('div');
+  head.className = 'card-head';
+  head.innerHTML = '<span class="num">' + n + '</span><h2></h2>' +
+    '<span class="tag ' + family + '">' + FAMILY_LABEL[family] + '</span>' +
+    '<span class="pick-badge">Picked</span>';
+  head.querySelector('h2').textContent = name;
+
+  const p = document.createElement('p');
+  p.className = 'card-desc';
+  p.textContent = desc;
+
+  const stage = document.createElement('div');
+  stage.className = 'stage';
+  const inner = document.createElement('div');
+  inner.className = 'stage-inner';
+  inner.innerHTML = ITEMS.map(tileHTML).join('');
+  stage.appendChild(inner);
+
+  const codeEl = document.createElement('code');
+  codeEl.className = 'code';
+  codeEl.textContent = code;
+
+  card.append(head, p, stage, codeEl);
+
+  inner.addEventListener('click', event => {
+    const menu = event.target.closest('.menu');
+    const tile = event.target.closest('.tile');
+    if (!tile) return;
+    if (menu){
+      tile.classList.toggle('counted');
+      return;
+    }
+    if (event.target.closest('.count')){
+      tile.dataset.qty = String(Number(tile.dataset.qty || 0) + 1);
+      tile.classList.add('counted');
+      tile.querySelector('.qty').textContent = tile.dataset.qty;
+      tile.classList.remove('bump');
+      requestAnimationFrame(() => tile.classList.add('bump'));
+    }
+  });
+
+  card.addEventListener('click', () => {
+    picked = n;
+    document.querySelectorAll('.card').forEach(c => c.classList.toggle('sel', c === card));
+    document.getElementById('pickText').textContent = 'Picked: #' + n + ' — ' + name;
+  });
+
+  list.appendChild(card);
+}
+
+function applyCounted(mode){
+  document.querySelectorAll('.tile').forEach(tile => {
+    if (mode === 'mixed') tile.classList.toggle('counted', tile.dataset.counted === 'true');
+    else tile.classList.toggle('counted', mode === 'all');
+  });
+}
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+
+const deskBtn = document.getElementById('deskBtn');
+const phoneBtn = document.getElementById('phoneBtn');
+deskBtn.addEventListener('click', () => {
+  document.body.classList.remove('phone'); document.body.classList.add('desktop');
+  deskBtn.classList.add('on'); phoneBtn.classList.remove('on');
+});
+phoneBtn.addEventListener('click', () => {
+  document.body.classList.remove('desktop'); document.body.classList.add('phone');
+  phoneBtn.classList.add('on'); deskBtn.classList.remove('on');
+});
+
+const mixBtn = document.getElementById('mixBtn');
+const allBtn = document.getElementById('allBtn');
+const noneBtn = document.getElementById('noneBtn');
+function setCounted(btn, mode){
+  applyCounted(mode);
+  [mixBtn, allBtn, noneBtn].forEach(b => b.classList.toggle('on', b === btn));
+}
+mixBtn.addEventListener('click', () => setCounted(mixBtn, 'mixed'));
+allBtn.addEventListener('click', () => setCounted(allBtn, 'all'));
+noneBtn.addEventListener('click', () => setCounted(noneBtn, 'none'));
+</script>
+</body>
+</html>

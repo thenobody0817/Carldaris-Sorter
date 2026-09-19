@@ -3,7 +3,8 @@ import { DEFAULT_ITEMS, IMAGE_BY_ID } from './catalog.js';
 export const VERSION = 4;
 export const MAX_QUANTITY = 999999999;
 export const languages = ['en', 'lv', 'ru', 'zh'];
-export const uid = () => crypto.randomUUID();
+export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
+const makeSpacer = () => ({ id: uid(), name: '', defaultKey: null, categoryId: null, qty: 0, spacer: true, image: '' });
 export function localDate(now = new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
@@ -18,17 +19,27 @@ export function quantity(value) {
   if (!Number.isSafeInteger(number) || number < 0 || number > MAX_QUANTITY) throw new Error('Enter a whole number between 0 and 999,999,999.');
   return number;
 }
+const gridSizes = ['auto', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 export const defaults = {
-  lang: 'en', theme: 'auto', accent: 'green', contrast: 'normal', gridCols: 'auto',
-  gridDir: 'ltr', textSize: 'md', qtySize: 'md', rowFit: 'auto', catAlign: 'left',
+  lang: 'en', theme: 'auto', accent: 'green', contrast: 'normal', gridCols: 'auto', gridRows: 'auto',
+  gridDir: 'ltr', qtySize: 'md', rowFit: 'auto', catAlign: 'left', tileStyle: 'classic',
+  imageZoom: 125, titleSize: 12, imageShiftX: 0, imageShiftY: 0,
 };
 const choices = {
   lang: languages, theme: ['auto', 'light', 'dark', 'oled'], accent: ['green', 'blue', 'violet', 'pink', 'amber', 'cyan'],
-  contrast: ['normal', 'high'], gridCols: ['auto', '3', '4', '5', '6'], gridDir: ['ltr', 'rtl'],
-  textSize: ['sm', 'md', 'lg'], qtySize: ['sm', 'md', 'lg'], rowFit: ['auto', '3', '4', '5', '6'], catAlign: ['left', 'center', 'right'],
+  contrast: ['normal', 'high'], gridCols: gridSizes, gridRows: gridSizes, gridDir: ['ltr', 'rtl'],
+  qtySize: ['sm', 'md', 'lg'], rowFit: ['auto', '3', '4', '5', '6'], catAlign: ['left', 'center', 'right'],
+  tileStyle: ['classic', 'glow', 'diagonal', 'round', 'convex', 'glass'],
 };
+const ranges = { imageZoom: [50, 400], titleSize: [9, 28], imageShiftX: [-50, 50], imageShiftY: [-50, 50] };
 function preferences(raw = {}) {
-  return Object.fromEntries(Object.entries(defaults).map(([key, fallback]) => [key, choices[key].includes(raw[key]) ? raw[key] : fallback]));
+  return Object.fromEntries(Object.entries(defaults).map(([key, fallback]) => {
+    if (ranges[key]) {
+      const value = Number(raw[key]);
+      return [key, Number.isFinite(value) ? Math.min(ranges[key][1], Math.max(ranges[key][0], Math.round(value))) : fallback];
+    }
+    return [key, choices[key].includes(raw[key]) ? raw[key] : fallback];
+  }));
 }
 function defaultCategory(name) {
   for (const list of Object.values(DEFAULT_ITEMS)) {
@@ -57,7 +68,7 @@ export function migrateLegacy(raw) {
       categoryId: categories.find(category => category.name === item.category)?.id || null,
       image: safeImage(item.image) || IMAGE_BY_ID[item.id] || '',
       qty: Number.isSafeInteger(value) && value >= 0 && value <= MAX_QUANTITY ? value : 0,
-      counted: Boolean(item.counted || value > 0), spacer: Boolean(item.spacer),
+      spacer: Boolean(item.spacer),
     };
   });
   const session = { id: uid(), name: String(raw.label || ''), date: validDate(raw.date) ? raw.date : localDate(), categories, items };
@@ -92,8 +103,8 @@ export function validateState(raw) {
       if (item.categoryId !== null && !categories.has(item.categoryId)) throw new Error('An item refers to a missing category.');
       item.qty = quantity(item.qty);
       item.image = safeImage(item.image);
-      item.counted = Boolean(item.counted);
       item.spacer = Boolean(item.spacer);
+      delete item.counted;
     }
   }
   if (!sessions.has(state.activeId)) throw new Error('Missing active session.');
@@ -104,7 +115,37 @@ export const activeSession = state => state.sessions.find(session => session.id 
 export const itemName = (item, lang) => DEFAULT_ITEMS[lang]?.find(value => value.id === item.defaultKey)?.name || item.name;
 export const categoryName = (category, lang) => DEFAULT_ITEMS[lang]?.find(value => value.id === category.defaultKey)?.category || category.name;
 export function totals(session) {
-  return session.items.reduce((sum, item) => item.spacer ? sum : ({ quantity: sum.quantity + item.qty, counted: sum.counted + Number(item.counted), items: sum.items + 1 }), { quantity: 0, counted: 0, items: 0 });
+  return session.items.reduce((sum, item) => item.spacer ? sum : ({ quantity: sum.quantity + item.qty }), { quantity: 0 });
+}
+function reflowItems(session, from, to) {
+  const rows = [];
+  for (let i = 0; i < session.items.length; i += from) rows.push(session.items.slice(i, i + from));
+  const out = [];
+  if (to > from) {
+    const pad = to - from;
+    for (const row of rows) { for (let i = 0; i < pad; i++) out.push(null); out.push(...row); }
+  } else {
+    const drop = from - to;
+    for (const row of rows) {
+      let cut = 0;
+      while (cut < drop && (!row[cut] || row[cut].spacer)) cut++;
+      out.push(...row.slice(cut));
+    }
+  }
+  session.items = out.map(cell => cell || makeSpacer());
+}
+export function shiftItems(items, offset) {
+  if (!Number.isSafeInteger(offset) || !offset || !items.length) return items;
+  const first = items.findIndex(value => !value.spacer);
+  if (first < 0) return items;
+  let last = items.length - 1;
+  while (last >= 0 && items[last].spacer) last--;
+  const clamped = Math.max(-first, Math.min(items.length - 1 - last, offset));
+  if (!clamped) return items;
+  return items.map((_, index) => {
+    const source = index - clamped;
+    return source >= 0 && source < items.length ? items[source] : makeSpacer();
+  });
 }
 export function applyAction(previous, action) {
   const next = structuredClone(previous);
@@ -114,28 +155,34 @@ export function applyAction(previous, action) {
     case 'count':
       if (!item || item.spacer) throw new Error('Item not found.');
       if (!Number.isSafeInteger(action.delta)) throw new Error('Invalid quantity change.');
-      item.qty = quantity(Math.max(0, item.qty + action.delta)); item.counted = true; break;
+      item.qty = quantity(Math.max(0, item.qty + action.delta)); break;
     case 'set':
       if (!item || item.spacer) throw new Error('Item not found.');
-      item.qty = quantity(action.value); item.counted = true; break;
-    case 'preferences': next.preferences = preferences({ ...next.preferences, ...action.value }); break;
+      item.qty = quantity(action.value); break;
+    case 'preferences': {
+      const merged = { ...next.preferences, ...action.value };
+      const from = action.fromColumns, to = Number(merged.gridCols);
+      if (Number.isInteger(from) && from > 0 && Number.isInteger(to) && to > 0 && from !== to) reflowItems(session, from, to);
+      next.preferences = preferences(merged);
+      break;
+    }
     case 'rename-session': session.name = String(action.name).trim().slice(0, 160); break;
     case 'new-session': {
       const fresh = structuredClone(session);
       fresh.id = uid(); fresh.name = String(action.name || '').trim().slice(0, 160); fresh.date = localDate();
-      fresh.items.forEach(item => { item.qty = 0; item.counted = false; });
+      fresh.items.forEach(item => { item.qty = 0; });
       next.sessions.unshift(fresh); next.activeId = fresh.id; break;
     }
     case 'switch-session':
       if (!next.sessions.some(session => session.id === action.id)) throw new Error('Session not found.');
       next.activeId = action.id; break;
-    case 'reset': session.items.forEach(item => { item.qty = 0; item.counted = false; }); break;
+    case 'reset': session.items.forEach(item => { item.qty = 0; }); break;
     case 'save-item': {
       const name = String(action.name || '').trim().slice(0, 160);
       if (!name) throw new Error('Enter an item name.');
       if (action.categoryId && !session.categories.some(category => category.id === action.categoryId)) throw new Error('Category not found.');
       if (item) { item.name = name; item.defaultKey = null; item.categoryId = action.categoryId || null; }
-      else session.items.push({ id: uid(), name, defaultKey: null, categoryId: action.categoryId || null, qty: 0, counted: false, spacer: false, image: '' });
+      else session.items.push({ id: uid(), name, defaultKey: null, categoryId: action.categoryId || null, qty: 0, spacer: false, image: '' });
       break;
     }
     case 'delete-item': session.items = session.items.filter(item => item.id !== action.id); break;
@@ -155,14 +202,49 @@ export function applyAction(previous, action) {
       break;
     case 'move': {
       if (!item) throw new Error('Item not found.');
-      const group = session.items.filter(value => value.categoryId === item.categoryId);
-      const target = group[group.indexOf(item) + action.direction];
-      if (target) {
-        const a = session.items.indexOf(item), b = session.items.indexOf(target);
-        [session.items[a], session.items[b]] = [session.items[b], session.items[a]];
-      }
+      const index = session.items.indexOf(item), target = session.items[index + action.direction];
+      if (target) { session.items[index] = target; session.items[index + action.direction] = item; }
       break;
     }
+    case 'reorder': {
+      if (!Array.isArray(action.ids) || action.ids.length !== session.items.length) throw new Error('Invalid item order.');
+      const byId = new Map(session.items.map(item => [item.id, item]));
+      const seen = new Set();
+      session.items = action.ids.map(id => {
+        const value = byId.get(id);
+        if (!value || seen.has(id)) throw new Error('Invalid item order.');
+        seen.add(id); return value;
+      });
+      break;
+    }
+    case 'shift':
+      session.items = shiftItems(session.items, action.offset); break;
+    case 'compact': {
+      const items = session.items.filter(value => !value.spacer);
+      const columns = Number.isSafeInteger(action.columns) && action.columns > 0 ? action.columns : Math.max(1, items.length);
+      const total = Math.ceil(items.length / columns) * columns;
+      while (items.length < total) items.push(makeSpacer());
+      session.items = items;
+      break;
+    }
+    case 'place': {
+      const from = session.items.findIndex(value => value.id === action.id);
+      if (from < 0) throw new Error('Item not found.');
+      if (!Number.isSafeInteger(action.index) || action.index < 0 || action.index > 10000) throw new Error('Invalid position.');
+      const cells = session.items.slice();
+      while (cells.length <= action.index) cells.push(null);
+      const moving = cells[from];
+      cells[from] = null;
+      const displaced = cells[action.index];
+      cells[action.index] = moving;
+      if (displaced) cells[from] = displaced;
+      session.items = cells.map(cell => cell || makeSpacer());
+      break;
+    }
+    case 'remove-gap':
+      if (!item || !item.spacer) throw new Error('Gap not found.');
+      session.items = session.items.filter(value => value.id !== action.id);
+      break;
     default: throw new Error('Unknown action.');
   }
   return validateState(next);
@@ -174,10 +256,10 @@ export function csv(state) {
     if (/^[\s]*[=+@-]/.test(text)) text = "'" + text;
     return `"${text.replaceAll('"', '""')}"`;
   };
-  const rows = [['Session', session.name], ['Date', session.date], [], ['Category', 'Item', 'Quantity', 'Checked']];
+  const rows = [['Session', session.name], ['Date', session.date], [], ['Category', 'Item', 'Quantity']];
   for (const item of session.items.filter(item => !item.spacer)) {
     const category = session.categories.find(category => category.id === item.categoryId);
-    rows.push([category ? categoryName(category, lang) : '', itemName(item, lang), item.qty, item.counted ? 'yes' : 'no']);
+    rows.push([category ? categoryName(category, lang) : '', itemName(item, lang), item.qty]);
   }
   return '\uFEFF' + rows.map(row => row.map(cell).join(';')).join('\r\n');
 }

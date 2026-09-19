@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Counter effects v2 — 20 variations</title>
+<style>
+  :root{
+    --bg:#111;
+    --card:#1e1e1e;
+    --surface-2:#2a2a2a;
+    --fg:#eee;
+    --dim:#888;
+    --border:#333;
+    --accent:#4ade80;
+    --accent-fg:#000;
+    --danger:#f87171;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --surface-2:#eceef1;
+    --fg:#14171a;
+    --dim:#5f6b76;
+    --border:#d7dbe0;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --danger:#dc2626;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#14171a;
+    --qty-ring:rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 72px;
+    font:15px/1.4 system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:1180px;margin:0 auto 18px}
+  h1{font-size:20px;margin:0 0 4px}
+  header p{margin:0 0 10px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .controls button{
+    font:inherit;font-weight:700;padding:8px 12px;border-radius:10px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  main{
+    max-width:1180px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:12px;display:flex;flex-direction:column;gap:8px;
+    --e:0;--dur:.24s;
+  }
+  .card-name{font-weight:800;font-size:14px}
+  .card-desc{color:var(--dim);font-size:12px;min-height:34px}
+  .stage{
+    display:flex;align-items:center;justify-content:center;
+    padding:26px 0;background:var(--bg);border-radius:10px;
+    overflow:visible;
+  }
+  .badge{
+    --e:inherit;--dur:inherit;--sweep:transparent;
+    min-width:58px;height:46px;padding:0 14px;border-radius:11px;
+    background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+    font-weight:800;font-size:24px;line-height:1;
+    font-variant-numeric:tabular-nums;
+    display:inline-flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+    cursor:pointer;user-select:none;-webkit-user-select:none;
+  }
+  .badge::after{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg,transparent 25%,color-mix(in srgb,var(--sweep) 62%,transparent) 50%,transparent 75%);
+    transform:translateX(-130%);
+  }
+  .num{display:inline-flex;align-items:center;position:relative}
+  .btns{display:flex;gap:6px}
+  .btns button{
+    flex:1;font:inherit;font-weight:700;padding:8px 0;border-radius:9px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .btns .plus{background:var(--accent);color:var(--accent-fg)}
+  .btns .rapid{flex:0 0 auto;padding:8px 10px;background:var(--surface-2);color:var(--dim)}
+  .meter{height:3px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+  .meter i{display:block;height:100%;width:calc(var(--e,0) * 100%);background:var(--accent);transition:width .12s linear}
+
+  /* ---------- shared odometer ---------- */
+  .badge .ghost{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;will-change:transform}
+  @keyframes inUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes outUp{from{transform:translateY(0)}to{transform:translateY(-100%)}}
+  @keyframes inDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+  @keyframes outDown{from{transform:translateY(0)}to{transform:translateY(100%)}}
+  @keyframes inLeft{from{transform:translateX(100%)}to{transform:translateX(0)}}
+  @keyframes outLeft{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+  @keyframes inRight{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+  @keyframes outRight{from{transform:translateX(0)}to{transform:translateX(100%)}}
+  .badge .num.in-up{animation-name:inUp;animation-duration:var(--dur);animation-timing-function:ease}
+  .badge .num.in-down{animation-name:inDown;animation-duration:var(--dur);animation-timing-function:ease}
+  .badge .num.in-left{animation-name:inLeft;animation-duration:var(--dur);animation-timing-function:ease}
+  .badge .num.in-right{animation-name:inRight;animation-duration:var(--dur);animation-timing-function:ease}
+  .badge .ghost.out-up{animation-name:outUp;animation-duration:var(--dur);animation-timing-function:ease;animation-fill-mode:forwards}
+  .badge .ghost.out-down{animation-name:outDown;animation-duration:var(--dur);animation-timing-function:ease;animation-fill-mode:forwards}
+  .badge .ghost.out-left{animation-name:outLeft;animation-duration:var(--dur);animation-timing-function:ease;animation-fill-mode:forwards}
+  .badge .ghost.out-right{animation-name:outRight;animation-duration:var(--dur);animation-timing-function:ease;animation-fill-mode:forwards}
+  .badge .num.overshoot,.badge .ghost.overshoot{animation-timing-function:cubic-bezier(.34,1.56,.64,1)}
+
+  /* ---------- digit columns (spin) ---------- */
+  .digit{display:inline-block;position:relative;overflow:hidden;height:1em;line-height:1;vertical-align:bottom}
+  .digit.rolling .d-out,.digit.rolling .d-in{display:block}
+  .digit.rolling .d-in{position:absolute;left:0;top:0}
+  @keyframes dInUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes dOutUp{from{transform:translateY(0)}to{transform:translateY(-100%)}}
+  @keyframes dInDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+  @keyframes dOutDown{from{transform:translateY(0)}to{transform:translateY(100%)}}
+  .digit.spin-up .d-out{animation:dOutUp .28s ease}
+  .digit.spin-up .d-in{animation:dInUp .28s ease}
+  .digit.spin-down .d-out{animation:dOutDown .28s ease}
+  .digit.spin-down .d-in{animation:dInDown .28s ease}
+
+  /* ---------- slot reel ---------- */
+  .reel-wrap{display:inline-block;overflow:hidden;height:1em;vertical-align:bottom}
+  .reel{display:block;will-change:transform}
+  .reel span{display:block;height:1em;line-height:1}
+  .slot-hi{display:inline-block}
+
+  /* ---------- 1-4 rolls ---------- */
+  /* 5 combo */
+  @keyframes punch{0%{transform:scale(1)}40%{transform:scale(calc(1.10 + var(--e) * .16))}100%{transform:scale(1)}}
+  @keyframes flashUp{0%{color:var(--accent)}100%{color:var(--qty-fg)}}
+  @keyframes flashDown{0%{color:var(--danger)}100%{color:var(--qty-fg)}}
+  @keyframes ringUp{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 color-mix(in srgb,var(--accent) 78%,transparent)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 calc(8px + var(--e) * 22px) rgba(0,0,0,0)}
+  }
+  @keyframes ringDown{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 color-mix(in srgb,var(--danger) 78%,transparent)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 calc(8px + var(--e) * 22px) rgba(0,0,0,0)}
+  }
+  .v-combo .badge.up{animation-name:punch,ringUp,flashUp;animation-duration:var(--dur),calc(var(--dur) * 1.8),var(--dur);animation-timing-function:ease}
+  .v-combo .badge.down{animation-name:punch,ringDown,flashDown;animation-duration:var(--dur),calc(var(--dur) * 1.8),var(--dur);animation-timing-function:ease}
+  .v-combo .badge{overflow:visible}
+
+  /* 9 punch */
+  .v-punch .badge.up{animation-name:punch,flashUp;animation-duration:var(--dur);animation-timing-function:ease}
+  .v-punch .badge.down{animation-name:punch,flashDown;animation-duration:var(--dur);animation-timing-function:ease}
+  .v-punch .badge{overflow:visible}
+
+  /* 10 elastic */
+  @keyframes elastic{
+    0%{transform:scale(1)}
+    28%{transform:scale(calc(1.16 + var(--e) * .2))}
+    48%{transform:scale(.94)}
+    68%{transform:scale(1.05)}
+    100%{transform:scale(1)}
+  }
+  .v-elastic .badge.up{animation-name:elastic,flashUp;animation-duration:calc(var(--dur) * 1.7);animation-timing-function:cubic-bezier(.3,.7,.4,1)}
+  .v-elastic .badge.down{animation-name:elastic,flashDown;animation-duration:calc(var(--dur) * 1.7);animation-timing-function:cubic-bezier(.3,.7,.4,1)}
+  .v-elastic .badge{overflow:visible}
+
+  /* 11 jelly */
+  @keyframes jelly{
+    0%{transform:scale(calc(1.06 + var(--e) * .2),calc(.92 - var(--e) * .14))}
+    35%{transform:scale(.9,1.12)}
+    65%{transform:scale(1.05,.97)}
+    100%{transform:scale(1,1)}
+  }
+  .v-jelly .badge.up,.v-jelly .badge.down{animation-name:jelly;animation-duration:calc(var(--dur) * 1.8);animation-timing-function:ease}
+  .v-jelly .badge{overflow:visible}
+
+  /* 12 bounce */
+  @keyframes bounce{
+    0%{transform:translateY(0)}
+    30%{transform:translateY(calc(-32% - var(--e) * 28%))}
+    55%{transform:translateY(0)}
+    75%{transform:translateY(-12%)}
+    100%{transform:translateY(0)}
+  }
+  .v-bounce .badge.up .num,.v-bounce .badge.down .num{animation-name:bounce;animation-duration:calc(var(--dur) * 2);animation-timing-function:ease}
+  .v-bounce .badge{overflow:visible}
+
+  /* 13 rise ghost */
+  .ghost-fx{position:absolute;left:50%;top:50%;font-size:.62em;font-weight:800;pointer-events:none;will-change:transform,opacity}
+  .ghost-fx.up{color:var(--accent)}
+  .ghost-fx.down{color:var(--danger)}
+  @keyframes riseUp{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-230%) scale(1.15)}}
+  @keyframes riseDown{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,130%) scale(1.15)}}
+  .v-rise .badge{overflow:visible}
+
+  /* 14 drift ghost */
+  @keyframes driftRight{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}25%{opacity:1}100%{opacity:0;transform:translate(60%,-50%) scale(1.15)}}
+  @keyframes driftLeft{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}25%{opacity:1}100%{opacity:0;transform:translate(-160%,-50%) scale(1.15)}}
+  .v-drift .badge{overflow:visible}
+
+  /* 15 ring */
+  .v-ring .badge.up{animation-name:ringUp;animation-duration:calc(var(--dur) * 2);animation-timing-function:ease}
+  .v-ring .badge.down{animation-name:ringDown;animation-duration:calc(var(--dur) * 2);animation-timing-function:ease}
+
+  /* 16 glow */
+  @keyframes glowUp{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 calc(4px + var(--e) * 18px) calc(1px + var(--e) * 7px) color-mix(in srgb,var(--accent) 82%,transparent)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 rgba(0,0,0,0)}
+  }
+  @keyframes glowDown{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 calc(4px + var(--e) * 18px) calc(1px + var(--e) * 7px) color-mix(in srgb,var(--danger) 82%,transparent)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 rgba(0,0,0,0)}
+  }
+  .v-glow .badge.up{animation-name:glowUp;animation-duration:calc(var(--dur) * 2.2);animation-timing-function:ease}
+  .v-glow .badge.down{animation-name:glowDown;animation-duration:calc(var(--dur) * 2.2);animation-timing-function:ease}
+
+  /* 17 fill sweep */
+  @keyframes sweep{from{transform:translateX(-130%)}to{transform:translateX(130%)}}
+  .v-fill .badge.up{--sweep:var(--accent)}
+  .v-fill .badge.down{--sweep:var(--danger)}
+  .v-fill .badge.up::after,.v-fill .badge.down::after{animation:sweep calc(var(--dur) * 2.1) ease}
+
+  /* 18 badge flash */
+  @keyframes bgUp{0%{background:var(--accent);color:var(--accent-fg)}100%{background:var(--qty-bg);color:var(--qty-fg)}}
+  @keyframes bgDown{0%{background:var(--danger);color:#fff}100%{background:var(--qty-bg);color:var(--qty-fg)}}
+  .v-bg .badge.up{animation-name:bgUp;animation-duration:calc(var(--dur) * 1.7);animation-timing-function:ease}
+  .v-bg .badge.down{animation-name:bgDown;animation-duration:calc(var(--dur) * 1.7);animation-timing-function:ease}
+
+  /* 19-20 flips */
+  @keyframes flipX{0%{transform:perspective(340px) rotateY(0)}50%{transform:perspective(340px) rotateY(90deg)}100%{transform:perspective(340px) rotateY(0)}}
+  @keyframes flipY{0%{transform:perspective(340px) rotateX(0)}50%{transform:perspective(340px) rotateX(90deg)}100%{transform:perspective(340px) rotateX(0)}}
+  .v-flipx .badge.flip-x{animation:flipX .32s ease}
+  .v-flipy .badge.flip-y{animation:flipY .32s ease}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Counter effects v2 — 20 variations</h1>
+  <p>Tap a badge, use +1 / &minus;1, or hit <b>&times;6</b> to stack taps fast. The bar under each badge is tap energy. Odometer rolls are 1&ndash;4 and 6&ndash;8. "Seed 98" tests carries.</p>
+  <div class="controls">
+    <button id="autoBtn" class="on">Auto demo: on</button>
+    <button id="themeBtn">Theme: dark</button>
+    <button id="seedBtn">Seed 98</button>
+    <button id="resetBtn">Reset to 5</button>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+var REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+var VARIANTS = [
+  { id:'rollup',    name:'1. Roll up',            desc:'Classic vertical odometer: the new number rolls up from below on +1, down from above on \u22121.' },
+  { id:'rollleft',  name:'2. Roll left',          desc:'Horizontal odometer: the number always rolls to the left, like a tape. Same feel, sideways.' },
+  { id:'rolldir',   name:'3. Directional roll',   desc:'Horizontal and direction-aware: +1 rolls left, \u22121 rolls right.' },
+  { id:'overshoot', name:'4. Overshoot roll',     desc:'Horizontal roll with a springy overshoot. Tap faster and the kick grows.' },
+  { id:'combo',     name:'5. Combo',              desc:'Punch + expanding ring + colour flash, all scaled by tap energy. The likely winner.' },
+  { id:'tick',      name:'6. Count-up tick',      desc:'The number rapidly ticks through intermediate values. Great for big jumps.' },
+  { id:'digitspin', name:'7. Digit spin',         desc:'Only the digits that actually change spin; a carry rolls the next column too.' },
+  { id:'slot',      name:'8. Slot reel',          desc:'The ones digit spins through numbers and snaps into place. Always spins forward.' },
+  { id:'punch',     name:'9. Punch + flash',      desc:'Scale punch plus an accent/danger colour flash. The refined current effect.' },
+  { id:'elastic',   name:'10. Elastic pop',       desc:'Springy elastic overshoot that grows with tap energy.' },
+  { id:'jelly',     name:'11. Jelly',             desc:'Squash-and-stretch jelly wobble.' },
+  { id:'bounce',    name:'12. Bounce',            desc:'The number bounces up and settles back down.' },
+  { id:'rise',      name:'13. Rise ghost',        desc:'A +1 / \u22121 ghost floats up and fades while the number swaps.' },
+  { id:'drift',     name:'14. Drift ghost',       desc:'A +1 / \u22121 ghost drifts sideways and fades.' },
+  { id:'ring',      name:'15. Ring pulse',        desc:'A coloured ring expands from the badge; the radius grows with tap energy.' },
+  { id:'glow',      name:'16. Glow bloom',        desc:'A soft coloured glow blooms around the badge.' },
+  { id:'fill',      name:'17. Fill sweep',        desc:'An accent sheen sweeps across the badge.' },
+  { id:'bg',        name:'18. Badge flash',       desc:'The whole badge background flashes accent/danger.' },
+  { id:'flipx',     name:'19. Flip X',            desc:'3D horizontal flip; the number swaps at the 90\u00b0 midpoint.' },
+  { id:'flipy',     name:'20. Flip Y',            desc:'3D vertical flip; the number swaps at the 90\u00b0 midpoint.' }
+];
+
+var REEL = '0123456789'.repeat(2);
+var list = document.getElementById('list');
+
+VARIANTS.forEach(function (v) {
+  var card = document.createElement('div');
+  card.className = 'card v-' + v.id;
+  card.dataset.variant = v.id;
+  card.dataset.val = '5';
+  card.dataset.dir = '1';
+  card.innerHTML =
+    '<div class="card-name"></div>' +
+    '<div class="card-desc"></div>' +
+    '<div class="stage"><div class="badge"></div></div>' +
+    '<div class="meter"><i></i></div>' +
+    '<div class="btns"><button class="minus">\u22121</button><button class="plus">+1</button><button class="rapid" title="Six taps in a row">\u00d76</button></div>';
+  card.querySelector('.card-name').textContent = v.name;
+  card.querySelector('.card-desc').textContent = v.desc;
+  list.appendChild(card);
+
+  renderStatic(card, 5);
+
+  card.querySelector('.plus').addEventListener('click', function () { trigger(card, 1); });
+  card.querySelector('.minus').addEventListener('click', function () { trigger(card, -1); });
+  card.querySelector('.rapid').addEventListener('click', function () { rapid(card, 1); });
+  card.querySelector('.badge').addEventListener('click', function () { trigger(card, 1); });
+});
+
+function slotMarkup(value) {
+  var hi = Math.floor(value / 10) ? String(Math.floor(value / 10)) : '';
+  var items = REEL.split('').map(function (c) { return '<span>' + c + '</span>'; }).join('');
+  return '<span class="num"><span class="slot-hi">' + hi + '</span><span class="digit reel-wrap"><span class="reel">' + items + '</span></span></span>';
+}
+
+function renderStatic(card, value) {
+  card.dataset.val = String(value);
+  var badge = card.querySelector('.badge');
+  badge.classList.remove('up', 'down', 'flip-x', 'flip-y');
+  var v = card.dataset.variant;
+  if (v === 'digitspin') {
+    badge.innerHTML = '<span class="num">' + String(value).split('').map(function (c) { return '<span class="digit">' + c + '</span>'; }).join('') + '</span>';
+  } else if (v === 'slot') {
+    badge.innerHTML = slotMarkup(value);
+    var reel = badge.querySelector('.reel');
+    var pos = value % 10;
+    reel.style.transition = 'none';
+    reel.style.transform = 'translateY(' + (-pos) + 'em)';
+    reel.dataset.pos = String(pos);
+  } else {
+    badge.innerHTML = '<span class="num">' + value + '</span>';
+  }
+}
+
+function setNum(card, value) { card.querySelector('.num').textContent = String(value); }
+
+function bumpEnergy(card) {
+  var now = performance.now();
+  var last = Number(card.dataset.lastTap) || 0;
+  var e = Number(card.dataset.energy) || 0;
+  if (now - last < 300) e = Math.min(1, e + 0.25);
+  else e = 0.25;
+  card.dataset.energy = String(e);
+  card.dataset.lastTap = String(now);
+  card.style.setProperty('--e', e);
+  card.style.setProperty('--dur', (0.2 + e * 0.12).toFixed(3) + 's');
+  clearTimeout(card._decay);
+  card._decay = setTimeout(function () {
+    card.dataset.energy = '0';
+    card.style.setProperty('--e', '0');
+  }, 650);
+  return e;
+}
+
+function trigger(card, dir) {
+  var val = Number(card.dataset.val) || 0;
+  var nv = Math.max(0, Math.min(999, val + dir));
+  if (nv === val) return;
+  var energy = bumpEnergy(card);
+  var badge = card.querySelector('.badge');
+  var v = card.dataset.variant;
+
+  if (REDUCED) { renderStatic(card, nv); return; }
+
+  switch (v) {
+    case 'rollup':    roll(card, dir, nv, 'y'); break;
+    case 'rollleft':  roll(card, dir, nv, 'left'); break;
+    case 'rolldir':   roll(card, dir, nv, dir >= 0 ? 'left' : 'right'); break;
+    case 'overshoot': roll(card, dir, nv, 'left', true); break;
+    case 'tick':      tick(card, val, nv, energy); break;
+    case 'digitspin': digitSpin(card, val, nv, dir); break;
+    case 'slot':      slotSpin(card, nv); break;
+    case 'rise':      card.dataset.val = String(nv); ghostFloat(card, dir, 'rise'); setNum(card, nv); break;
+    case 'drift':     card.dataset.val = String(nv); ghostFloat(card, dir, 'drift'); setNum(card, nv); break;
+    case 'flipx':     flip(card, dir, nv, 'flip-x'); break;
+    case 'flipy':     flip(card, dir, nv, 'flip-y'); break;
+    default:
+      card.dataset.val = String(nv);
+      setNum(card, nv);
+      badge.classList.remove('up', 'down');
+      void badge.offsetWidth;
+      badge.classList.add(dir >= 0 ? 'up' : 'down');
+      clearTimeout(badge._t);
+      badge._t = setTimeout(function () { badge.classList.remove('up', 'down'); }, 700);
+  }
+}
+
+function roll(card, dir, nv, axis, overshoot) {
+  var badge = card.querySelector('.badge');
+  var num = card.querySelector('.num');
+  badge.querySelectorAll('.ghost').forEach(function (g) { g.remove(); });
+  var ghost = document.createElement('span');
+  ghost.className = 'ghost';
+  ghost.textContent = num.textContent;
+  badge.appendChild(ghost);
+  num.textContent = String(nv);
+  num.classList.remove('in-up', 'in-down', 'in-left', 'in-right', 'overshoot');
+  ghost.classList.remove('out-up', 'out-down', 'out-left', 'out-right', 'overshoot');
+  void num.offsetWidth;
+  var inC, outC;
+  if (axis === 'y') { inC = dir >= 0 ? 'in-up' : 'in-down'; outC = dir >= 0 ? 'out-up' : 'out-down'; }
+  else if (axis === 'right') { inC = 'in-right'; outC = 'out-right'; }
+  else { inC = 'in-left'; outC = 'out-left'; }
+  num.classList.add(inC);
+  ghost.classList.add(outC);
+  if (overshoot) { num.classList.add('overshoot'); ghost.classList.add('overshoot'); }
+  card.dataset.val = String(nv);
+  setTimeout(function () { ghost.remove(); }, 400);
+}
+
+function tick(card, from, to, energy) {
+  cancelAnimationFrame(card._tick);
+  var num = card.querySelector('.num');
+  var dur = 180 + energy * 280;
+  var t0 = performance.now();
+  function step(now) {
+    var p = Math.min(1, (now - t0) / dur);
+    var e = 1 - Math.pow(1 - p, 3);
+    num.textContent = String(Math.round(from + (to - from) * e));
+    if (p < 1) card._tick = requestAnimationFrame(step);
+    else { num.textContent = String(to); card.dataset.val = String(to); }
+  }
+  card.dataset.val = String(to);
+  card._tick = requestAnimationFrame(step);
+}
+
+function digitSpin(card, val, nv, dir) {
+  var num = card.querySelector('.num');
+  var oldStr = String(val), newStr = String(nv);
+  var len = Math.max(oldStr.length, newStr.length);
+  var oldP = oldStr.padStart(len, ' ');
+  var newP = newStr.padStart(len, ' ');
+  num.innerHTML = newP.split('').map(function (ch, i) {
+    var oc = oldP[i];
+    if (oc !== ch && oc !== ' ' && ch !== ' ') {
+      return '<span class="digit rolling"><span class="d-out">' + oc + '</span><span class="d-in">' + ch + '</span></span>';
+    }
+    return '<span class="digit">' + (ch === ' ' ? '' : ch) + '</span>';
+  }).join('');
+  card.dataset.val = String(nv);
+  var token = (card._dToken = (card._dToken || 0) + 1);
+  requestAnimationFrame(function () {
+    if (card._dToken !== token) return;
+    num.querySelectorAll('.digit.rolling').forEach(function (d) {
+      d.classList.remove('spin-up', 'spin-down');
+      void d.offsetWidth;
+      d.classList.add(dir >= 0 ? 'spin-up' : 'spin-down');
+    });
+  });
+  clearTimeout(card._dClean);
+  card._dClean = setTimeout(function () {
+    if (card._dToken !== token) return;
+    num.innerHTML = String(nv).split('').map(function (ch) { return '<span class="digit">' + ch + '</span>'; }).join('');
+  }, 340);
+}
+
+function slotSpin(card, nv) {
+  var num = card.querySelector('.num');
+  var hi = num.querySelector('.slot-hi');
+  var reel = num.querySelector('.reel');
+  if (!reel) return;
+  hi.textContent = Math.floor(nv / 10) ? String(Math.floor(nv / 10)) : '';
+  var target = nv % 10;
+  var startPos = Number(reel.dataset.pos) || 0;
+  var delta = ((target - startPos + 10) % 10) || 10;
+  var endPos = startPos + delta;
+  reel.style.transition = 'none';
+  reel.style.transform = 'translateY(' + (-startPos) + 'em)';
+  void reel.offsetWidth;
+  reel.style.transition = 'transform .55s cubic-bezier(.15,.85,.25,1)';
+  reel.style.transform = 'translateY(' + (-endPos) + 'em)';
+  reel.dataset.pos = String(target);
+  card.dataset.val = String(nv);
+  var token = (card._slotToken = (card._slotToken || 0) + 1);
+  reel.addEventListener('transitionend', function done() {
+    if (card._slotToken !== token) return;
+    reel.style.transition = 'none';
+    reel.style.transform = 'translateY(' + (-target) + 'em)';
+  }, { once: true });
+}
+
+function ghostFloat(card, dir, kind) {
+  var badge = card.querySelector('.badge');
+  var g = document.createElement('span');
+  g.className = 'ghost-fx ' + kind + (dir >= 0 ? ' up' : ' down');
+  g.textContent = dir >= 0 ? '+1' : '\u22121';
+  g.style.animation = (kind === 'rise' ? (dir >= 0 ? 'riseUp' : 'riseDown') : (dir >= 0 ? 'driftRight' : 'driftLeft')) + ' .6s ease forwards';
+  badge.appendChild(g);
+  setTimeout(function () { g.remove(); }, 650);
+}
+
+function flip(card, dir, nv, cls) {
+  var badge = card.querySelector('.badge');
+  var token = (card._flip = (card._flip || 0) + 1);
+  badge.classList.remove('flip-x', 'flip-y');
+  void badge.offsetWidth;
+  badge.classList.add(cls);
+  card.dataset.val = String(nv);
+  setTimeout(function () { if (card._flip === token) setNum(card, nv); }, 140);
+  setTimeout(function () { if (card._flip === token) badge.classList.remove(cls); }, 340);
+}
+
+function rapid(card, dir) {
+  var n = 0;
+  var timer = setInterval(function () {
+    trigger(card, dir);
+    if (++n >= 6) clearInterval(timer);
+  }, 55);
+}
+
+/* ---------- global controls ---------- */
+var auto = true;
+setInterval(function () {
+  if (!auto) return;
+  document.querySelectorAll('.card').forEach(function (card) {
+    var val = Number(card.dataset.val);
+    var dir = Number(card.dataset.dir) || 1;
+    if (val >= 9) dir = -1;
+    else if (val <= 0) dir = 1;
+    card.dataset.dir = String(dir);
+    trigger(card, dir);
+  });
+}, 1200);
+
+var autoBtn = document.getElementById('autoBtn');
+autoBtn.addEventListener('click', function () {
+  auto = !auto;
+  autoBtn.classList.toggle('on', auto);
+  autoBtn.textContent = 'Auto demo: ' + (auto ? 'on' : 'off');
+});
+
+var themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', function () {
+  var light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+
+document.getElementById('seedBtn').addEventListener('click', function () {
+  document.querySelectorAll('.card').forEach(function (card) { renderStatic(card, 98); });
+});
+document.getElementById('resetBtn').addEventListener('click', function () {
+  document.querySelectorAll('.card').forEach(function (card) { renderStatic(card, 5); });
+});
+</script>
+</body>
+</html>
