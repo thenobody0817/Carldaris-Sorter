@@ -347,7 +347,11 @@
     font-size:var(--name-fs);
     font-weight:700;line-height:1.2;
     color:var(--fg);
-    background:var(--card);
+    background-color:var(--card);
+    background-image:linear-gradient(var(--accent),var(--accent));
+    background-repeat:no-repeat;
+    background-position:left bottom;
+    background-size:0 2px;
     border-bottom:1px solid var(--border);
     text-align:center;
     word-break:break-word;
@@ -358,6 +362,12 @@
     pointer-events:none;
     z-index:2;
   }
+  @keyframes nameDraw{
+    0%{background-size:0 2px}
+    60%{background-size:100% 2px}
+    100%{background-size:100% 2px}
+  }
+  .tile .name.draw{animation:nameDraw .5s ease}
 
   .tile .qty{
     position:absolute;
@@ -824,8 +834,7 @@
       </div>
 
       <div class="row">
-        <button onclick="multCommit(-1)" data-i18n="calc.subtract">− Subtract</button>
-        <button class="accent" onclick="multCommit(1)" data-i18n="calc.add">+ Add</button>
+        <button class="accent" onclick="multCommit()" data-i18n="calc.add">+ Add</button>
       </div>
     </div>
   </div>
@@ -2622,6 +2631,16 @@ function flashTile(id, dir, oldQty){
   if (oldQty == null) oldQty = String(parseInt(newQty, 10) - dir);
   if (String(oldQty) === newQty) return;
 
+  /* caption underline draw (plays alongside the counter roll) */
+  const nameEl = tile.querySelector('.name');
+  if (nameEl){
+    nameEl.classList.remove('draw');
+    void nameEl.offsetWidth;
+    nameEl.classList.add('draw');
+    clearTimeout(nameEl._drawT);
+    nameEl._drawT = setTimeout(() => nameEl.classList.remove('draw'), 600);
+  }
+
   clearTimeout(qty._odoT);
   qty.classList.remove('odo-up','odo-down');
 
@@ -2724,17 +2743,17 @@ function multInput(which, raw){
   multRender();
 }
 
-function multCommit(sign){
+function multCommit(){
   if (!activeId) return;
   const n = multTotal();
   if (n <= 0) return;
 
-  bumpItem(activeId, sign * n);
+  bumpItem(activeId, n);
 
   const it = state.items.find(i => i.id === activeId);
   if (it) document.getElementById('mInput').value = it.qty;
 
-  showToast(`${sign > 0 ? '+' : '−'}${nf(n)}`, sign > 0 ? 'ok' : '');
+  showToast(`+${nf(n)}`, 'ok');
 }
 
 [['multPerRow','perRow'],['multRows','rows'],['multEach','each']].forEach(([id, which]) => {
