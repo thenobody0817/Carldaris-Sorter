@@ -258,6 +258,8 @@
 
     --name-fs: 13px;
 
+    --img-zoom: 1.5;
+
     --qty-fs: 20px;
     --qty-pad-y: 4px;
     --qty-pad-x: 9px;
@@ -324,24 +326,29 @@
     position:relative;aspect-ratio:1;
     display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
     border:2px solid transparent;cursor:pointer;
-    transition:transform .06s ease,
-               border-color .2s ease,
+    transition:border-color .12s ease,
                box-shadow .2s ease;
     user-select:none;-webkit-user-select:none;
     -webkit-touch-callout:none;
     touch-action:pan-y;
   }
-  .tile:active{transform:scale(.96)}
   .tile.counted{border-color:var(--accent)}
   .tile.selected{
     border-color:var(--select);
     box-shadow:0 0 0 3px var(--select-ring);
     z-index:1;
   }
-  .tile img{flex:1 1 auto;min-height:0;width:100%;height:auto;object-fit:cover;pointer-events:none}
+  .tile:active{border-color:var(--accent)}
+  .tile img{
+    flex:1 1 auto;min-height:0;width:100%;height:auto;
+    object-fit:cover;object-position:center;
+    transform:scale(var(--img-zoom, 1.5));
+    transform-origin:center;
+    pointer-events:none;
+  }
 
   .tile .name{
-    order:-1;
+    order:1;
     flex:0 0 auto;
     padding:4px 7px;
     font-size:var(--name-fs);
@@ -350,9 +357,9 @@
     background-color:var(--card);
     background-image:linear-gradient(var(--accent),var(--accent));
     background-repeat:no-repeat;
-    background-position:left bottom;
+    background-position:left top;
     background-size:0 2px;
-    border-bottom:1px solid var(--border);
+    border-top:1px solid var(--border);
     text-align:center;
     word-break:break-word;
     overflow:hidden;
@@ -369,14 +376,20 @@
   }
   .tile .name.draw{animation:nameDraw .5s ease}
 
+  .tile .foot{
+    order:-1;
+    flex:0 0 auto;
+    display:flex;
+    align-items:stretch;
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    z-index:2;
+  }
   .tile .qty{
-    position:absolute;
-    right:8px;
-    bottom:8px;
-    z-index:3;
-    min-width:var(--qty-min-w);
+    position:relative;
+    flex:1 1 auto;
+    min-width:0;
     padding:var(--qty-pad-y) var(--qty-pad-x);
-    max-width:calc(100% - 16px);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -386,15 +399,12 @@
     line-height:1;
     font-variant-numeric:tabular-nums;
     color:var(--qty-fg);
-    background:var(--qty-bg);
-    box-shadow:inset 0 0 0 1px var(--qty-ring);
-    -webkit-backdrop-filter:blur(6px);
-    backdrop-filter:blur(6px);
-    border-radius:var(--qty-radius);
+    background:transparent;
     pointer-events:none;
   }
-  .tile .qty.zero{ color:var(--qty-zero-fg); background:var(--qty-zero-bg); }
-  .tile.counted .qty{ color:var(--accent-fg); background:var(--accent); }
+  .tile .qty.zero{ color:var(--qty-zero-fg); }
+  .tile.counted .foot{ background:var(--accent); }
+  .tile.counted .qty{ color:var(--accent-fg); }
 
   .add-tile{
     background:transparent;
@@ -478,8 +488,8 @@
   @keyframes slideup{from{transform:translateY(30px);opacity:0}}
   .sheet h2{margin:0 0 4px;font-size:19px}
   .sheet .sub{color:var(--dim);font-size:13px;margin-bottom:14px}
-  .sheet input[type=number]{
-    width:100%;font-size:48px;font-weight:800;text-align:center;
+  #mInput{
+    width:100%;font-size:36px;font-weight:800;text-align:center;
     padding:8px;background:var(--sunken);color:var(--fg);
     border:2px solid var(--border-strong);border-radius:14px;
     font-variant-numeric:tabular-nums;
@@ -622,8 +632,8 @@
   .stepper{display:flex;align-items:center;gap:6px}
   .stepper input{
     flex:1;min-width:0;width:100%;
-    font-size:28px;font-weight:800;text-align:center;
-    padding:8px 4px;background:var(--sunken);color:var(--fg);
+    font-size:22px;font-weight:800;text-align:center;
+    padding:10px 4px;background:var(--sunken);color:var(--fg);
     border:2px solid var(--border-strong);border-radius:12px;
     font-variant-numeric:tabular-nums;font-family:inherit;outline:none;
     -moz-appearance:textfield;transition:border-color .15s;
@@ -632,9 +642,9 @@
   .stepper input::-webkit-outer-spin-button,
   .stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .stepper button{
-    flex:0 0 38px;height:38px;padding:0;
-    font-size:20px;font-weight:700;line-height:1;
-    background:var(--surface-2);color:var(--fg);border-radius:11px;
+    flex:0 0 44px;height:44px;padding:0;
+    font-size:24px;font-weight:700;line-height:1;
+    background:var(--surface-2);color:var(--fg);border-radius:12px;
   }
   .stepper button:active{background:var(--surface-3)}
   .mult-total{
@@ -648,7 +658,7 @@
     text-transform:uppercase;letter-spacing:.06em;font-weight:700;
   }
   .mult-total strong{
-    font-size:36px;font-weight:800;color:var(--accent);
+    font-size:28px;font-weight:800;color:var(--accent);
     font-variant-numeric:tabular-nums;line-height:1;
   }
   .mult-total strong.zero{color:var(--placeholder)}
@@ -813,17 +823,6 @@
             <button type="button" onclick="multDelta('rows', -1)" aria-label="−">−</button>
             <input id="multRows" type="number" inputmode="numeric" min="1" max="999" value="9">
             <button type="button" onclick="multDelta('rows', 1)" aria-label="+">+</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="mult-row">
-        <div class="mult-field">
-          <label for="multEach" data-i18n="calc.each">Items per box</label>
-          <div class="stepper">
-            <button type="button" onclick="multDelta('each', -1)" aria-label="−">−</button>
-            <input id="multEach" type="number" inputmode="numeric" min="1" max="9999" value="1">
-            <button type="button" onclick="multDelta('each', 1)" aria-label="+">+</button>
           </div>
         </div>
       </div>
@@ -1045,7 +1044,7 @@ const I18N = {
     'settings.tileView':'Вид плиток',
     'settings.cols':'Плиток в ряду (столбцов)',
     'settings.auto':'Авто',
-    'settings.rowsVisible':'Видно рядов на экране',
+    'settings.rowsVisible':'Рядов на экране',
     'settings.direction':'Направление',
     'settings.ltr':'Слева → вправо',
     'settings.rtl':'Справа → влево',
@@ -1295,8 +1294,8 @@ const I18N = {
     'settings.auto':'Auto',
     'settings.rowsVisible':'Redzamās rindas ekrānā',
     'settings.direction':'Virziens',
-    'settings.ltr':'No kreisās → pa labi',
-    'settings.rtl':'No labās → pa kreisi',
+    'settings.ltr':'No kreisās → uz labo',
+    'settings.rtl':'No labās → uz kreiso',
     'settings.catAlign':'Kategorijas nosaukums',
     'settings.alignLeft':'Pa kreisi',
     'settings.alignCenter':'Centrā',
@@ -1419,8 +1418,8 @@ const I18N = {
     'settings.auto':'自动',
     'settings.rowsVisible':'屏幕可见行数',
     'settings.direction':'方向',
-    'settings.ltr':'从左 → 到右',
-    'settings.rtl':'从右 → 到左',
+    'settings.ltr':'从左到右',
+    'settings.rtl':'从右到左',
     'settings.catAlign':'分类名称',
     'settings.alignLeft':'左',
     'settings.alignCenter':'居中',
@@ -1452,7 +1451,7 @@ const I18N = {
     'editor.newItem':'新项目',
     'editor.subItem':'输入名称和分类',
     'editor.name':'名称',
-    'editor.namePh':'例如：20 升桶',
+    'editor.namePh':'例如：20升桶',
     'editor.category':'分类',
     'editor.categoryPh':'例如：桶',
     'editor.nameCategory':'分类名称',
@@ -2165,8 +2164,6 @@ function buildUpdatedHtml(){
   if (multPerRowEl) multPerRowEl.value = '8';
   const multRowsEl = clone.querySelector('#multRows');
   if (multRowsEl) multRowsEl.value = '9';
-  const multEachEl = clone.querySelector('#multEach');
-  if (multEachEl) multEachEl.value = '1';
   const multTotalEl = clone.querySelector('#multTotal');
   if (multTotalEl){ multTotalEl.textContent = '0'; multTotalEl.className = 'zero'; }
 
@@ -2295,7 +2292,7 @@ function makeTile(it){
   el.innerHTML = `
     ${it.image ? `<img src="${it.image}" alt="">` : ''}
     <div class="name">${escapeHtml(it.name)}</div>
-    <div class="qty ${it.qty ? '' : 'zero'}">${it.qty}</div>`;
+    <div class="foot"><div class="qty ${it.qty ? '' : 'zero'}">${it.qty}</div></div>`;
   return el;
 }
 
@@ -2707,16 +2704,14 @@ function tapTile(id){
 /* ================= multiplier ================= */
 let multPerRow = 8;
 let multRows   = 9;
-let multEach   = 1;
 
 function multTotal(){
-  return multPerRow * multRows * multEach;
+  return multPerRow * multRows;
 }
 
 function multSync(){
   document.getElementById('multPerRow').value = multPerRow;
   document.getElementById('multRows').value   = multRows;
-  document.getElementById('multEach').value   = multEach;
 }
 
 function multRender(){
@@ -2729,7 +2724,6 @@ function multRender(){
 function multDelta(which, d){
   if (which === 'perRow') multPerRow = Math.max(1, Math.min(999,  multPerRow + d));
   if (which === 'rows')   multRows   = Math.max(1, Math.min(999,  multRows + d));
-  if (which === 'each')   multEach   = Math.max(1, Math.min(9999, multEach + d));
   multSync();
   multRender();
 }
@@ -2739,7 +2733,6 @@ function multInput(which, raw){
   if (isNaN(n) || n < 1) return;
   if (which === 'perRow') multPerRow = Math.min(999, n);
   if (which === 'rows')   multRows   = Math.min(999, n);
-  if (which === 'each')   multEach   = Math.min(9999, n);
   multRender();
 }
 
@@ -2756,7 +2749,7 @@ function multCommit(){
   showToast(`+${nf(n)}`, 'ok');
 }
 
-[['multPerRow','perRow'],['multRows','rows'],['multEach','each']].forEach(([id, which]) => {
+[['multPerRow','perRow'],['multRows','rows']].forEach(([id, which]) => {
   const el = document.getElementById(id);
   el.addEventListener('input', e => multInput(which, e.target.value));
   el.addEventListener('change', e => { multInput(which, e.target.value); multSync(); });

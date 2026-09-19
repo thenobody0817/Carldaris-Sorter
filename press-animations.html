@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tile press animation gallery</title>
+<style>
+  :root{
+    --bg:#111;
+    --card:#1e1e1e;
+    --surface-2:#2a2a2a;
+    --fg:#eee;
+    --dim:#888;
+    --border:#333;
+    --accent:#4ade80;
+    --accent-fg:#000;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --surface-2:#eceef1;
+    --fg:#14171a;
+    --dim:#5f6b76;
+    --border:#d7dbe0;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#14171a;
+    --qty-ring:rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 64px;
+    font:15px/1.4 system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:1100px;margin:0 auto 16px}
+  h1{font-size:20px;margin:0 0 4px}
+  header p{margin:0 0 10px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .controls button{
+    font:inherit;font-weight:700;padding:8px 12px;border-radius:10px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  main{
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:12px;display:flex;flex-direction:column;gap:8px;
+  }
+  .card-name{font-weight:800;font-size:13px}
+  .card-desc{color:var(--dim);font-size:11px;min-height:30px}
+  .stage{display:flex;align-items:center;justify-content:center;padding:24px 0;background:var(--bg);border-radius:10px}
+  .tile{
+    position:relative;width:150px;height:150px;border-radius:14px;
+    background:var(--card);overflow:hidden;
+    display:flex;flex-direction:column;
+    border:2px solid transparent;
+    cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+    transition:transform .08s ease, opacity .1s ease, filter .12s ease,
+               box-shadow .15s ease, border-color .12s ease, background-color .12s ease;
+  }
+  .tile .cap{
+    flex:0 0 auto;padding:5px 8px;text-align:center;
+    font-weight:700;font-size:13px;line-height:1.2;
+    color:var(--fg);background:var(--card);
+    border-bottom:1px solid var(--border);
+  }
+  .tile .img{flex:1 1 auto;background:linear-gradient(135deg,#3a4a5a,#26313d)}
+  html[data-theme="light"] .tile .img{background:linear-gradient(135deg,#dfe6ee,#c3ccd6)}
+  .tile .badge{
+    position:absolute;right:8px;bottom:8px;z-index:3;
+    min-width:34px;padding:4px 9px;border-radius:10px;
+    background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+    font-weight:800;font-size:18px;line-height:1;text-align:center;
+    font-variant-numeric:tabular-nums;pointer-events:none;
+  }
+  .hint{color:var(--dim);font-size:11px;text-align:center}
+
+  /* ================= press variants ================= */
+
+  .v-none .tile.pressed{}
+
+  .v-shrink .tile.pressed{transform:scale(.96)}
+  .v-shrink-more .tile.pressed{transform:scale(.9)}
+  .v-grow .tile.pressed{transform:scale(1.04)}
+
+  .v-dim .tile.pressed{opacity:.7}
+  .v-bright .tile.pressed{filter:brightness(1.2)}
+  .v-darken .tile.pressed{filter:brightness(.8)}
+  .v-blur .tile.pressed{filter:blur(2px)}
+  .v-gray .tile.pressed{filter:grayscale(1)}
+
+  .v-press-down .tile.pressed{transform:translateY(3px)}
+  .v-press-up .tile.pressed{transform:translateY(-3px)}
+  .v-tilt .tile.pressed{transform:rotate(-2deg)}
+  .v-skew .tile.pressed{transform:skewX(-4deg)}
+  .v-squash .tile.pressed{transform:scale(1.05,.9)}
+  .v-stretch .tile.pressed{transform:scale(.95,1.06)}
+
+  .v-inset .tile.pressed{box-shadow:inset 0 3px 10px rgba(0,0,0,.55)}
+  .v-ring .tile.pressed{box-shadow:0 0 0 4px var(--accent)}
+  .v-glow .tile.pressed{box-shadow:0 0 18px 2px var(--accent)}
+  .v-outline .tile.pressed{outline:2px solid var(--accent);outline-offset:2px}
+  .v-border .tile.pressed{border-color:var(--accent)}
+
+  .v-tint .tile::after{
+    content:'';position:absolute;inset:0;z-index:4;
+    background:var(--accent);opacity:0;pointer-events:none;
+    transition:opacity .12s ease;
+  }
+  .v-tint .tile.pressed::after{opacity:.25}
+
+  .v-shrink-dim .tile.pressed{transform:scale(.94);opacity:.8}
+  .v-shrink-ring .tile.pressed{transform:scale(.96);box-shadow:0 0 0 4px var(--accent)}
+
+  @keyframes t-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .v-pulse .tile.pressed{animation:t-pulse .8s ease infinite}
+
+  @keyframes t-wobble{0%{transform:rotate(0)}25%{transform:rotate(-1.5deg)}75%{transform:rotate(1.5deg)}100%{transform:rotate(0)}}
+  .v-wobble .tile.pressed{animation:t-wobble .6s ease infinite}
+
+  @keyframes t-breathe{0%{transform:scale(1)}50%{transform:scale(1.045)}100%{transform:scale(1)}}
+  .v-breathe .tile.pressed{animation:t-breathe 1s ease infinite}
+
+  @keyframes t-jelly{0%{transform:scale(1.15,.85)}35%{transform:scale(.9,1.1)}65%{transform:scale(1.04,.97)}100%{transform:scale(1)}}
+  .v-jelly .tile.pressed{animation:t-jelly .45s ease}
+
+  @keyframes t-pop{0%{transform:scale(1.12)}100%{transform:scale(1)}}
+  .v-pop .tile.pressed{animation:t-pop .3s ease}
+
+  @keyframes t-bounce{0%{transform:translateY(0)}30%{transform:translateY(-14%)}60%{transform:translateY(0)}80%{transform:translateY(-5%)}100%{transform:translateY(0)}}
+  .v-bounce .tile.pressed{animation:t-bounce .45s ease}
+
+  .v-ripple .tile::before{
+    content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;
+    margin:-6px 0 0 -6px;border-radius:50%;z-index:4;
+    background:var(--accent);opacity:0;transform:scale(0);pointer-events:none;
+  }
+  @keyframes t-ripple{0%{transform:scale(0);opacity:.55}100%{transform:scale(26);opacity:0}}
+  .v-ripple .tile.pressed::before{animation:t-ripple .5s ease}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tile press animations</h1>
+  <p>Press and hold a tile to preview. "Auto demo" presses/releases all of them in a loop.</p>
+  <div class="controls">
+    <button id="autoBtn" class="on">Auto demo: on</button>
+    <button id="themeBtn">Theme: dark</button>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+const VARIANTS = [
+  ['none',        'Off',              'No press feedback at all.'],
+  ['shrink',      'Shrink',           'Current: scales to 0.96.'],
+  ['shrink-more', 'Shrink hard',      'Scales to 0.9.'],
+  ['grow',        'Grow',             'Scales up to 1.04.'],
+  ['dim',         'Dim',              'Fades to 70% opacity.'],
+  ['bright',      'Brighten',         'Brightness up.'],
+  ['darken',      'Darken',           'Brightness down.'],
+  ['blur',        'Blur',             'Softens while held.'],
+  ['gray',        'Grayscale',        'Desaturates while held.'],
+  ['press-down',  'Press down',       'Nudges down 3px.'],
+  ['press-up',    'Lift',             'Nudges up 3px.'],
+  ['tilt',        'Tilt',             'Rotates -2 degrees.'],
+  ['skew',        'Skew',             'Skews sideways.'],
+  ['squash',      'Squash',           'Wider and shorter.'],
+  ['stretch',     'Stretch',          'Narrower and taller.'],
+  ['inset',       'Inset shadow',     'Looks pushed into the surface.'],
+  ['ring',        'Ring',             'Accent ring appears.'],
+  ['glow',        'Glow',             'Accent glow blooms.'],
+  ['outline',     'Outline',          'Accent outline.'],
+  ['border',      'Border',           'Border turns accent.'],
+  ['tint',        'Tint',             'Accent overlay.'],
+  ['shrink-dim',  'Shrink + dim',     'Scales down and fades.'],
+  ['shrink-ring', 'Shrink + ring',    'Scales down with accent ring.'],
+  ['pulse',       'Pulse',            'Repeats while held.'],
+  ['wobble',      'Wobble',           'Repeats while held.'],
+  ['breathe',     'Breathe',          'Slow swell while held.'],
+  ['jelly',       'Jelly',            'One-shot squash and stretch.'],
+  ['pop',         'Pop',              'One-shot scale-down.'],
+  ['bounce',      'Bounce',           'One-shot hop.'],
+  ['ripple',      'Ripple',           'One-shot circle from center.']
+];
+
+const list = document.getElementById('list');
+
+for (const [id, name, desc] of VARIANTS){
+  const card = document.createElement('div');
+  card.className = 'card v-' + id;
+  card.innerHTML =
+    '<div class="card-name"></div><div class="card-desc"></div>' +
+    '<div class="stage"><div class="tile">' +
+      '<div class="cap">Blue crate</div>' +
+      '<div class="img"></div>' +
+      '<div class="badge">5</div>' +
+    '</div></div>' +
+    '<div class="hint">press &amp; hold</div>';
+  card.querySelector('.card-name').textContent = name;
+  card.querySelector('.card-desc').textContent = desc;
+
+  const tile = card.querySelector('.tile');
+  tile.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    tile.classList.add('pressed');
+  });
+  const release = () => tile.classList.remove('pressed');
+  tile.addEventListener('pointerup', release);
+  tile.addEventListener('pointerleave', release);
+  tile.addEventListener('pointercancel', release);
+
+  list.appendChild(card);
+}
+
+let auto = true;
+setInterval(() => {
+  if (!auto) return;
+  const tiles = document.querySelectorAll('.tile');
+  tiles.forEach(t => t.classList.add('pressed'));
+  setTimeout(() => { if (auto) tiles.forEach(t => t.classList.remove('pressed')); }, 700);
+}, 1400);
+
+const autoBtn = document.getElementById('autoBtn');
+autoBtn.addEventListener('click', () => {
+  auto = !auto;
+  autoBtn.classList.toggle('on', auto);
+  autoBtn.textContent = 'Auto demo: ' + (auto ? 'on' : 'off');
+  if (!auto) document.querySelectorAll('.tile.pressed').forEach(t => t.classList.remove('pressed'));
+});
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+</script>
+</body>
+</html>
