@@ -296,24 +296,29 @@
     height: var(--tile-h, 100px);
   }
 
-  .cat-title{
+  .cat-head{
+    grid-column:1 / -1;
+    display:flex;align-items:baseline;justify-content:flex-start;
+    margin:14px 2px 2px;
+  }
+  .cat-head:first-child{margin-top:2px}
+  .cat-head .cat-sum{
+    font-size:13px;color:var(--fg);font-weight:800;
+    font-variant-numeric:tabular-nums;
+  }
+  .cat-foot{
     grid-column:1 / -1;
     font-size:13px;font-weight:700;text-transform:uppercase;
     letter-spacing:.06em;color:var(--dim);
-    margin:14px 2px 2px;
-    display:flex;align-items:baseline;gap:8px;
+    margin:6px 2px 0;
+    text-align:left;
   }
-  .cat-title:first-child{margin-top:2px}
-  .cat-title .cat-name{ flex:1 1 auto;min-width:0;text-align:left; }
-  .cat-title .cat-sum{
-    flex:0 0 auto;
-    font-size:13px;color:var(--fg);font-weight:800;
-    font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;
-  }
-  main[data-catalign="center"] .cat-title .cat-name{ text-align:center; }
-  main[data-catalign="right"]  .cat-title .cat-name{ text-align:right; }
-  main[data-cols="6"] .cat-title{ font-size:11px; }
-  main[data-fit] .cat-title{ margin:6px 2px 2px; }
+  main[data-catalign="center"] .cat-head{ justify-content:center; }
+  main[data-catalign="right"]  .cat-head{ justify-content:flex-end; }
+  main[data-catalign="center"] .cat-foot{ text-align:center; }
+  main[data-catalign="right"]  .cat-foot{ text-align:right; }
+  main[data-cols="6"] .cat-foot{ font-size:11px; }
+  main[data-fit] .cat-head{ margin:6px 2px 2px; }
 
   .tile{
     background:var(--card);border-radius:14px;overflow:hidden;
@@ -325,6 +330,7 @@
                box-shadow .2s ease;
     user-select:none;-webkit-user-select:none;
     -webkit-touch-callout:none;
+    touch-action:pan-y;
   }
   .tile:active{transform:scale(.96)}
   .tile.counted{border-color:var(--accent)}
@@ -497,63 +503,12 @@
     line-height:1;
   }
 
-  /* radial long-press menu */
-  #radial{
-    position:fixed;inset:0;z-index:40;display:none;
-    background:var(--overlay);
-    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
-    touch-action:none;
-  }
-  #radial.on{display:block}
-  .radial-hub{
-    position:absolute;width:0;height:0;
-  }
-  #radial.on .radial-hub{ animation:radialpop .12s ease; }
-  @keyframes radialpop{from{transform:scale(.86);opacity:.4}}
-  .radial-center{
-    position:absolute;left:50%;top:50%;
-    transform:translate(-50%,-50%);
-    width:98px;height:98px;padding:6px;
-    border-radius:50%;
-    background:var(--surface-2);color:var(--fg);
-    border:2px solid var(--select);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:2px;overflow:hidden;
-    box-shadow:0 6px 22px var(--shadow-strong);
-  }
-  .radial-center .rc-name{
-    font-size:11px;color:var(--dim);font-weight:700;
-    max-width:84px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  .radial-center .rc-qty{
-    font-size:30px;font-weight:800;line-height:1;
-    font-variant-numeric:tabular-nums;
-  }
-  .radial-btn{
-    position:absolute;left:50%;top:50%;
-    width:66px;height:66px;padding:0;
-    border-radius:50%;
-    background:var(--surface-3);color:var(--fg);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:1px;overflow:hidden;
-    transform:translate(-50%,-50%) rotate(var(--a)) translateY(-104px) rotate(calc(-1 * var(--a)));
-    transition:transform .09s ease, background .12s, box-shadow .12s;
-    touch-action:none;
-  }
-  .radial-btn .ico{font-size:21px;line-height:1;font-weight:400}
-  .radial-btn .lbl{
-    font-size:11px;font-weight:700;line-height:1;
-    max-width:58px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  .radial-btn.active{
-    background:var(--accent);color:var(--accent-fg);
-    box-shadow:0 0 0 4px var(--glow), 0 0 20px var(--accent);
-    transform:translate(-50%,-50%) rotate(var(--a)) translateY(-112px) rotate(calc(-1 * var(--a))) scale(1.08);
-  }
-  .radial-btn[data-act="plus"]{ background:var(--accent);color:var(--accent-fg); }
-  .radial-btn[data-act="minus"]{ background:var(--surface-4); }
-  .radial-btn[data-act="reset"]{ color:var(--danger); }
-  .radial-btn[data-act="mul"]{ border:2px solid var(--select); }
+  /* tile quantity feedback (tap +1 / swipe -1) */
+  @keyframes qtypop{ 0%{transform:scale(1.45)} 100%{transform:scale(1)} }
+  @keyframes qtyup{ 0%{color:var(--accent)} 100%{color:var(--qty-fg)} }
+  @keyframes qtydown{ 0%{color:var(--danger)} 100%{color:var(--qty-fg)} }
+  .tile .qty.flash-up{ animation:qtypop .26s ease, qtyup .26s ease; }
+  .tile .qty.flash-down{ animation:qtypop .26s ease, qtydown .26s ease; }
 
   /* settings */
   .opt-row{ display:flex;gap:6px;margin:8px 0 4px; }
@@ -598,6 +553,24 @@
     background:var(--sw, var(--accent));
     border-color:var(--fg);
   }
+
+  /* compact settings sheet */
+  #settings .sheet{ padding:14px 14px calc(14px + env(safe-area-inset-bottom)); }
+  #settings .sheet h2{ font-size:17px;margin-bottom:2px; }
+  #settings .sheet .sub{ font-size:12px;margin-bottom:8px; }
+  #settings .settings-block{ margin-bottom:10px; }
+  #settings .block-label{ margin:0 0 4px;font-size:11px; }
+  #settings .opt-row{ margin:0;gap:5px; }
+  #settings .opt-row button{ padding:9px 0;font-size:13px;border-radius:10px; }
+  #settings .opt-row#themeRow button,
+  #settings .opt-row#contrastRow button,
+  #settings .opt-row button[data-cols="auto"],
+  #settings .opt-row button[data-dir]{ font-size:12px; }
+  #settings .opt-row.accent-row{ gap:8px; }
+  #settings .opt-row.accent-row button{
+    flex:0 0 34px;width:34px;height:34px;padding:0;border-radius:50%;
+  }
+  #settings .row{ margin-top:8px; }
 
   .calc-row{
     display:flex;align-items:flex-end;gap:10px;
@@ -792,29 +765,6 @@
 
 <main id="grid" data-cols="4" data-dir="ltr" data-tsize="md" data-qsize="md"></main>
 
-<div id="radial">
-  <div class="radial-hub" id="radialHub">
-    <button class="radial-center" id="radialCenter" type="button" title="Details" data-i18n-title="more">
-      <span class="rc-name" id="radialName"></span>
-      <span class="rc-qty" id="radialQty">0</span>
-    </button>
-    <button class="radial-btn" data-act="plus" type="button" style="--a:0deg" title="+1">
-      <span class="ico">+</span><span class="lbl">+1</span>
-    </button>
-    <button class="radial-btn" data-act="mul" type="button" style="--a:90deg"
-            title="Multiply rows" data-i18n-title="calc.mulRows">
-      <span class="ico">×</span><span class="lbl" data-i18n="radial.mult">Multiply</span>
-    </button>
-    <button class="radial-btn" data-act="minus" type="button" style="--a:180deg" title="−1">
-      <span class="ico">−</span><span class="lbl">−1</span>
-    </button>
-    <button class="radial-btn" data-act="reset" type="button" style="--a:270deg"
-            title="Reset to 0" data-i18n-title="reset">
-      <span class="ico">↺</span><span class="lbl" data-i18n="reset">Reset</span>
-    </button>
-  </div>
-</div>
-
 <div id="modal">
   <div class="sheet">
     <div class="sheet-head">
@@ -833,6 +783,10 @@
       <button onclick="bump(10)">+10</button>
       <button onclick="bump(5)">+5</button>
       <button class="add1" onclick="bump(1)">+1</button>
+    </div>
+
+    <div class="row">
+      <button onclick="openCalc()" data-i18n="multiply">× Multiply rows</button>
     </div>
 
     <div class="img-block">
@@ -1092,7 +1046,7 @@ const I18N = {
     'cancel':'Отмена',
     'calc.subtract':'− Вычесть',
     'calc.add':'+ Добавить',
-    'radial.mult':'Умножить',
+    'multiply':'Умножить',
     'settings.tileView':'Вид плиток',
     'settings.cols':'Плиток в ряду (столбцов)',
     'settings.auto':'Авто',
@@ -1214,7 +1168,7 @@ const I18N = {
     'cancel':'Cancel',
     'calc.subtract':'− Subtract',
     'calc.add':'+ Add',
-    'radial.mult':'Multiply',
+    'multiply':'Multiply',
     'settings.tileView':'Tile view',
     'settings.cols':'Tiles per row (columns)',
     'settings.auto':'Auto',
@@ -1336,7 +1290,7 @@ const I18N = {
     'cancel':'Atcelt',
     'calc.subtract':'− Atņemt',
     'calc.add':'+ Pievienot',
-    'radial.mult':'Reizināt',
+    'multiply':'Reizināt',
     'settings.tileView':'Flīžu skats',
     'settings.cols':'Flīzes rindā (kolonnas)',
     'settings.auto':'Auto',
@@ -1458,7 +1412,7 @@ const I18N = {
     'cancel':'取消',
     'calc.subtract':'− 减去',
     'calc.add':'+ 添加',
-    'radial.mult':'相乘',
+    'multiply':'相乘',
     'settings.tileView':'方块视图',
     'settings.cols':'每行方块数（列）',
     'settings.auto':'自动',
@@ -1995,7 +1949,7 @@ function fitTiles(){
     if (state.items.some(i => i.category === cat && !i.spacer)) visibleCats++;
   }
 
-  const catHeaderH = 32;
+  const catHeaderH = 48;
   const mainPad = 20;
   const gap = 8;
 
@@ -2015,7 +1969,7 @@ if (window.visualViewport){
 }
 
 /* ================= collapse header on scroll ================= */
-const HEADER_OVERLAYS = ['modal','editor','cats','calc','settings','radial','pick'];
+const HEADER_OVERLAYS = ['modal','editor','cats','calc','settings','pick'];
 function anyOverlayOpen(){
   for (const id of HEADER_OVERLAYS){
     const el = document.getElementById(id);
@@ -2173,7 +2127,7 @@ function buildUpdatedHtml(){
     mainClone.removeAttribute('style');
   }
 
-  ['#modal','#editor','#cats','#pick','#calc','#settings','#radial'].forEach(sel => {
+  ['#modal','#editor','#cats','#pick','#calc','#settings'].forEach(sel => {
     const el = clone.querySelector(sel);
     if (el) el.classList.remove('on');
   });
@@ -2189,8 +2143,7 @@ function buildUpdatedHtml(){
   if (mClear) mClear.removeAttribute('style');
 
   ['#mName','#mCat','#pickTitle','#pickMsg',
-   '#edTitle','#edSub','#total','#date','#voiceToast','#calcTitle',
-   '#radialName','#radialQty'].forEach(sel => {
+   '#edTitle','#edSub','#total','#date','#voiceToast','#calcTitle'].forEach(sel => {
     const el = clone.querySelector(sel);
     if (el) el.textContent = '';
   });
@@ -2268,7 +2221,6 @@ async function resetAll(){
   document.getElementById('settings').classList.remove('on');
   document.getElementById('editor').classList.remove('on');
   document.getElementById('cats').classList.remove('on');
-  closeRadial();
   save();
   render();
   requestAnimationFrame(fitTiles);
@@ -2300,9 +2252,8 @@ function render(){
 
     const catSum = list.reduce((s, it) => s + (it.spacer ? 0 : it.qty), 0);
     const hdr = document.createElement('div');
-    hdr.className = 'cat-title';
-    hdr.innerHTML = `<span class="cat-name">${escapeHtml(cat)}</span>
-                     <span class="cat-sum">${nf(catSum)}</span>`;
+    hdr.className = 'cat-head';
+    hdr.innerHTML = `<span class="cat-sum">${nf(catSum)}</span>`;
     grid.appendChild(hdr);
 
     for (const it of list){
@@ -2310,6 +2261,11 @@ function render(){
       total += it.qty;
       grid.appendChild(makeTile(it));
     }
+
+    const foot = document.createElement('div');
+    foot.className = 'cat-foot';
+    foot.textContent = cat;
+    grid.appendChild(foot);
   }
 
   const addTile = document.createElement('div');
@@ -2366,13 +2322,15 @@ window.addEventListener('beforeunload', () => {
   save();
 });
 
-/* ================= tap / long press ================= */
+/* ================= tap / swipe / long-press ================= */
 const gridEl = document.getElementById('grid');
 let pressTimer  = null;
 let pressTarget = null;
 let longPressed = false;
 let moved       = false;
+let swiped      = false;
 let startX = 0, startY = 0;
+let swipeNeed = 44;
 
 gridEl.addEventListener('pointerdown', e => {
   const tile = e.target.closest('.tile');
@@ -2385,52 +2343,58 @@ gridEl.addEventListener('pointerdown', e => {
 
   longPressed = false;
   moved       = false;
+  swiped      = false;
   startX = e.clientX;
   startY = e.clientY;
   pressTarget = tile;
+  swipeNeed = Math.max(30, tile.getBoundingClientRect().width * 0.55);
   pressTimer = setTimeout(() => {
     longPressed = true;
-    openRadial(tile.dataset.id, startX, startY, e.pointerId);
+    openModal(tile.dataset.id);
     navigator.vibrate?.(15);
   }, 500);
 });
 
 document.addEventListener('pointermove', e => {
-  if (radialState && e.pointerId === radialState.pointerId){
-    radialPick(e.clientX, e.clientY);
-    return;
-  }
   if (dragState){ moveDrag(e); return; }
-  if (!pressTimer) return;
-  if (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10){
+  if (!pressTarget) return;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+
+  if (!moved && (Math.abs(dx) > 10 || Math.abs(dy) > 10)){
     moved = true;
     clearTimeout(pressTimer);
     pressTimer = null;
   }
+  /* mostly-horizontal drag past the threshold = -1 */
+  if (!swiped && !longPressed && Math.abs(dx) > swipeNeed && Math.abs(dx) > Math.abs(dy) * 1.5){
+    swiped = true;
+    swipeDecrement(pressTarget.dataset.id);
+  }
 });
 
 document.addEventListener('pointerup', e => {
-  if (radialState && e.pointerId === radialState.pointerId){
-    radialSuppressClick = Date.now() + 220;
-    if (radialActiveAct) radialFire(radialActiveAct);
-    return;
-  }
   if (dragState){ endDrag(e); return; }
   const wasPressing = pressTimer !== null;
   clearTimeout(pressTimer);
   pressTimer = null;
-  if (!wasPressing || longPressed || moved || !pressTarget) return;
-
-  const id = pressTarget.dataset.id;
-  tapTile(id);
+  const target = pressTarget;
   pressTarget = null;
+
+  if (wasPressing && !longPressed && !moved && !swiped && target){
+    tapTile(target.dataset.id);
+  } else if (swiped){
+    render();
+  }
 });
 
 document.addEventListener('pointercancel', e => {
-  if (radialState && e.pointerId === radialState.pointerId){ closeRadial(); return; }
   if (dragState){ endDrag(); return; }
   clearTimeout(pressTimer);
   pressTimer = null;
+  pressTarget = null;
+  moved  = false;
+  swiped = false;
 });
 
 gridEl.addEventListener('contextmenu', e => {
@@ -2456,7 +2420,6 @@ function toggleReorder(){
   if (btn) btn.classList.toggle('active', reorderMode);
 
   if (reorderMode){
-    if (document.getElementById('radial').classList.contains('on')) closeRadial();
     showToast(t('reorder.on'));
   } else {
     save();
@@ -2647,7 +2610,44 @@ function bumpItem(id, n){
   it.qty = Math.max(0, it.qty + n);
   it.counted = true;
   save(); render();
+  flashTile(id, n);
   navigator.vibrate?.(8);
+}
+
+function flashTile(id, dir){
+  const tile = document.querySelector(`.tile[data-id="${id}"]`);
+  const qty = tile && tile.querySelector('.qty');
+  if (!qty) return;
+  qty.classList.remove('flash-up','flash-down');
+  void qty.offsetWidth;
+  qty.classList.add(dir >= 0 ? 'flash-up' : 'flash-down');
+  setTimeout(() => qty.classList.remove('flash-up','flash-down'), 300);
+}
+
+function updateTotal(){
+  let total = 0;
+  for (const it of state.items) if (!it.spacer) total += it.qty;
+  document.getElementById('total').textContent = nf(total);
+}
+
+/* Horizontal swipe = -1, applied in place so the tile is not re-rendered mid-gesture. */
+function swipeDecrement(id){
+  const it = state.items.find(i => i.id === id);
+  if (!it || it.spacer) return;
+  it.qty = Math.max(0, it.qty - 1);
+  it.counted = true;
+  save();
+
+  const tile = document.querySelector(`.tile[data-id="${id}"]`);
+  if (tile){
+    const q = tile.querySelector('.qty');
+    if (q){ q.textContent = it.qty; q.classList.toggle('zero', !it.qty); }
+    tile.classList.toggle('counted', it.qty > 0);
+  }
+  updateTotal();
+  qbShow(id);
+  flashTile(id, -1);
+  navigator.vibrate?.(12);
 }
 
 function qbBump(n){
@@ -2655,7 +2655,7 @@ function qbBump(n){
   bumpItem(qbId, n);
 }
 
-/* Single tap: select the tile and add one. Long-press opens the radial menu. */
+/* Single tap = +1. Horizontal swipe = -1. Long-press = details. */
 function tapTile(id){
   const it = state.items.find(i => i.id === id);
   if (!it || it.spacer) return;
@@ -2663,118 +2663,6 @@ function tapTile(id){
   state.lastItem = id;
   bumpItem(id, 1);
 }
-
-/* ================= radial long-press menu ================= */
-let radialState = null;
-let radialActiveAct = null;
-let radialSuppressClick = 0;
-
-function radialHubPoint(x, y){
-  const margin = 150;
-  const w = window.innerWidth  || 360;
-  const h = window.innerHeight || 640;
-  return {
-    x: Math.min(Math.max(x, margin), Math.max(margin, w - margin)),
-    y: Math.min(Math.max(y, margin), Math.max(margin, h - margin))
-  };
-}
-
-function openRadial(id, x, y, pointerId){
-  const it = state.items.find(i => i.id === id);
-  if (!it || it.spacer) return;
-
-  const p = radialHubPoint(x, y);
-  radialState = { id, pointerId, x: p.x, y: p.y };
-  radialActiveAct = null;
-  radialSuppressClick = Date.now() + 220;
-
-  document.getElementById('radialName').textContent = it.name;
-  document.getElementById('radialQty').textContent  = nf(it.qty);
-
-  const hub = document.getElementById('radialHub');
-  hub.style.left = p.x + 'px';
-  hub.style.top  = p.y + 'px';
-
-  document.querySelectorAll('.radial-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('radial').classList.add('on');
-  qbShow(id);
-}
-
-function closeRadial(){
-  const el = document.getElementById('radial');
-  if (el) el.classList.remove('on');
-  radialState = null;
-  radialActiveAct = null;
-}
-
-function setItemQty(id, n){
-  const it = state.items.find(i => i.id === id);
-  if (!it || it.spacer) return;
-  it.qty = Math.max(0, parseInt(n, 10) || 0);
-  it.counted = true;
-  save(); render();
-  navigator.vibrate?.(8);
-}
-
-function radialRefreshQty(){
-  const it = radialState && state.items.find(i => i.id === radialState.id);
-  const el = document.getElementById('radialQty');
-  if (it && el) el.textContent = nf(it.qty);
-}
-
-function radialPick(x, y){
-  if (!radialState) return;
-  const dx = x - radialState.x;
-  const dy = y - radialState.y;
-  let act = null;
-  if (Math.hypot(dx, dy) >= 34){
-    const ang = Math.atan2(dy, dx) * 180 / Math.PI;   /* 0=right, 90=down, -90=up */
-    if (ang >= -135 && ang < -45)      act = 'plus';
-    else if (ang >= -45 && ang < 45)   act = 'mul';
-    else if (ang >= 45 && ang < 135)   act = 'minus';
-    else                               act = 'reset';
-  }
-  radialActiveAct = act;
-  document.querySelectorAll('.radial-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.act === act));
-}
-
-function radialFire(act){
-  if (!radialState) return;
-  const id = radialState.id;
-
-  if (act === 'mul'){
-    closeRadial();
-    activeId = id;
-    openCalc();
-    return;
-  }
-
-  if (act === 'plus')  bumpItem(id, 1);
-  if (act === 'minus') bumpItem(id, -1);
-  if (act === 'reset') setItemQty(id, 0);
-
-  radialRefreshQty();
-  radialActiveAct = null;
-  document.querySelectorAll('.radial-btn').forEach(b => b.classList.remove('active'));
-}
-
-function radialDetails(){
-  if (!radialState) return;
-  const id = radialState.id;
-  closeRadial();
-  openModal(id);
-}
-
-document.getElementById('radial').addEventListener('click', e => {
-  if (Date.now() < radialSuppressClick) return;
-  if (!radialState) return;
-
-  const btn = e.target.closest('.radial-btn');
-  if (btn){ radialFire(btn.dataset.act); return; }
-  if (e.target.closest('.radial-center')){ radialDetails(); return; }
-  if (e.target.id === 'radial') closeRadial();
-});
 
 /* ================= calculator ================= */
 function openCalc(){
@@ -2819,6 +2707,13 @@ function calcCommit(sign){
   calcColsLast = cols;
 
   if (activeId) bumpItem(activeId, sign * n);
+
+  /* if the details modal is behind the calculator, keep its field in sync */
+  if (activeId && document.getElementById('modal').classList.contains('on')){
+    const it = state.items.find(i => i.id === activeId);
+    if (it) document.getElementById('mInput').value = it.qty;
+  }
+
   closeCalc();
   showToast(`${sign > 0 ? '+' : '−'}${nf(n)}`,
             sign > 0 ? 'ok' : '');
@@ -2838,6 +2733,8 @@ document.getElementById('calc').addEventListener('click', e => {
 });
 
 /* ================= item window (live-save) ================= */
+let modalOpenedAt = 0;
+
 function openModal(id){
   activeId = id;
   const it = state.items.find(i => i.id === id);
@@ -2850,6 +2747,7 @@ function openModal(id){
   inp.value = it.qty;
 
   updatePreview();
+  modalOpenedAt = Date.now();
   document.getElementById('modal').classList.add('on');
 
   setTimeout(() => {
@@ -2892,6 +2790,7 @@ function setZero(){
 }
 
 document.getElementById('modal').addEventListener('click', e => {
+  if (Date.now() - modalOpenedAt < 350) return;
   if (e.target.id === 'modal') closeModal();
 });
 
@@ -3349,7 +3248,6 @@ function exportCSV(){
 /* ================= Esc ================= */
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if (document.getElementById('radial').classList.contains('on')){ closeRadial(); return; }
   if (document.getElementById('settings').classList.contains('on')){ closeSettings(); return; }
   if (document.getElementById('calc').classList.contains('on')){ closeCalc(); return; }
   if (document.getElementById('editor').classList.contains('on')){ closeEditor(); return; }
