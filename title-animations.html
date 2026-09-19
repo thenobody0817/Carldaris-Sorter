@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Title tap animation gallery</title>
+<style>
+  :root{
+    --bg:#111;
+    --card:#1e1e1e;
+    --surface-2:#2a2a2a;
+    --fg:#eee;
+    --dim:#888;
+    --border:#333;
+    --accent:#4ade80;
+    --accent-fg:#000;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --surface-2:#eceef1;
+    --fg:#14171a;
+    --dim:#5f6b76;
+    --border:#d7dbe0;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#14171a;
+    --qty-ring:rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 64px;
+    font:15px/1.4 system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:1100px;margin:0 auto 16px}
+  h1{font-size:20px;margin:0 0 4px}
+  header p{margin:0 0 10px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .controls button{
+    font:inherit;font-weight:700;padding:8px 12px;border-radius:10px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  main{
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:12px;display:flex;flex-direction:column;gap:8px;
+  }
+  .card-name{font-weight:800;font-size:13px}
+  .card-desc{color:var(--dim);font-size:11px;min-height:30px}
+  .stage{display:flex;align-items:center;justify-content:center;padding:22px 0;background:var(--bg);border-radius:10px}
+  .tile{
+    position:relative;width:150px;height:150px;border-radius:14px;
+    background:var(--card);overflow:hidden;
+    display:flex;flex-direction:column;
+    border:2px solid transparent;
+  }
+  .tile .cap{
+    position:relative;flex:0 0 auto;overflow:hidden;
+    padding:5px 8px;text-align:center;
+    font-weight:700;font-size:13px;line-height:1.2;
+    color:var(--fg);background:var(--card);
+    border-bottom:1px solid var(--border);
+    cursor:pointer;user-select:none;-webkit-user-select:none;z-index:2;
+  }
+  .tile .cap .txt{display:inline-block}
+  .tile .img{
+    flex:1 1 auto;
+    background:linear-gradient(135deg,#3a4a5a,#26313d);
+  }
+  html[data-theme="light"] .tile .img{background:linear-gradient(135deg,#dfe6ee,#c3ccd6)}
+  .tile .badge{
+    position:absolute;right:8px;bottom:8px;z-index:3;
+    min-width:34px;padding:4px 9px;border-radius:10px;
+    background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+    font-weight:800;font-size:18px;line-height:1;text-align:center;
+    font-variant-numeric:tabular-nums;pointer-events:none;
+  }
+  .btns{display:flex;gap:8px}
+  .btns button{
+    flex:1;font:inherit;font-weight:700;padding:7px 0;border-radius:9px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .btns .plus{background:var(--accent);color:var(--accent-fg)}
+
+  /* ================= 40 tap animations ================= */
+
+  @keyframes t-pop{0%{transform:scale(1.12)}100%{transform:scale(1)}}
+  .v-pop .tile.play{animation:t-pop .3s ease}
+
+  @keyframes t-press{0%{transform:scale(1)}45%{transform:scale(.9)}100%{transform:scale(1)}}
+  .v-press .tile.play{animation:t-press .3s ease}
+
+  @keyframes t-bounce{0%{transform:translateY(0)}30%{transform:translateY(-16%)}60%{transform:translateY(0)}80%{transform:translateY(-6%)}100%{transform:translateY(0)}}
+  .v-bounce .tile.play{animation:t-bounce .45s ease}
+
+  @keyframes t-shakex{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+  .v-shakex .tile.play{animation:t-shakex .35s ease}
+
+  @keyframes t-shakey{0%,100%{transform:translateY(0)}20%{transform:translateY(-5px)}40%{transform:translateY(5px)}60%{transform:translateY(-3px)}80%{transform:translateY(3px)}}
+  .v-shakey .tile.play{animation:t-shakey .35s ease}
+
+  @keyframes t-jelly{0%{transform:scale(1.2,.85)}35%{transform:scale(.9,1.12)}65%{transform:scale(1.05,.97)}100%{transform:scale(1,1)}}
+  .v-jelly .tile.play{animation:t-jelly .42s ease}
+
+  @keyframes t-flipx{0%{transform:perspective(400px) rotateX(0)}50%{transform:perspective(400px) rotateX(20deg)}100%{transform:perspective(400px) rotateX(0)}}
+  .v-flipx .tile.play{animation:t-flipx .4s ease}
+
+  @keyframes t-flipy{0%{transform:perspective(400px) rotateY(0)}50%{transform:perspective(400px) rotateY(20deg)}100%{transform:perspective(400px) rotateY(0)}}
+  .v-flipy .tile.play{animation:t-flipy .4s ease}
+
+  @keyframes t-rotate{0%{transform:rotate(0)}30%{transform:rotate(-3deg)}65%{transform:rotate(3deg)}100%{transform:rotate(0)}}
+  .v-rotate .tile.play{animation:t-rotate .4s ease}
+
+  @keyframes t-tilt{0%{transform:skewX(0)}40%{transform:skewX(-6deg)}70%{transform:skewX(4deg)}100%{transform:skewX(0)}}
+  .v-tilt .tile.play{animation:t-tilt .4s ease}
+
+  @keyframes t-pulse{0%{opacity:1}50%{opacity:.55}100%{opacity:1}}
+  .v-pulse .tile.play{animation:t-pulse .4s ease}
+
+  @keyframes t-flashbg{0%{background:var(--accent);color:var(--accent-fg)}100%{background:var(--card);color:var(--fg)}}
+  .v-flashbg .tile.play .cap{animation:t-flashbg .4s ease}
+
+  @keyframes t-slided{0%{transform:translateY(0)}40%{transform:translateY(12px)}100%{transform:translateY(0)}}
+  .v-slided .tile.play{animation:t-slided .35s ease}
+
+  @keyframes t-slideu{0%{transform:translateY(0)}40%{transform:translateY(-12px)}100%{transform:translateY(0)}}
+  .v-slideu .tile.play{animation:t-slideu .35s ease}
+
+  @keyframes t-nudgel{0%{transform:translateX(0)}40%{transform:translateX(-9px)}100%{transform:translateX(0)}}
+  .v-nudgel .tile.play{animation:t-nudgel .3s ease}
+
+  @keyframes t-nudger{0%{transform:translateX(0)}40%{transform:translateX(9px)}100%{transform:translateX(0)}}
+  .v-nudger .tile.play{animation:t-nudger .3s ease}
+
+  @keyframes t-swing{0%{transform:rotate(0)}30%{transform:rotate(-5deg)}60%{transform:rotate(4deg)}100%{transform:rotate(0)}}
+  .v-swing .tile.play{animation:t-swing .45s ease;transform-origin:top center}
+
+  @keyframes t-rubber{0%{transform:scale(1,1)}30%{transform:scale(1.15,.85)}50%{transform:scale(.9,1.1)}70%{transform:scale(1.05,.95)}100%{transform:scale(1,1)}}
+  .v-rubber .tile.play{animation:t-rubber .5s ease}
+
+  @keyframes t-zoom{0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+  .v-zoom .tile.play{animation:t-zoom .35s ease}
+
+  @keyframes t-sink{0%{transform:scaleY(1)}45%{transform:scaleY(.84)}100%{transform:scaleY(1)}}
+  .v-sink .tile.play{animation:t-sink .35s ease}
+
+  .v-sweep .tile .cap::before{
+    content:'';position:absolute;inset:0;
+    background:var(--accent);opacity:.35;
+    transform:translateX(-100%);
+  }
+  @keyframes t-sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+  .v-sweep .tile.play .cap::before{animation:t-sweep .5s ease}
+
+  .v-underline .tile .cap::after{
+    content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+    background:var(--accent);transform:scaleX(0);transform-origin:left;
+  }
+  @keyframes t-underline{0%{transform:scaleX(0)}60%{transform:scaleX(1)}100%{transform:scaleX(1)}}
+  .v-underline .tile.play .cap::after{animation:t-underline .5s ease}
+
+  @keyframes t-color{0%{color:var(--accent)}100%{color:var(--fg)}}
+  .v-color .tile.play .cap .txt{animation:t-color .45s ease}
+
+  @keyframes t-glow{0%{text-shadow:0 0 12px var(--accent)}100%{text-shadow:0 0 0 rgba(0,0,0,0)}}
+  .v-glow .tile.play .cap .txt{animation:t-glow .5s ease}
+
+  @keyframes t-tracking{0%{letter-spacing:0}50%{letter-spacing:.14em}100%{letter-spacing:0}}
+  .v-tracking .tile.play .cap .txt{animation:t-tracking .5s ease}
+
+  @keyframes t-textup{0%{transform:translateY(120%);opacity:0}100%{transform:translateY(0);opacity:1}}
+  .v-textup .tile.play .cap .txt{animation:t-textup .3s ease}
+
+  @keyframes t-blurin{0%{filter:blur(6px);opacity:0}100%{filter:blur(0);opacity:1}}
+  .v-blurin .tile.play .cap .txt{animation:t-blurin .35s ease}
+
+  @keyframes t-shadow{0%{box-shadow:0 0 0 0 var(--accent)}100%{box-shadow:0 0 20px 6px rgba(0,0,0,0)}}
+  .v-shadow .tile.play{animation:t-shadow .5s ease}
+
+  @keyframes t-ring{0%{box-shadow:0 0 0 0 var(--accent)}100%{box-shadow:0 0 0 14px rgba(0,0,0,0)}}
+  .v-ring .tile.play{animation:t-ring .45s ease}
+
+  @keyframes t-outline{0%{outline:2px solid var(--accent);outline-offset:-2px}100%{outline:2px solid rgba(0,0,0,0);outline-offset:8px}}
+  .v-outline .tile.play{animation:t-outline .5s ease}
+
+  .v-wipe .tile .cap::before{
+    content:'';position:absolute;inset:0;
+    background:var(--accent);opacity:.4;
+    transform:scaleX(0);transform-origin:left;
+  }
+  @keyframes t-wipe{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+  .v-wipe .tile.play .cap::before{animation:t-wipe .35s ease}
+
+  .v-gradient .tile .cap::before{
+    content:'';position:absolute;inset:0;opacity:.4;
+    background:linear-gradient(90deg,var(--accent),transparent,var(--accent));
+    background-size:200% 100%;
+  }
+  @keyframes t-gradient{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+  .v-gradient .tile.play .cap::before{animation:t-gradient .6s linear}
+
+  .v-ripple .tile .cap::before{
+    content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;
+    margin:-6px 0 0 -6px;border-radius:50%;
+    background:var(--accent);opacity:0;transform:scale(0);
+  }
+  @keyframes t-ripple{0%{transform:scale(0);opacity:.6}100%{transform:scale(26);opacity:0}}
+  .v-ripple .tile.play .cap::before{animation:t-ripple .5s ease}
+
+  @keyframes t-elastic{0%{transform:scale(1)}30%{transform:scale(1.2)}45%{transform:scale(.92)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+  .v-elastic .tile.play{animation:t-elastic .5s ease}
+
+  @keyframes t-heart{0%{transform:scale(1)}15%{transform:scale(1.14)}30%{transform:scale(1)}45%{transform:scale(1.1)}60%{transform:scale(1)}100%{transform:scale(1)}}
+  .v-heart .tile.play{animation:t-heart .6s ease}
+
+  @keyframes t-shiver{0%,100%{transform:translate(0,0)}10%{transform:translate(-1px,1px)}20%{transform:translate(1px,-1px)}30%{transform:translate(-1px,-1px)}40%{transform:translate(1px,1px)}50%{transform:translate(-1px,1px)}60%{transform:translate(1px,-1px)}70%{transform:translate(-1px,-1px)}80%{transform:translate(1px,1px)}90%{transform:translate(-1px,1px)}}
+  .v-shiver .tile.play{animation:t-shiver .5s linear}
+
+  @keyframes t-breathe{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+  .v-breathe .tile.play{animation:t-breathe .9s ease}
+
+  @keyframes t-skew{0%{transform:skewY(0)}50%{transform:skewY(4deg)}100%{transform:skewY(0)}}
+  .v-skew .tile.play{animation:t-skew .4s ease}
+
+  @keyframes t-blurpulse{0%{filter:blur(0)}50%{filter:blur(3px)}100%{filter:blur(0)}}
+  .v-blurpulse .tile.play{animation:t-blurpulse .45s ease}
+
+  .v-flashw .tile::after{
+    content:'';position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;
+  }
+  @keyframes t-flashw{0%{opacity:.5}100%{opacity:0}}
+  .v-flashw .tile.play::after{animation:t-flashw .4s ease}
+</style>
+</head>
+<body>
+<header>
+  <h1>Title tap animations</h1>
+  <p>Tap a caption (or +1 / &minus;1). "Auto demo" loops all 40 so you can compare. Tell me the number you want.</p>
+  <div class="controls">
+    <button id="autoBtn" class="on">Auto demo: on</button>
+    <button id="themeBtn">Theme: dark</button>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+const VARIANTS = [
+  ['pop',      'Pop',              'Quick scale-up on tap.'],
+  ['press',    'Press down',       'Dips in then springs back.'],
+  ['bounce',   'Bounce',           'Hops up and settles.'],
+  ['shakex',   'Shake horizontal', 'Side-to-side shake.'],
+  ['shakey',   'Shake vertical',   'Up-down shake.'],
+  ['jelly',    'Jelly',            'Squash and stretch wobble.'],
+  ['flipx',    'Flip X',           'Tilts back on the X axis.'],
+  ['flipy',    'Flip Y',           'Tilts on the Y axis.'],
+  ['rotate',   'Rock',             'Rocks left and right.'],
+  ['tilt',     'Tilt',             'Skews sideways.'],
+  ['pulse',    'Pulse',            'Fades out and back.'],
+  ['flashbg',  'Caption flash',    'Caption background flashes accent.'],
+  ['slided',   'Slide down',       'Drops down and returns.'],
+  ['slideu',   'Slide up',         'Lifts up and returns.'],
+  ['nudgel',   'Nudge left',       'Small nudge to the left.'],
+  ['nudger',   'Nudge right',      'Small nudge to the right.'],
+  ['swing',    'Swing',            'Swings from the top edge.'],
+  ['rubber',   'Rubber band',      'Stretches then snaps back.'],
+  ['zoom',     'Zoom',             'Zooms in and settles.'],
+  ['sink',     'Sink',             'Compresses vertically.'],
+  ['sweep',    'Sweep',            'Light sweeps across the caption.'],
+  ['underline', 'Underline draw',  'Accent underline grows in.'],
+  ['color',    'Color flash',      'Caption text flashes accent.'],
+  ['glow',     'Text glow',        'Caption text glows.'],
+  ['tracking', 'Tracking',         'Letter spacing expands.'],
+  ['textup',   'Text slide in',    'Text slides in from below.'],
+  ['blurin',   'Blur in',          'Text focuses in from blur.'],
+  ['shadow',   'Shadow pulse',     'Soft colored shadow blooms.'],
+  ['ring',     'Ring',             'Ring expands from the tile.'],
+  ['outline',  'Outline expand',   'Outline pushes outward.'],
+  ['wipe',     'Wipe',             'Accent wipes across the caption.'],
+  ['gradient', 'Gradient shift',   'Moving gradient across the caption.'],
+  ['ripple',   'Ripple',           'Circle ripples out from center.'],
+  ['elastic',  'Elastic',          'Elastic overshoot scale.'],
+  ['heart',    'Heartbeat',        'Double beat pulse.'],
+  ['shiver',   'Shiver',           'Tiny fast vibration.'],
+  ['breathe',  'Breathe',          'Slow gentle swell.'],
+  ['skew',     'Skew',             'Vertical skew wobble.'],
+  ['blurpulse','Blur pulse',       'Blurs and refocuses.'],
+  ['flashw',   'White flash',      'White flash over the tile.']
+];
+
+const list = document.getElementById('list');
+
+for (const [id, name, desc] of VARIANTS){
+  const card = document.createElement('div');
+  card.className = 'card v-' + id;
+  card.dataset.variant = id;
+  card.dataset.val = '5';
+  card.dataset.dir = '1';
+  card.innerHTML =
+    '<div class="card-name"></div><div class="card-desc"></div>' +
+    '<div class="stage"><div class="tile">' +
+      '<div class="cap"><span class="txt">Blue crate</span></div>' +
+      '<div class="img"></div>' +
+      '<div class="badge">5</div>' +
+    '</div></div>' +
+    '<div class="btns"><button class="minus">&minus;1</button><button class="plus">+1</button></div>';
+  card.querySelector('.card-name').textContent = name;
+  card.querySelector('.card-desc').textContent = desc;
+
+  const tile = card.querySelector('.tile');
+  card.querySelector('.plus').addEventListener('click', () => trigger(card, 1));
+  card.querySelector('.minus').addEventListener('click', () => trigger(card, -1));
+  card.querySelector('.cap').addEventListener('click', () => trigger(card, 1));
+
+  list.appendChild(card);
+}
+
+function trigger(card, dir){
+  const val = +card.dataset.val;
+  const nv = Math.max(0, Math.min(99, val + dir));
+  card.dataset.val = nv;
+
+  const tile = card.querySelector('.tile');
+  card.querySelector('.badge').textContent = nv;
+
+  tile.classList.remove('play');
+  void tile.offsetWidth;
+  tile.classList.add('play');
+  clearTimeout(tile._t);
+  tile._t = setTimeout(() => tile.classList.remove('play'), 780);
+}
+
+let auto = true;
+setInterval(() => {
+  if (!auto) return;
+  document.querySelectorAll('.card').forEach(card => {
+    let val = +card.dataset.val;
+    let dir = +card.dataset.dir || 1;
+    if (val >= 9) dir = -1;
+    else if (val <= 0) dir = 1;
+    card.dataset.dir = String(dir);
+    trigger(card, dir);
+  });
+}, 1300);
+
+const autoBtn = document.getElementById('autoBtn');
+autoBtn.addEventListener('click', () => {
+  auto = !auto;
+  autoBtn.classList.toggle('on', auto);
+  autoBtn.textContent = 'Auto demo: ' + (auto ? 'on' : 'off');
+});
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+</script>
+</body>
+</html>

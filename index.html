@@ -195,6 +195,7 @@
   html[data-theme="light"][data-accent="cyan"]{   --accent:#0891b2; --accent-fg:#fff; }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
+  html{scrollbar-gutter:stable}
   body{
     font:16px/1.3 system-ui,-apple-system,sans-serif;
     background:var(--bg);color:var(--fg);
@@ -220,7 +221,6 @@
     padding-top:calc(10px + env(safe-area-inset-top));
     display:flex;flex-direction:column;gap:6px;
     border-bottom:1px solid var(--border);
-    transition:gap .22s ease, padding-bottom .22s ease;
   }
   .hdr-top{display:flex;align-items:center;gap:8px}
   .label{
@@ -234,18 +234,17 @@
   .label:focus{border-bottom-color:var(--accent)}
 
   .hdr-bottom{
-    display:grid;grid-template-rows:1fr;
-    transition:grid-template-rows .22s ease, opacity .18s ease;
+    height:var(--hdr-bottom-h, auto);
+    overflow:hidden;
+    transition:height .2s ease, opacity .16s ease;
   }
   .hdr-bottom-inner{
-    min-height:0;overflow:hidden;
     display:flex;align-items:center;gap:6px;
     justify-content:space-between;flex-wrap:wrap;
   }
   body.hdr-collapsed .hdr-bottom{
-    grid-template-rows:0fr;opacity:0;pointer-events:none;
+    height:0;opacity:0;pointer-events:none;
   }
-  body.hdr-collapsed header{gap:0;padding-bottom:6px}
   .date{font-size:12px;color:var(--dim)}
   .hdr-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .total{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums;margin-right:2px}
@@ -371,6 +370,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    overflow:hidden;
     font-size:var(--qty-fs);
     font-weight:800;
     line-height:1;
@@ -437,14 +437,13 @@
     touch-action:auto;
   }
 
-  #modal,#editor,#cats,#calc,#settings{
+  #modal,#editor,#cats,#settings{
     position:fixed;inset:0;background:var(--overlay);z-index:20;
     display:none;align-items:flex-end;
     -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
   }
-  #modal.on,#editor.on,#cats.on,#calc.on,#settings.on{display:flex}
+  #modal.on,#editor.on,#cats.on,#settings.on{display:flex}
   #editor{z-index:30}
-  #calc{z-index:30}
   #settings{z-index:30}
 
   /* settings: no dim/blur + short sheet so grid changes stay visible behind it */
@@ -503,12 +502,21 @@
     line-height:1;
   }
 
-  /* tile quantity feedback (tap +1 / swipe -1) */
-  @keyframes qtypop{ 0%{transform:scale(1.45)} 100%{transform:scale(1)} }
-  @keyframes qtyup{ 0%{color:var(--accent)} 100%{color:var(--qty-fg)} }
-  @keyframes qtydown{ 0%{color:var(--danger)} 100%{color:var(--qty-fg)} }
-  .tile .qty.flash-up{ animation:qtypop .26s ease, qtyup .26s ease; }
-  .tile .qty.flash-down{ animation:qtypop .26s ease, qtydown .26s ease; }
+  /* tile quantity feedback (tap +1 / swipe -1) — odometer roll */
+  @keyframes odoInUp{   0%{transform:translateY(100%)}  100%{transform:translateY(0)} }
+  @keyframes odoOutUp{  0%{transform:translateY(0)}     100%{transform:translateY(-100%)} }
+  @keyframes odoInDown{ 0%{transform:translateY(-100%)} 100%{transform:translateY(0)} }
+  @keyframes odoOutDown{0%{transform:translateY(0)}     100%{transform:translateY(100%)} }
+  .tile .qty .odo-num{ display:inline-block; }
+  .tile .qty .odo-ghost{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:none;
+  }
+  .tile .qty.odo-up   .odo-num{   animation:odoInUp .24s ease; }
+  .tile .qty.odo-up   .odo-ghost{ animation:odoOutUp .24s ease forwards; }
+  .tile .qty.odo-down .odo-num{   animation:odoInDown .24s ease; }
+  .tile .qty.odo-down .odo-ghost{ animation:odoOutDown .24s ease forwards; }
 
   /* settings */
   .opt-row{ display:flex;gap:6px;margin:8px 0 4px; }
@@ -571,75 +579,69 @@
     flex:0 0 34px;width:34px;height:34px;padding:0;border-radius:50%;
   }
   #settings .row{ margin-top:8px; }
+  #settings .settings-grid{
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:10px 12px;align-items:start;
+  }
+  #settings .settings-grid .settings-block{ margin-bottom:0; }
+  #settings .settings-grid .settings-block.wide{ grid-column:1 / -1; }
+  @media (max-width: 340px){
+    #settings .settings-grid{ grid-template-columns:1fr; }
+    #settings .settings-grid .settings-block.wide{ grid-column:auto; }
+  }
 
-  .calc-row{
-    display:flex;align-items:flex-end;gap:10px;
-    margin:14px 0 4px;
-  }
-  .calc-field{
-    flex:1;min-width:0;
-    display:flex;flex-direction:column;gap:6px;
-  }
-  .calc-field label{
+  /* counter */
+  .counter-row button{font-size:18px;font-weight:800}
+  .counter-row .counter-minus{background:var(--surface-2);color:var(--danger)}
+  .counter-row .counter-reset{background:var(--surface-2);color:var(--fg)}
+  .counter-row .counter-plus{background:var(--accent);color:var(--accent-fg)}
+
+  /* multiplier */
+  .mult-block{margin-top:16px}
+  .mult-row{display:flex;align-items:flex-end;gap:10px}
+  .mult-row + .mult-row{margin-top:10px}
+  .mult-field{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .mult-field label{
     font-size:12px;color:var(--dim);font-weight:700;
-    text-transform:uppercase;letter-spacing:.06em;
-    text-align:center;
+    text-transform:uppercase;letter-spacing:.06em;text-align:center;
   }
-  .calc-field input{
-    width:100%;font-size:40px;font-weight:800;text-align:center;
-    padding:10px 6px;background:var(--sunken);color:var(--fg);
-    border:2px solid var(--border-strong);border-radius:14px;
-    font-variant-numeric:tabular-nums;
-    -moz-appearance:textfield;
-    font-family:inherit;outline:none;
-    transition:border-color .15s;
+  .mult-x{
+    font-size:26px;font-weight:300;color:var(--dim);
+    padding-bottom:12px;flex-shrink:0;
   }
-  .calc-field input:focus{border-color:var(--accent)}
-  .calc-field input::-webkit-outer-spin-button,
-  .calc-field input::-webkit-inner-spin-button{
-    -webkit-appearance:none;margin:0;
+  .stepper{display:flex;align-items:center;gap:6px}
+  .stepper input{
+    flex:1;min-width:0;width:100%;
+    font-size:28px;font-weight:800;text-align:center;
+    padding:8px 4px;background:var(--sunken);color:var(--fg);
+    border:2px solid var(--border-strong);border-radius:12px;
+    font-variant-numeric:tabular-nums;font-family:inherit;outline:none;
+    -moz-appearance:textfield;transition:border-color .15s;
   }
-  .calc-x{
-    font-size:32px;font-weight:300;color:var(--dim);
-    padding-bottom:20px;flex-shrink:0;
+  .stepper input:focus{border-color:var(--accent)}
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .stepper button{
+    flex:0 0 38px;height:38px;padding:0;
+    font-size:20px;font-weight:700;line-height:1;
+    background:var(--surface-2);color:var(--fg);border-radius:11px;
   }
-  .calc-total{
+  .stepper button:active{background:var(--surface-3)}
+  .mult-total{
     display:flex;align-items:baseline;justify-content:center;
-    gap:14px;margin:18px 0 4px;
-    padding:16px;background:var(--sunken);border-radius:14px;
+    gap:14px;margin:14px 0 4px;
+    padding:14px;background:var(--sunken);border-radius:14px;
     border:2px solid var(--border);
   }
-  .calc-total span{
+  .mult-total span{
     font-size:13px;color:var(--dim);
     text-transform:uppercase;letter-spacing:.06em;font-weight:700;
   }
-  .calc-total strong{
-    font-size:40px;font-weight:800;color:var(--accent);
+  .mult-total strong{
+    font-size:36px;font-weight:800;color:var(--accent);
     font-variant-numeric:tabular-nums;line-height:1;
   }
-  .calc-total strong.zero{color:var(--placeholder)}
-
-  .img-block{margin-top:14px}
-  .img-label{
-    font-size:12px;color:var(--dim);font-weight:700;
-    text-transform:uppercase;letter-spacing:.06em;
-    margin-bottom:6px;
-  }
-  .img-preview{
-    display:none;
-    width:100%;height:140px;object-fit:cover;
-    border-radius:12px;margin-bottom:8px;
-    background:var(--sunken);
-  }
-  .img-preview.on{display:block}
-  .img-row{display:flex;gap:8px}
-  .img-row button{
-    flex:1;background:var(--surface-2);font-size:14px;padding:14px 4px;
-    display:flex;flex-direction:column;align-items:center;gap:4px;
-  }
-  .img-row button .ico{font-size:20px;line-height:1}
-  .img-row button .lbl{font-size:12px;font-weight:600}
-  .img-clear{width:100%;margin-top:8px;padding:10px;font-size:13px}
+  .mult-total strong.zero{color:var(--placeholder)}
 
   .ed-label{
     display:block;font-size:12px;color:var(--dim);
@@ -778,69 +780,53 @@
     <input id="mInput" type="number" inputmode="numeric" step="1" value="0"
            oninput="commitLive()">
 
-    <div class="row quick">
-      <button onclick="setZero()">0</button>
-      <button onclick="bump(10)">+10</button>
-      <button onclick="bump(5)">+5</button>
-      <button class="add1" onclick="bump(1)">+1</button>
+    <div class="row counter-row">
+      <button class="counter-minus" onclick="bump(-1)">−1</button>
+      <button class="counter-reset" onclick="setZero()" data-i18n="counter.reset">Reset</button>
+      <button class="counter-plus" onclick="bump(1)">+1</button>
     </div>
 
-    <div class="row">
-      <button onclick="openCalc()" data-i18n="multiply">× Multiply rows</button>
-    </div>
-
-    <div class="img-block">
-      <div class="img-label" data-i18n="photo.section">Item photo</div>
-      <img id="mPreview" class="img-preview" alt="">
-      <div class="img-row">
-        <button onclick="takePhoto()">
-          <span class="ico">📷</span>
-          <span class="lbl" data-i18n="photo.camera">Take photo</span>
-        </button>
-        <button onclick="pickFromGallery()">
-          <span class="ico">🖼</span>
-          <span class="lbl" data-i18n="photo.gallery">From gallery</span>
-        </button>
+    <div class="mult-block">
+      <div class="mult-row">
+        <div class="mult-field">
+          <label for="multPerRow" data-i18n="calc.cols">Per row</label>
+          <div class="stepper">
+            <button type="button" onclick="multDelta('perRow', -1)" aria-label="−">−</button>
+            <input id="multPerRow" type="number" inputmode="numeric" min="1" max="999" value="8">
+            <button type="button" onclick="multDelta('perRow', 1)" aria-label="+">+</button>
+          </div>
+        </div>
+        <div class="mult-x">×</div>
+        <div class="mult-field">
+          <label for="multRows" data-i18n="calc.rows">Rows</label>
+          <div class="stepper">
+            <button type="button" onclick="multDelta('rows', -1)" aria-label="−">−</button>
+            <input id="multRows" type="number" inputmode="numeric" min="1" max="999" value="9">
+            <button type="button" onclick="multDelta('rows', 1)" aria-label="+">+</button>
+          </div>
+        </div>
       </div>
-      <button id="mClear" class="img-clear danger"
-              onclick="clearImage()" data-i18n="photo.remove">🗑 Remove photo</button>
-    </div>
 
-    <div class="row">
-      <button onclick="editCurrent()" data-i18n="edit">✏️ Edit</button>
-      <button class="danger" onclick="deleteCurrent()" data-i18n="delete">🗑 Delete</button>
-    </div>
-  </div>
-</div>
-
-<div id="calc">
-  <div class="sheet">
-    <h2 id="calcTitle" data-i18n="calc.title">Multiply</h2>
-    <div class="sub" data-i18n="calc.sub">Rows × Per row</div>
-
-    <div class="calc-row">
-      <div class="calc-field">
-        <label for="calcRows" data-i18n="calc.rows">Rows</label>
-        <input id="calcRows" type="number" inputmode="numeric" min="0" value="1">
+      <div class="mult-row">
+        <div class="mult-field">
+          <label for="multEach" data-i18n="calc.each">Items per box</label>
+          <div class="stepper">
+            <button type="button" onclick="multDelta('each', -1)" aria-label="−">−</button>
+            <input id="multEach" type="number" inputmode="numeric" min="1" max="9999" value="1">
+            <button type="button" onclick="multDelta('each', 1)" aria-label="+">+</button>
+          </div>
+        </div>
       </div>
-      <div class="calc-x">×</div>
-      <div class="calc-field">
-        <label for="calcCols" data-i18n="calc.cols">Per row</label>
-        <input id="calcCols" type="number" inputmode="numeric" min="0" value="1">
+
+      <div class="mult-total">
+        <span data-i18n="calc.total">Total</span>
+        <strong id="multTotal" class="zero">0</strong>
       </div>
-    </div>
 
-    <div class="calc-total">
-      <span data-i18n="calc.total">Total</span>
-      <strong id="calcTotal" class="zero">0</strong>
-    </div>
-
-    <div class="row">
-      <button onclick="closeCalc()" data-i18n="cancel">Cancel</button>
-    </div>
-    <div class="row">
-      <button onclick="calcCommit(-1)" data-i18n="calc.subtract">− Subtract</button>
-      <button class="accent" onclick="calcCommit(1)" data-i18n="calc.add">+ Add</button>
+      <div class="row">
+        <button onclick="multCommit(-1)" data-i18n="calc.subtract">− Subtract</button>
+        <button class="accent" onclick="multCommit(1)" data-i18n="calc.add">+ Add</button>
+      </div>
     </div>
   </div>
 </div>
@@ -850,7 +836,8 @@
     <h2 data-i18n="settings.title">Settings</h2>
     <div class="sub" data-i18n="settings.tileView">Tile view</div>
 
-    <div class="settings-block">
+    <div class="settings-grid">
+    <div class="settings-block wide">
       <div class="block-label" data-i18n="settings.language">Language</div>
       <div class="opt-row" id="langRow">
         <button data-lang="ru" onclick="setLang('ru')">Рус</button>
@@ -860,7 +847,7 @@
       </div>
     </div>
 
-    <div class="settings-block">
+    <div class="settings-block wide">
       <div class="block-label" data-i18n="settings.cols">Tiles per row (columns)</div>
       <div class="opt-row" id="sizeRow">
         <button data-cols="auto" onclick="setGridCols('auto')" data-i18n="settings.auto">Auto</button>
@@ -871,7 +858,7 @@
       </div>
     </div>
 
-    <div class="settings-block">
+    <div class="settings-block wide">
       <div class="block-label" data-i18n="settings.rowsVisible">Rows visible on screen</div>
       <div class="opt-row" id="rowFitRow">
         <button data-rowfit="auto" onclick="setRowFit('auto')" data-i18n="settings.auto">Auto</button>
@@ -917,7 +904,7 @@
       </div>
     </div>
 
-    <div class="settings-block">
+    <div class="settings-block wide">
       <div class="block-label" data-i18n="settings.theme">Theme</div>
       <div class="opt-row" id="themeRow">
         <button data-themeopt="auto"  onclick="setTheme('auto')"  data-i18n="settings.themeAuto">Auto</button>
@@ -945,6 +932,7 @@
         <button data-accentopt="amber"  onclick="setAccent('amber')"  data-i18n-title="accent.amber"  data-i18n-aria="accent.amber"  aria-label="Amber"></button>
         <button data-accentopt="cyan"   onclick="setAccent('cyan')"   data-i18n-title="accent.cyan"   data-i18n-aria="accent.cyan"   aria-label="Cyan"></button>
       </div>
+    </div>
     </div>
 
     <div class="row">
@@ -1000,10 +988,6 @@
   </div>
 </div>
 
-<input id="camInput" type="file" accept="image/*"
-       capture="environment" style="display:none">
-<input id="galInput" type="file" accept="image/*" style="display:none">
-
 <div id="voiceToast"></div>
 
 <script>
@@ -1042,11 +1026,13 @@ const I18N = {
     'calc.sub':'Ряды × В ряду',
     'calc.rows':'Рядов',
     'calc.cols':'В ряду',
+    'calc.each':'Позиций в ящике',
     'calc.total':'Итого',
     'cancel':'Отмена',
     'calc.subtract':'− Вычесть',
     'calc.add':'+ Добавить',
     'multiply':'Умножить',
+    'counter.reset':'Сброс',
     'settings.tileView':'Вид плиток',
     'settings.cols':'Плиток в ряду (столбцов)',
     'settings.auto':'Авто',
@@ -1164,11 +1150,13 @@ const I18N = {
     'calc.sub':'Rows × Per row',
     'calc.rows':'Rows',
     'calc.cols':'Per row',
+    'calc.each':'Items per box',
     'calc.total':'Total',
     'cancel':'Cancel',
     'calc.subtract':'− Subtract',
     'calc.add':'+ Add',
     'multiply':'Multiply',
+    'counter.reset':'Reset',
     'settings.tileView':'Tile view',
     'settings.cols':'Tiles per row (columns)',
     'settings.auto':'Auto',
@@ -1286,11 +1274,13 @@ const I18N = {
     'calc.sub':'Rindas × Rindā',
     'calc.rows':'Rindas',
     'calc.cols':'Rindā',
+    'calc.each':'Vienības kastē',
     'calc.total':'Kopā',
     'cancel':'Atcelt',
     'calc.subtract':'− Atņemt',
     'calc.add':'+ Pievienot',
     'multiply':'Reizināt',
+    'counter.reset':'Atiestatīt',
     'settings.tileView':'Flīžu skats',
     'settings.cols':'Flīzes rindā (kolonnas)',
     'settings.auto':'Auto',
@@ -1408,11 +1398,13 @@ const I18N = {
     'calc.sub':'行数 × 每行',
     'calc.rows':'行数',
     'calc.cols':'每行',
+    'calc.each':'每箱数量',
     'calc.total':'合计',
     'cancel':'取消',
     'calc.subtract':'− 减去',
     'calc.add':'+ 添加',
     'multiply':'相乘',
+    'counter.reset':'重置',
     'settings.tileView':'方块视图',
     'settings.cols':'每行方块数（列）',
     'settings.auto':'自动',
@@ -1642,9 +1634,6 @@ let reorderMode = false;
 let editingId   = null;
 let editingCat  = null;
 let editorMode  = 'item';
-
-let calcRowsLast = 1;
-let calcColsLast = 1;
 
 /* ================= state ================= */
 function readEmbedded(){
@@ -1912,7 +1901,7 @@ function setLang(v){
   renderOpts();
   render();
   if (qbId) qbShow(qbId);
-  requestAnimationFrame(fitTiles);
+  requestAnimationFrame(() => { measureHeader(); fitTiles(); });
 }
 
 /* Computes the tile height so exactly N rows fit in the visible area. */
@@ -1962,14 +1951,14 @@ function fitTiles(){
   main.style.setProperty('--tile-h', tileH + 'px');
 }
 
-window.addEventListener('resize', () => requestAnimationFrame(fitTiles));
+window.addEventListener('resize', () => requestAnimationFrame(() => { measureHeader(); fitTiles(); }));
 window.addEventListener('orientationchange', () => setTimeout(fitTiles, 200));
 if (window.visualViewport){
   visualViewport.addEventListener('resize', () => requestAnimationFrame(fitTiles));
 }
 
 /* ================= collapse header on scroll ================= */
-const HEADER_OVERLAYS = ['modal','editor','cats','calc','settings','pick'];
+const HEADER_OVERLAYS = ['modal','editor','cats','settings','pick'];
 function anyOverlayOpen(){
   for (const id of HEADER_OVERLAYS){
     const el = document.getElementById(id);
@@ -1978,19 +1967,35 @@ function anyOverlayOpen(){
   return false;
 }
 
+/* Measure the natural height of the button row so it can animate from a
+   concrete pixel value to 0 (auto height cannot be transitioned). */
+function measureHeader(){
+  const wrap  = document.querySelector('.hdr-bottom');
+  const inner = document.querySelector('.hdr-bottom-inner');
+  if (!wrap || !inner) return;
+  const h = Math.ceil(inner.getBoundingClientRect().height) + 1;
+  if (h > 1) wrap.style.setProperty('--hdr-bottom-h', h + 'px');
+}
+
 let lastScrollY = window.scrollY || 0;
 let scrollTicking = false;
+let collapseLockUntil = 0;
+
+function setHeaderCollapsed(v){
+  if (document.body.classList.contains('hdr-collapsed') === v) return;
+  document.body.classList.toggle('hdr-collapsed', v);
+  /* ignore further direction changes until the height animation settles */
+  collapseLockUntil = Date.now() + 260;
+}
 
 function updateHeaderCollapse(){
   const y = window.scrollY || document.documentElement.scrollTop || 0;
-  const collapsed = document.body.classList.contains('hdr-collapsed');
 
   if (y <= 8 || anyOverlayOpen()){
-    if (collapsed) document.body.classList.remove('hdr-collapsed');
-  } else if (y > lastScrollY + 4){
-    if (!collapsed) document.body.classList.add('hdr-collapsed');
-  } else if (y < lastScrollY - 4){
-    if (collapsed) document.body.classList.remove('hdr-collapsed');
+    setHeaderCollapsed(false);
+  } else if (Date.now() >= collapseLockUntil){
+    if (y > lastScrollY + 6)      setHeaderCollapsed(true);
+    else if (y < lastScrollY - 6) setHeaderCollapsed(false);
   }
   lastScrollY = y;
 }
@@ -2127,23 +2132,15 @@ function buildUpdatedHtml(){
     mainClone.removeAttribute('style');
   }
 
-  ['#modal','#editor','#cats','#pick','#calc','#settings'].forEach(sel => {
+  ['#modal','#editor','#cats','#pick','#settings'].forEach(sel => {
     const el = clone.querySelector(sel);
     if (el) el.classList.remove('on');
   });
   const bodyClone = clone.querySelector('body');
   if (bodyClone) bodyClone.classList.remove('hdr-collapsed');
 
-  const preview = clone.querySelector('#mPreview');
-  if (preview){
-    preview.removeAttribute('src');
-    preview.classList.remove('on');
-  }
-  const mClear = clone.querySelector('#mClear');
-  if (mClear) mClear.removeAttribute('style');
-
   ['#mName','#mCat','#pickTitle','#pickMsg',
-   '#edTitle','#edSub','#total','#date','#voiceToast','#calcTitle'].forEach(sel => {
+   '#edTitle','#edSub','#total','#date','#voiceToast'].forEach(sel => {
     const el = clone.querySelector(sel);
     if (el) el.textContent = '';
   });
@@ -2155,12 +2152,14 @@ function buildUpdatedHtml(){
   const mInput = clone.querySelector('#mInput');
   if (mInput) mInput.value = '0';
 
-  const calcRows = clone.querySelector('#calcRows');
-  if (calcRows) calcRows.value = '1';
-  const calcCols = clone.querySelector('#calcCols');
-  if (calcCols) calcCols.value = '1';
-  const calcTotal = clone.querySelector('#calcTotal');
-  if (calcTotal){ calcTotal.textContent = '0'; calcTotal.className = 'zero'; }
+  const multPerRowEl = clone.querySelector('#multPerRow');
+  if (multPerRowEl) multPerRowEl.value = '8';
+  const multRowsEl = clone.querySelector('#multRows');
+  if (multRowsEl) multRowsEl.value = '9';
+  const multEachEl = clone.querySelector('#multEach');
+  if (multEachEl) multEachEl.value = '1';
+  const multTotalEl = clone.querySelector('#multTotal');
+  if (multTotalEl){ multTotalEl.textContent = '0'; multTotalEl.className = 'zero'; }
 
   const micBtn = clone.querySelector('#micBtn');
   if (micBtn) micBtn.classList.remove('on');
@@ -2217,7 +2216,6 @@ async function resetAll(){
   activeId = null;
   state.lastItem = null;
   document.getElementById('modal').classList.remove('on');
-  document.getElementById('calc').classList.remove('on');
   document.getElementById('settings').classList.remove('on');
   document.getElementById('editor').classList.remove('on');
   document.getElementById('cats').classList.remove('on');
@@ -2607,21 +2605,43 @@ function qbShow(id){
 function bumpItem(id, n){
   const it = state.items.find(i => i.id === id);
   if (!it || it.spacer) return;
+  const oldQty = it.qty;
   it.qty = Math.max(0, it.qty + n);
   it.counted = true;
   save(); render();
-  flashTile(id, n);
+  flashTile(id, n, oldQty);
   navigator.vibrate?.(8);
 }
 
-function flashTile(id, dir){
+function flashTile(id, dir, oldQty){
   const tile = document.querySelector(`.tile[data-id="${id}"]`);
   const qty = tile && tile.querySelector('.qty');
   if (!qty) return;
-  qty.classList.remove('flash-up','flash-down');
+
+  const newQty = qty.textContent;
+  if (oldQty == null) oldQty = String(parseInt(newQty, 10) - dir);
+  if (String(oldQty) === newQty) return;
+
+  clearTimeout(qty._odoT);
+  qty.classList.remove('odo-up','odo-down');
+
+  const ghost = document.createElement('span');
+  ghost.className = 'odo-ghost';
+  ghost.textContent = oldQty;
+  const num = document.createElement('span');
+  num.className = 'odo-num';
+  num.textContent = newQty;
+
+  qty.textContent = '';
+  qty.appendChild(ghost);
+  qty.appendChild(num);
+
   void qty.offsetWidth;
-  qty.classList.add(dir >= 0 ? 'flash-up' : 'flash-down');
-  setTimeout(() => qty.classList.remove('flash-up','flash-down'), 300);
+  qty.classList.add(dir >= 0 ? 'odo-up' : 'odo-down');
+  qty._odoT = setTimeout(() => {
+    qty.classList.remove('odo-up','odo-down');
+    if (ghost.parentNode) ghost.remove();
+  }, 300);
 }
 
 function updateTotal(){
@@ -2634,6 +2654,7 @@ function updateTotal(){
 function swipeDecrement(id){
   const it = state.items.find(i => i.id === id);
   if (!it || it.spacer) return;
+  const oldQty = it.qty;
   it.qty = Math.max(0, it.qty - 1);
   it.counted = true;
   save();
@@ -2646,7 +2667,7 @@ function swipeDecrement(id){
   }
   updateTotal();
   qbShow(id);
-  flashTile(id, -1);
+  flashTile(id, -1, oldQty);
   navigator.vibrate?.(12);
 }
 
@@ -2664,72 +2685,62 @@ function tapTile(id){
   bumpItem(id, 1);
 }
 
-/* ================= calculator ================= */
-function openCalc(){
-  if (!activeId) return;
-  const it = state.items.find(i => i.id === activeId);
-  if (!it) return;
+/* ================= multiplier ================= */
+let multPerRow = 8;
+let multRows   = 9;
+let multEach   = 1;
 
-  document.getElementById('calcTitle').textContent = it.name;
-
-  const rowsEl = document.getElementById('calcRows');
-  const colsEl = document.getElementById('calcCols');
-  rowsEl.value = calcRowsLast;
-  colsEl.value = calcColsLast;
-  updateCalcTotal();
-
-  document.getElementById('calc').classList.add('on');
-  setTimeout(() => { rowsEl.focus(); rowsEl.select(); }, 60);
+function multTotal(){
+  return multPerRow * multRows * multEach;
 }
 
-function closeCalc(){
-  document.getElementById('calc').classList.remove('on');
-  if (!document.getElementById('modal').classList.contains('on')) activeId = null;
+function multSync(){
+  document.getElementById('multPerRow').value = multPerRow;
+  document.getElementById('multRows').value   = multRows;
+  document.getElementById('multEach').value   = multEach;
 }
 
-function updateCalcTotal(){
-  const rows = parseInt(document.getElementById('calcRows').value) || 0;
-  const cols = parseInt(document.getElementById('calcCols').value) || 0;
-  const n = rows * cols;
-  const el = document.getElementById('calcTotal');
+function multRender(){
+  const n = multTotal();
+  const el = document.getElementById('multTotal');
   el.textContent = nf(n);
   el.className = n > 0 ? '' : 'zero';
 }
 
-function calcCommit(sign){
-  const rows = parseInt(document.getElementById('calcRows').value) || 0;
-  const cols = parseInt(document.getElementById('calcCols').value) || 0;
-  const n = rows * cols;
-
-  if (n <= 0){ closeCalc(); return; }
-
-  calcRowsLast = rows;
-  calcColsLast = cols;
-
-  if (activeId) bumpItem(activeId, sign * n);
-
-  /* if the details modal is behind the calculator, keep its field in sync */
-  if (activeId && document.getElementById('modal').classList.contains('on')){
-    const it = state.items.find(i => i.id === activeId);
-    if (it) document.getElementById('mInput').value = it.qty;
-  }
-
-  closeCalc();
-  showToast(`${sign > 0 ? '+' : '−'}${nf(n)}`,
-            sign > 0 ? 'ok' : '');
+function multDelta(which, d){
+  if (which === 'perRow') multPerRow = Math.max(1, Math.min(999,  multPerRow + d));
+  if (which === 'rows')   multRows   = Math.max(1, Math.min(999,  multRows + d));
+  if (which === 'each')   multEach   = Math.max(1, Math.min(9999, multEach + d));
+  multSync();
+  multRender();
 }
 
-['calcRows','calcCols'].forEach(id => {
-  const el = document.getElementById(id);
-  el.addEventListener('input', updateCalcTotal);
-  el.addEventListener('keydown', e => {
-    if (e.key === 'Enter'){ e.preventDefault(); calcCommit(1); }
-    if (e.key === 'Escape'){ e.preventDefault(); closeCalc(); }
-  });
-});
+function multInput(which, raw){
+  const n = parseInt(raw, 10);
+  if (isNaN(n) || n < 1) return;
+  if (which === 'perRow') multPerRow = Math.min(999, n);
+  if (which === 'rows')   multRows   = Math.min(999, n);
+  if (which === 'each')   multEach   = Math.min(9999, n);
+  multRender();
+}
 
-document.getElementById('calc').addEventListener('click', e => {
-  if (e.target.id === 'calc') closeCalc();
+function multCommit(sign){
+  if (!activeId) return;
+  const n = multTotal();
+  if (n <= 0) return;
+
+  bumpItem(activeId, sign * n);
+
+  const it = state.items.find(i => i.id === activeId);
+  if (it) document.getElementById('mInput').value = it.qty;
+
+  showToast(`${sign > 0 ? '+' : '−'}${nf(n)}`, sign > 0 ? 'ok' : '');
+}
+
+[['multPerRow','perRow'],['multRows','rows'],['multEach','each']].forEach(([id, which]) => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', e => multInput(which, e.target.value));
+  el.addEventListener('change', e => { multInput(which, e.target.value); multSync(); });
 });
 
 /* ================= item window (live-save) ================= */
@@ -2746,15 +2757,10 @@ function openModal(id){
   const inp = document.getElementById('mInput');
   inp.value = it.qty;
 
-  updatePreview();
+  multSync();
+  multRender();
   modalOpenedAt = Date.now();
   document.getElementById('modal').classList.add('on');
-
-  setTimeout(() => {
-    inp.focus();
-    inp.select();
-    liftSheetForKeyboard();
-  }, 80);
 }
 
 function closeModal(){
@@ -2826,41 +2832,6 @@ function resetSheetLift(){
 if (window.visualViewport){
   visualViewport.addEventListener('resize', liftSheetForKeyboard);
   visualViewport.addEventListener('scroll', liftSheetForKeyboard);
-}
-
-/* ================= editing / deleting an item ================= */
-function editCurrent(){
-  if (!activeId) return;
-  const id = activeId;
-  activeId = null;
-  document.getElementById('modal').classList.remove('on');
-  resetSheetLift();
-  openEditor(id, 'item');
-}
-
-async function deleteCurrent(){
-  if (!activeId) return;
-  const id = activeId;
-  const it = state.items.find(i => i.id === id);
-  if (!it) return;
-
-  const ok = await showPick({
-    title: t('delete.title'),
-    message: t('delete.msg', {name: it.name}),
-    options: [
-      {label:t('delete.confirm'), value:'yes', style:'danger'},
-      {label:t('cancel'), value:null}
-    ]
-  });
-  if (ok !== 'yes') return;
-
-  state.items = state.items.filter(i => i.id !== id);
-  if (qbId === id) qbId = null;
-  if (state.lastItem === id) state.lastItem = null;
-  activeId = null;
-  document.getElementById('modal').classList.remove('on');
-  resetSheetLift();
-  save(); render();
 }
 
 /* ================= item / category editor ================= */
@@ -3113,98 +3084,6 @@ function showPick({title, message, options}){
   });
 }
 
-/* ================= photo ================= */
-function updatePreview(){
-  const img = document.getElementById('mPreview');
-  const clearBtn = document.getElementById('mClear');
-  const it = state.items.find(i => i.id === activeId);
-  if (it && it.image){
-    img.src = it.image;
-    img.classList.add('on');
-    clearBtn.style.display = '';
-  } else {
-    img.removeAttribute('src');
-    img.classList.remove('on');
-    clearBtn.style.display = 'none';
-  }
-}
-
-function takePhoto(){
-  if (!activeId) return;
-  const inp = document.getElementById('camInput');
-  inp.value = '';
-  inp.onchange = () => handleImageFile(inp.files?.[0]);
-  inp.click();
-}
-
-function pickFromGallery(){
-  if (!activeId) return;
-  const inp = document.getElementById('galInput');
-  inp.value = '';
-  inp.onchange = () => handleImageFile(inp.files?.[0]);
-  inp.click();
-}
-
-async function handleImageFile(file){
-  if (!file) return;
-  try{
-    const data = await compressImage(file, 360, 0.75);
-    const it = state.items.find(i => i.id === activeId);
-    if (!it) return;
-    it.image = data;
-    save();
-    updatePreview();
-  }catch(e){
-    console.warn(e);
-    alert(t('img.error'));
-  }
-}
-
-function clearImage(){
-  if (!activeId) return;
-  const it = state.items.find(i => i.id === activeId);
-  if (!it) return;
-  it.image = '';
-  save();
-  updatePreview();
-}
-
-async function compressImage(file, max = 360, quality = 0.75){
-  let source = null;
-  let w = 0, h = 0;
-  let objectUrl = null;
-
-  if (typeof createImageBitmap === 'function'){
-    try{
-      source = await createImageBitmap(file, {imageOrientation:'from-image'});
-      w = source.width;
-      h = source.height;
-    }catch{ source = null; }
-  }
-
-  if (!source){
-    objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.src = objectUrl;
-    await img.decode();
-    source = img;
-    w = img.naturalWidth  || img.width;
-    h = img.naturalHeight || img.height;
-  }
-
-  try{
-    const s = Math.min(1, max / Math.max(w, h));
-    const c = document.createElement('canvas');
-    c.width  = Math.max(1, Math.round(w * s));
-    c.height = Math.max(1, Math.round(h * s));
-    c.getContext('2d').drawImage(source, 0, 0, c.width, c.height);
-    return c.toDataURL('image/jpeg', quality);
-  }finally{
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-    if (source && source.close) source.close();
-  }
-}
-
 /* ================= CSV export ================= */
 function slug(s){
   return (s || '')
@@ -3249,7 +3128,6 @@ function exportCSV(){
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (document.getElementById('settings').classList.contains('on')){ closeSettings(); return; }
-  if (document.getElementById('calc').classList.contains('on')){ closeCalc(); return; }
   if (document.getElementById('editor').classList.contains('on')){ closeEditor(); return; }
   if (document.getElementById('cats').classList.contains('on')){ closeCats(); return; }
   if (document.getElementById('modal').classList.contains('on')) closeModal();
@@ -3542,7 +3420,7 @@ applyCatAlign();
 applyI18n();
 applyVoiceLang();
 render();
-requestAnimationFrame(fitTiles);
+requestAnimationFrame(() => { measureHeader(); fitTiles(); });
 if (state.lastItem && state.items.find(i => i.id === state.lastItem)){
   qbShow(state.lastItem);
 }

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Counter animation variations</title>
+<style>
+  :root{
+    --bg:#111;
+    --card:#1e1e1e;
+    --surface-2:#2a2a2a;
+    --fg:#eee;
+    --dim:#888;
+    --border:#333;
+    --accent:#4ade80;
+    --accent-fg:#000;
+    --danger:#f87171;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --surface-2:#eceef1;
+    --fg:#14171a;
+    --dim:#5f6b76;
+    --border:#d7dbe0;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --danger:#dc2626;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#14171a;
+    --qty-ring:rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 64px;
+    font:15px/1.4 system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:1100px;margin:0 auto 16px}
+  h1{font-size:20px;margin:0 0 4px}
+  header p{margin:0 0 10px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .controls button{
+    font:inherit;font-weight:700;padding:8px 12px;border-radius:10px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  main{
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;
+  }
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:12px;display:flex;flex-direction:column;gap:8px;
+  }
+  .card-name{font-weight:800;font-size:14px}
+  .card-desc{color:var(--dim);font-size:12px;min-height:32px}
+  .stage{
+    display:flex;align-items:center;justify-content:center;
+    padding:20px 0;background:var(--bg);border-radius:10px;
+  }
+  .badge{
+    min-width:56px;height:44px;padding:0 14px;border-radius:10px;
+    background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+    font-weight:800;font-size:24px;line-height:1;
+    font-variant-numeric:tabular-nums;
+    display:inline-flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+    cursor:pointer;user-select:none;-webkit-user-select:none;
+  }
+  .num{display:inline-block}
+  .btns{display:flex;gap:8px}
+  .btns button{
+    flex:1;font:inherit;font-weight:700;padding:8px 0;border-radius:9px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .btns .plus{background:var(--accent);color:var(--accent-fg)}
+
+  /* ---------- animations ---------- */
+
+  @keyframes pop{0%{transform:scale(1.42)}55%{transform:scale(.95)}100%{transform:scale(1)}}
+  @keyframes qtyup{0%{color:var(--accent)}100%{color:var(--qty-fg)}}
+  @keyframes qtydown{0%{color:var(--danger)}100%{color:var(--qty-fg)}}
+
+  /* 1. current */
+  .v-current .badge.up{animation:pop .28s ease, qtyup .28s ease}
+  .v-current .badge.down{animation:pop .28s ease, qtydown .28s ease}
+
+  /* 2. pop only */
+  .v-pop .badge.up,.v-pop .badge.down{animation:pop .3s ease}
+
+  /* 3. slide in */
+  @keyframes enterUp{0%{transform:translateY(95%);opacity:0}100%{transform:translateY(0);opacity:1}}
+  @keyframes enterDown{0%{transform:translateY(-95%);opacity:0}100%{transform:translateY(0);opacity:1}}
+  .v-enterup .badge.up .num{animation:enterUp .24s ease}
+  .v-enterup .badge.down .num{animation:enterDown .24s ease}
+
+  /* 4. odometer roll */
+  @keyframes odoInUp{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
+  @keyframes odoOutUp{0%{transform:translateY(0)}100%{transform:translateY(-100%)}}
+  @keyframes odoInDown{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
+  @keyframes odoOutDown{0%{transform:translateY(0)}100%{transform:translateY(100%)}}
+  .v-odo .badge .num.in-up{animation:odoInUp .24s ease}
+  .v-odo .badge .num.in-down{animation:odoInDown .24s ease}
+  .v-odo .badge .ghost{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  }
+  .v-odo .badge .ghost.out-up{animation:odoOutUp .24s ease forwards}
+  .v-odo .badge .ghost.out-down{animation:odoOutDown .24s ease forwards}
+
+  /* 5. fade + pop */
+  @keyframes fadePop{0%{opacity:0;transform:scale(.55)}100%{opacity:1;transform:scale(1)}}
+  .v-fade .badge.up .num{animation:fadePop .22s ease}
+  .v-fade .badge.down .num{animation:fadePop .22s ease}
+
+  /* 6. pulse ring */
+  @keyframes ringUp{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 var(--accent)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 14px rgba(0,0,0,0)}
+  }
+  @keyframes ringDown{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 var(--danger)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 14px rgba(0,0,0,0)}
+  }
+  .v-ring .badge.up{animation:ringUp .45s ease}
+  .v-ring .badge.down{animation:ringDown .45s ease}
+
+  /* 7. badge background flash */
+  @keyframes bgUp{0%{background:var(--accent);color:var(--accent-fg)}100%{background:var(--qty-bg);color:var(--qty-fg)}}
+  @keyframes bgDown{0%{background:var(--danger);color:#fff}100%{background:var(--qty-bg);color:var(--qty-fg)}}
+  .v-bg .badge.up{animation:bgUp .4s ease}
+  .v-bg .badge.down{animation:bgDown .4s ease}
+
+  /* 8. jelly wobble */
+  @keyframes jelly{
+    0%{transform:scale(1.3,.8)}
+    35%{transform:scale(.88,1.15)}
+    65%{transform:scale(1.06,.96)}
+    100%{transform:scale(1,1)}
+  }
+  .v-jelly .badge.up,.v-jelly .badge.down{animation:jelly .42s ease}
+
+  /* 9. pop up / shake down */
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-3px)}
+    40%{transform:translateX(3px)}
+    60%{transform:translateX(-2px)}
+    80%{transform:translateX(2px)}
+  }
+  .v-shake .badge.up{animation:pop .3s ease}
+  .v-shake .badge.down{animation:shake .3s ease}
+
+  /* 10. glow pulse */
+  @keyframes glowUp{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 var(--accent)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 16px 4px rgba(0,0,0,0)}
+  }
+  @keyframes glowDown{
+    0%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 0 0 var(--danger)}
+    100%{box-shadow:inset 0 0 0 1px var(--qty-ring),0 0 16px 4px rgba(0,0,0,0)}
+  }
+  .v-glow .badge.up{animation:glowUp .5s ease}
+  .v-glow .badge.down{animation:glowDown .5s ease}
+
+  /* 11. bounce */
+  @keyframes bounce{
+    0%{transform:translateY(0)}
+    30%{transform:translateY(-48%)}
+    55%{transform:translateY(0)}
+    75%{transform:translateY(-15%)}
+    100%{transform:translateY(0)}
+  }
+  .v-bounce .badge.up .num{animation:bounce .45s ease}
+  .v-bounce .badge.down .num{animation:bounce .45s ease}
+
+  /* 12. flip */
+  @keyframes flip{
+    0%{transform:perspective(320px) rotateX(0)}
+    50%{transform:perspective(320px) rotateX(90deg)}
+    100%{transform:perspective(320px) rotateX(0)}
+  }
+  .v-flip .badge.flip{animation:flip .28s ease}
+</style>
+</head>
+<body>
+<header>
+  <h1>Counter animation variations</h1>
+  <p>Tap a badge or use +1 / &minus;1. "Auto demo" loops every variant so you can compare.</p>
+  <div class="controls">
+    <button id="autoBtn" class="on">Auto demo: on</button>
+    <button id="themeBtn">Theme: dark</button>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+const VARIANTS = [
+  { id:'current',  name:'1. Pop + color flash',   desc:'What the app does now: scales up and flashes accent/danger color.' },
+  { id:'pop',      name:'2. Pop only',            desc:'Scales with a small overshoot, no color change.' },
+  { id:'enterup',  name:'3. Slide in',            desc:'New number slides in from below on +1, from above on \u22121.' },
+  { id:'odo',      name:'4. Odometer roll',       desc:'Old number rolls out while the new one rolls in.' },
+  { id:'fade',     name:'5. Fade + pop',          desc:'Fades in while scaling up. Softer than the current one.' },
+  { id:'ring',     name:'6. Pulse ring',          desc:'A colored ring expands outward from the badge.' },
+  { id:'bg',       name:'7. Badge flash',         desc:'The badge background flashes accent/danger.' },
+  { id:'jelly',    name:'8. Jelly wobble',        desc:'Squash-and-stretch wobble.' },
+  { id:'shake',    name:'9. Pop / shake',         desc:'Pops on +1, shakes on \u22121.' },
+  { id:'glow',     name:'10. Glow pulse',         desc:'A soft colored glow blooms around the badge.' },
+  { id:'bounce',   name:'11. Bounce',             desc:'The number bounces up and settles.' },
+  { id:'flip',     name:'12. Flip',               desc:'3D flip; the number changes at the midpoint.' }
+];
+
+const list = document.getElementById('list');
+
+for (const v of VARIANTS){
+  const card = document.createElement('div');
+  card.className = 'card v-' + v.id;
+  card.dataset.variant = v.id;
+  card.dataset.val = '5';
+  card.dataset.dir = '1';
+  card.innerHTML =
+    '<div class="card-name"></div>' +
+    '<div class="card-desc"></div>' +
+    '<div class="stage"><div class="badge"><span class="num">5</span></div></div>' +
+    '<div class="btns"><button class="minus">&minus;1</button><button class="plus">+1</button></div>';
+  card.querySelector('.card-name').textContent = v.name;
+  card.querySelector('.card-desc').textContent = v.desc;
+
+  const badge = card.querySelector('.badge');
+  card.querySelector('.plus').addEventListener('click', () => trigger(card, 1));
+  card.querySelector('.minus').addEventListener('click', () => trigger(card, -1));
+  badge.addEventListener('click', () => trigger(card, 1));
+
+  list.appendChild(card);
+}
+
+function trigger(card, dir){
+  const v = card.dataset.variant;
+  const val = +card.dataset.val;
+  const nv = Math.max(0, Math.min(99, val + dir));
+  card.dataset.val = nv;
+
+  const badge = card.querySelector('.badge');
+  const num = card.querySelector('.num');
+
+  if (v === 'odo'){ runOdometer(card, dir, nv); return; }
+
+  if (v === 'flip'){
+    badge.classList.remove('flip');
+    void badge.offsetWidth;
+    badge.classList.add('flip');
+    setTimeout(() => { num.textContent = nv; }, 130);
+    setTimeout(() => badge.classList.remove('flip'), 340);
+    return;
+  }
+
+  num.textContent = nv;
+  badge.classList.remove('up', 'down');
+  void badge.offsetWidth;
+  badge.classList.add(dir >= 0 ? 'up' : 'down');
+  clearTimeout(badge._t);
+  badge._t = setTimeout(() => badge.classList.remove('up', 'down'), 560);
+}
+
+function runOdometer(card, dir, nv){
+  const badge = card.querySelector('.badge');
+  const num = card.querySelector('.num');
+
+  const ghost = document.createElement('span');
+  ghost.className = 'ghost';
+  ghost.textContent = num.textContent;
+  badge.appendChild(ghost);
+
+  num.textContent = nv;
+  num.classList.remove('in-up', 'in-down');
+  void num.offsetWidth;
+  num.classList.add(dir >= 0 ? 'in-up' : 'in-down');
+  ghost.classList.add(dir >= 0 ? 'out-up' : 'out-down');
+
+  setTimeout(() => ghost.remove(), 320);
+}
+
+let auto = true;
+setInterval(() => {
+  if (!auto) return;
+  document.querySelectorAll('.card').forEach(card => {
+    let val = +card.dataset.val;
+    let dir = +card.dataset.dir || 1;
+    if (val >= 9) dir = -1;
+    else if (val <= 0) dir = 1;
+    card.dataset.dir = String(dir);
+    trigger(card, dir);
+  });
+}, 1200);
+
+const autoBtn = document.getElementById('autoBtn');
+autoBtn.addEventListener('click', () => {
+  auto = !auto;
+  autoBtn.classList.toggle('on', auto);
+  autoBtn.textContent = 'Auto demo: ' + (auto ? 'on' : 'off');
+});
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+</script>
+</body>
+</html>
