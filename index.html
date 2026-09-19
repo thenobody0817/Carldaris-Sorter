@@ -258,7 +258,7 @@
 
     --name-fs: 13px;
 
-    --img-zoom: 1.5;
+    --img-zoom: 1.1;
 
     --qty-fs: 20px;
     --qty-pad-y: 4px;
@@ -349,17 +349,19 @@
 
   .tile .name{
     order:1;
-    flex:0 0 auto;
-    padding:4px 7px;
+    position:absolute;
+    left:0;right:0;bottom:0;
+    padding:22px 8px 6px;
     font-size:var(--name-fs);
     font-weight:700;line-height:1.2;
-    color:var(--fg);
-    background-color:var(--card);
+    color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,.85);
+    background-color:transparent;
     background-image:linear-gradient(var(--accent),var(--accent));
     background-repeat:no-repeat;
-    background-position:left top;
+    background-position:left bottom;
     background-size:0 2px;
-    border-top:1px solid var(--border);
+    border-top:0;
     text-align:center;
     word-break:break-word;
     overflow:hidden;
@@ -368,6 +370,12 @@
     -webkit-box-orient:vertical;
     pointer-events:none;
     z-index:2;
+  }
+  .tile .name::before{
+    content:'';
+    position:absolute;left:0;right:0;top:0;bottom:0;
+    background:linear-gradient(transparent,rgba(0,0,0,.78));
+    z-index:-1;pointer-events:none;
   }
   @keyframes nameDraw{
     0%{background-size:0 2px}

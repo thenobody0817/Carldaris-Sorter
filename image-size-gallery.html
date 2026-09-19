@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tile image size gallery</title>
+<style>
+  :root{
+    --bg:#111;
+    --card:#1e1e1e;
+    --surface-2:#2a2a2a;
+    --surface-3:#333;
+    --fg:#eee;
+    --dim:#888;
+    --border:#333;
+    --accent:#4ade80;
+    --accent-fg:#000;
+    --qty-bg:rgba(0,0,0,.62);
+    --qty-fg:#fff;
+    --qty-ring:rgba(255,255,255,.22);
+  }
+  html[data-theme="light"]{
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --surface-2:#eceef1;
+    --surface-3:#e2e5e9;
+    --fg:#14171a;
+    --dim:#5f6b76;
+    --border:#d7dbe0;
+    --accent:#16a34a;
+    --accent-fg:#ffffff;
+    --qty-bg:rgba(255,255,255,.92);
+    --qty-fg:#14171a;
+    --qty-ring:rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px 16px 64px;
+    font:15px/1.4 system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--fg);
+  }
+  header{max-width:1100px;margin:0 auto 16px}
+  h1{font-size:20px;margin:0 0 4px}
+  header p{margin:0 0 10px;color:var(--dim);font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .controls button{
+    font:inherit;font-weight:700;padding:8px 12px;border-radius:10px;
+    border:0;background:var(--surface-2);color:var(--fg);cursor:pointer;
+  }
+  .controls button.on{background:var(--accent);color:var(--accent-fg)}
+  .pick{font-size:13px;font-weight:700;color:var(--accent);margin-left:4px}
+  main{
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;
+  }
+  .card{
+    background:var(--card);border:2px solid var(--border);border-radius:14px;
+    padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;
+    transition:border-color .12s, box-shadow .12s;
+  }
+  .card:hover{border-color:var(--dim)}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+  .card-name{font-weight:800;font-size:13px;display:flex;align-items:center;gap:6px}
+  .card-name .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:20px;height:20px;border-radius:6px;background:var(--surface-2);
+    font-size:11px;font-weight:800;color:var(--dim);flex:0 0 auto;
+  }
+  .card.sel .card-name .num{background:var(--accent);color:var(--accent-fg)}
+  .card-desc{color:var(--dim);font-size:11px;min-height:30px}
+  .code{
+    font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--dim);background:var(--bg);border-radius:7px;padding:5px 7px;
+    word-break:break-word;
+  }
+  .stage{
+    display:flex;align-items:center;justify-content:center;
+    padding:22px 0;background:var(--bg);border-radius:10px;min-height:220px;
+  }
+
+  /* ---- shared tile (mirrors the app) ---- */
+  .tile{
+    position:relative;width:170px;height:170px;border-radius:14px;
+    background:var(--card);overflow:hidden;border:2px solid transparent;
+    display:flex;flex-direction:column;
+  }
+  .tile img{
+    flex:1 1 auto;min-height:0;width:100%;height:100%;
+    object-fit:cover;object-position:center;display:block;
+    transform:scale(var(--z,1.5));transform-origin:center;
+  }
+  .tile .foot{
+    order:-1;flex:0 0 auto;background:var(--card);
+    border-bottom:1px solid var(--border);z-index:2;
+  }
+  .tile .qty{
+    padding:4px 9px;text-align:center;font-weight:800;font-size:20px;line-height:1;
+    color:var(--fg);font-variant-numeric:tabular-nums;
+  }
+  .tile .name{
+    order:1;flex:0 0 auto;padding:4px 7px;text-align:center;
+    font-weight:700;font-size:13px;line-height:1.2;color:var(--fg);
+    background:var(--card);border-top:1px solid var(--border);z-index:2;
+  }
+  .tile.counted .foot{background:var(--accent);}
+  .tile.counted .qty{color:var(--accent-fg);}
+
+  /* ---- variants ---- */
+
+  /* 1 current baseline */
+  .v1 .tile{ --z:1.5; }
+
+  /* 2 more zoom */
+  .v2 .tile{ --z:1.8; }
+
+  /* 3 max zoom */
+  .v3 .tile{ --z:2.2; }
+
+  /* 4 counter as floating badge -> frees the top bar */
+  .v4 .tile .foot{
+    position:absolute;top:8px;right:8px;background:transparent;border:0;
+  }
+  .v4 .tile .qty{
+    padding:4px 9px;border-radius:10px;background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+  }
+  .v4 .tile.counted .foot{background:transparent;}
+
+  /* 5 name overlaid on the photo -> frees the bottom bar */
+  .v5 .tile .name{
+    position:absolute;left:0;right:0;bottom:0;border:0;color:#fff;
+    padding:18px 8px 6px;
+    background:linear-gradient(transparent,rgba(0,0,0,.78));
+  }
+
+  /* 6 full-bleed: both overlaid, image fills whole tile */
+  .v6 .tile .foot{
+    position:absolute;top:8px;right:8px;background:transparent;border:0;
+  }
+  .v6 .tile .qty{
+    padding:4px 9px;border-radius:10px;background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+  }
+  .v6 .tile .name{
+    position:absolute;left:0;right:0;bottom:0;border:0;color:#fff;
+    padding:18px 8px 6px;
+    background:linear-gradient(transparent,rgba(0,0,0,.78));
+  }
+  .v6 .tile.counted .foot{background:transparent;}
+
+  /* 7 taller (portrait) tiles */
+  .v7 .tile{ --z:1.5; width:150px;height:210px; }
+
+  /* 8 full-bleed + more zoom (max image) */
+  .v8 .tile{ --z:1.8; }
+  .v8 .tile .foot{
+    position:absolute;top:8px;right:8px;background:transparent;border:0;
+  }
+  .v8 .tile .qty{
+    padding:4px 9px;border-radius:10px;background:var(--qty-bg);color:var(--qty-fg);
+    box-shadow:inset 0 0 0 1px var(--qty-ring);
+  }
+  .v8 .tile .name{
+    position:absolute;left:0;right:0;bottom:0;border:0;color:#fff;
+    padding:18px 8px 6px;
+    background:linear-gradient(transparent,rgba(0,0,0,.78));
+  }
+  .v8 .tile.counted .foot{background:transparent;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tile image size — solutions gallery</h1>
+  <p>Same tile markup as the app, real product photos. Click a card to mark your pick, then tell me its number.</p>
+  <div class="controls">
+    <button id="kegBtn" class="on">Image: Keg</button>
+    <button id="crateBtn">Image: Crate</button>
+    <button id="themeBtn">Theme: dark</button>
+    <span class="pick" id="pickText"></span>
+  </div>
+</header>
+<main id="list"></main>
+
+<script>
+'use strict';
+
+const IMAGES = {
+  keg:   { src:'images/keg20.webp',   name:'Keg 20 L' },
+  crate: { src:'images/crateGrnF.webp', name:'Green with bottles' }
+};
+
+const VARIANTS = [
+  [1, 'v1', 'Current (zoom 1.5)',      'Baseline: counter bar top, name bar bottom, image zoomed 1.5×.'],
+  [2, 'v2', 'Zoom 1.8',                'Same layout, image cropped/filled 20% more.'],
+  [3, 'v3', 'Zoom 2.2',                'Aggressive crop; products can clip top/bottom.'],
+  [4, 'v4', 'Counter as corner badge', 'Counter floats over the photo, removing the top bar so the image is taller.'],
+  [5, 'v5', 'Name over photo',         'Name sits on a gradient over the image, removing the bottom bar.'],
+  [6, 'v6', 'Full-bleed (both overlaid)','Photo fills the whole tile; counter badge top-right, name over gradient.'],
+  [7, 'v7', 'Taller portrait tiles',   'Keep bars, but tiles become 3:4 so the photo gets much more area.'],
+  [8, 'v8', 'Full-bleed + zoom 1.8',   'Maximum image: no bars and an extra crop on top.']
+];
+
+const list = document.getElementById('list');
+let currentImg = 'keg';
+let selected = null;
+
+for (const [n, cls, name, desc] of VARIANTS){
+  const card = document.createElement('div');
+  card.className = 'card ' + cls;
+  card.dataset.n = n;
+  card.dataset.name = name;
+  card.innerHTML =
+    '<div class="card-name"><span class="num">' + n + '</span><span class="t"></span></div>' +
+    '<div class="card-desc"></div>' +
+    '<div class="stage"><div class="tile counted">' +
+      '<div class="foot"><div class="qty">5</div></div>' +
+      '<img alt="">' +
+      '<div class="name"></div>' +
+    '</div></div>' +
+    '<div class="code"></div>';
+  card.querySelector('.card-name .t').textContent = name;
+  card.querySelector('.card-desc').textContent = desc;
+
+  card.addEventListener('click', () => {
+    selected = n;
+    document.querySelectorAll('.card').forEach(c => c.classList.toggle('sel', c === card));
+    document.getElementById('pickText').textContent = 'Picked: #' + n + ' — ' + name;
+  });
+
+  list.appendChild(card);
+}
+
+function applyImage(){
+  const img = IMAGES[currentImg];
+  document.querySelectorAll('.tile img').forEach(el => el.src = img.src);
+  document.querySelectorAll('.tile .name').forEach(el => el.textContent = img.name);
+  document.querySelectorAll('.v7').forEach(c => c.querySelector('.code').textContent = 'tile{aspect-ratio:3/4}');
+  document.querySelectorAll('.v1 .code').forEach(e => e.textContent = 'transform:scale(1.5)');
+  document.querySelectorAll('.v2 .code').forEach(e => e.textContent = 'transform:scale(1.8)');
+  document.querySelectorAll('.v3 .code').forEach(e => e.textContent = 'transform:scale(2.2)');
+  document.querySelectorAll('.v4 .code').forEach(e => e.textContent = '.qty{position:absolute;top:8px;right:8px}');
+  document.querySelectorAll('.v5 .code').forEach(e => e.textContent = '.name{position:absolute;bottom:0}');
+  document.querySelectorAll('.v6 .code').forEach(e => e.textContent = 'image full-bleed + both overlaid');
+  document.querySelectorAll('.v8 .code').forEach(e => e.textContent = 'full-bleed + transform:scale(1.8)');
+}
+
+const kegBtn = document.getElementById('kegBtn');
+const crateBtn = document.getElementById('crateBtn');
+kegBtn.addEventListener('click', () => { currentImg='keg'; kegBtn.classList.add('on'); crateBtn.classList.remove('on'); applyImage(); });
+crateBtn.addEventListener('click', () => { currentImg='crate'; crateBtn.classList.add('on'); kegBtn.classList.remove('on'); applyImage(); });
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  themeBtn.textContent = 'Theme: ' + (light ? 'dark' : 'light');
+});
+
+applyImage();
+</script>
+</body>
+</html>
