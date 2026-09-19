@@ -3,7 +3,7 @@ import { DEFAULT_ITEMS, IMAGE_BY_ID } from './catalog.js';
 export const VERSION = 4;
 export const MAX_QUANTITY = 999999999;
 export const languages = ['en', 'lv', 'ru', 'zh'];
-export const uid = () => crypto.randomUUID();
+export const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
 export function localDate(now = new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }

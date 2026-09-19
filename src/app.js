@@ -256,7 +256,7 @@ try{
   render();failure(error);
   if(blocked)open(t('restore'),`<p>${escape(t('recovery'))}</p><div class="menu-list">${button('raw-backup',t('rawBackup'))}${button('restore',t('restore'),'primary')}</div>`);
 }
-if('serviceWorker' in navigator && (!['127.0.0.1','localhost'].includes(location.hostname) || new URLSearchParams(location.search).has('offline-test'))){
+if('serviceWorker' in navigator && location.protocol !== 'file:' && (!['127.0.0.1','localhost'].includes(location.hostname) || new URLSearchParams(location.search).has('offline-test'))){
   let changingController=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(waitingWorker && !changingController){changingController=true;location.reload();}});
   const offerUpdate=worker=>{waitingWorker=worker;$('offline-label').innerHTML=`<button data-action="reload">${escape(t('reload'))}</button>`;};

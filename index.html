@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101512"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Count — Bottles & Crates</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="stylesheet" href="src/styles.css"><script type="module" src="src/app.js"></script>
+<title>Count — Bottles & Crates</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="stylesheet" href="src/styles.css"><script src="app.bundle.js" defer></script>
 </head>
 <body>
 <div class="app-shell">
@@ -16,9 +16,8 @@
 <div class="search-row"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find an item…" aria-label="Find an item" autocomplete="off"></label><button data-action="reorder" id="reorder-button" aria-pressed="false" aria-label="Reorder items">↕</button></div>
 <div id="grid"></div><div id="empty" class="empty" hidden>No items found.</div><footer class="page-footer"><span>CARLDARIS SORTER</span><span id="offline-label">Ready for your next count.</span></footer>
 </main></div>
-<div id="file-warning" class="file-warning" hidden><strong>This app needs a local web address to run.</strong><span>Opening index.html directly disables its modules and storage. From this folder, run <code>node scripts/serve.cjs</code>, then open <code>http://127.0.0.1:4173/</code> in the browser address bar.</span></div>
+
 <aside id="quick-bar" class="quick-bar" hidden aria-label="Selected item"><div><span id="selected-label">Selected item</span><strong id="selected-name"></strong></div><button data-action="selected-minus" aria-label="Subtract one">−</button><button data-action="selected-details" id="selected-qty">0</button><button data-action="selected-plus" class="primary" aria-label="Add one">+</button></aside>
 <dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title"></h2><button data-action="close" class="icon-button" aria-label="Close">×</button></div><div id="dialog-content"></div></dialog>
 <div id="toast" role="status" class="toast" hidden></div><input type="file" id="import-file" accept="application/json,.json" hidden><noscript>This app needs JavaScript to count and save items.</noscript>
-<script>if(location.protocol==='file:'){document.getElementById('file-warning').hidden=false;}</script>
 </body></html>
