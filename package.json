@@ -1,0 +1,11 @@
+{
+  "name": "carldaris-sorter",
+  "private": true,
+  "version": "4.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "test": "node --test tests/*.test.js",
+    "audit:legacy": "node scripts/audit-legacy.cjs"
+  }
+}
